@@ -1,0 +1,84 @@
+//- Uniwersalne okno Custom Confirm (Zastępuje systemowe confirm)
+#custom-confirm-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box
+        .custom-modal-header
+            h3#custom-confirm-title Potwierdzenie akcji
+        .custom-modal-body
+            p#custom-confirm-message Czy na pewno chcesz to zrobić?
+        .custom-modal-footer
+            button#custom-confirm-cancel-btn.modal-btn-secondary Anuluj
+            button#custom-confirm-success-btn.modal-btn-danger Potwierdź
+
+//- Uniwersalne okno Custom Alert (Zastępuje systemowe alert)
+#custom-alert-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box
+        .custom-modal-header
+            h3#custom-alert-title Komunikat systemu
+        .custom-modal-body
+            p#custom-alert-message Treść wiadomości...
+        .custom-modal-footer
+            button#custom-alert-close-btn.modal-btn-primary OK
+
+//- Uniwersalne okno powiększenia zdjęcia (Lightbox Image Modal)
+#custom-lightbox-modal.custom-lightbox-backdrop(style="display: none;" onclick="closeLightbox()")
+    span.lightbox-close(onclick="closeLightbox()") &times;
+    img#lightbox-target-image.lightbox-content(src="" alt="Powiększone zdjęcie")
+
+//- Uniwersalne okno udostępniania artykułu
+#custom-share-modal.custom-modal-backdrop(style="display: none;" onclick="window.closeShareModal()")
+    .custom-modal-box(style="max-width: 380px;" onclick="event.stopPropagation()")
+        .custom-modal-header(style="display: flex; justify-content: space-between; align-items: center;")
+            h3 Udostępnij artykuł
+            span(onclick="window.closeShareModal()" style="cursor: pointer; font-size: 20px; font-weight: bold; color: #65676b;") &times;
+        .custom-modal-body(style="padding: 16px; display: flex; flex-direction: column; gap: 12px;")
+            button#share-fb-link.dropdown-item(style="background: #1877f2; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;")
+                i.fa-brands.fa-facebook(style="color: white;")
+                | Udostępnij na Facebooku
+            button#share-x-link.dropdown-item(style="background: #000000; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;")
+                i.fa-brands.fa-x-twitter(style="color: white;")
+                | Udostępnij na platformie X
+            button#share-li-link.dropdown-item(style="background: #0077b5; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;")
+                i.fa-brands.fa-linkedin(style="color: white;")
+                | Udostępnij na LinkedIn
+            hr(style="border: 0; border-top: 1px solid #e4e6eb; margin: 4px 0;")
+            div(style="display: flex; gap: 8px;")
+                input#share-copy-input(type="text" readonly style="flex: 1; padding: 8px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 13px; background: #f0f2f5; outline: none;")
+                button(onclick="window.copyShareLinkToClipboard()" style="background: #42b72a; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;") Kopiuj
+
+//- DYNAMICZNY LOADER MODAL (SSE-COMPATIBLE)
+#custom-loading-modal.custom-modal-backdrop(style="display: none; background-color: rgba(0, 0, 0, 0.7); pointer-events: auto;")
+    .custom-modal-box(style="max-width: 360px; text-align: center; padding: 32px 24px;")
+        div(style="margin-bottom: 20px;")
+            i.fa-solid.fa-circle-notch.fa-spin(style="font-size: 44px; color: var(--color-primary, #0f5132);")
+        h3#loader-status-heading(style="font-size: 18px; font-weight: 700; color: #1c1e21; margin-bottom: 8px; font-family: sans-serif;") Trwa weryfikacja artykułu
+        p#loader-status-text(style="font-size: 13.5px; color: #65676b; line-height: 1.5; margin: 0; font-family: sans-serif;") 
+            | Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa oraz weryfikację faktograficzną w sieci. Proszę nie zamykać i nie odświeżać strony.
+
+//- Uniwersalny modal zgłaszania nadużyć (DSA / Safe Harbor)
+#custom-abuse-modal.custom-modal-backdrop(style="display: none;" onclick="window.closeAbuseModal()")
+    .custom-modal-box(style="max-width: 500px;" onclick="event.stopPropagation()")
+        .custom-modal-header(style="background: #fff3f3; border-bottom: 1px solid #f5c6cb; display: flex; justify-content: space-between; align-items: center;")
+            h3(style="color: #bc2525; margin: 0; font-size: 16px; font-weight: bold;") ⚠️ Zgłoś naruszenie lub nadużycie
+            span(onclick="window.closeAbuseModal()" style="cursor: pointer; font-size: 24px; font-weight: bold; color: #65676b; line-height: 1;") &times;
+        form#publicAbuseReportForm(onsubmit="window.submitAbuseModalForm(event)" autocomplete="off")
+            input(type="hidden" name="_csrf" value=csrfToken)
+            input#abuseModalParentPostId(type="hidden" name="parentPostId")
+            input(type="hidden" name="isAbuseReport" value="true")
+            .custom-modal-body(style="padding: 16px; display: flex; flex-direction: column; gap: 12px; font-family: sans-serif;")
+                if !user
+                    div
+                        label(style="font-size: 12px; font-weight: bold; color: #bc2525; display: block; margin-bottom: 4px;") Twój adres e-mail (Wymagany do kontaktu):*
+                        input#abuseModalReporterEmail(type="email" name="reporterEmail" required placeholder="np. twój-email@domena.pl" style="width: 100%; padding: 10px; border: 1px solid #bc2525; border-radius: 6px; font-size: 14px; outline: none;")
+                div
+                    label(style="font-size: 12px; font-weight: bold; color: #bc2525; display: block; margin-bottom: 4px;") Typ zgłoszenia / Charakter naruszenia:*
+                    select(name="abuseCategory" required style="width: 100%; padding: 10px; border: 1px solid #bc2525; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; background: #fff;")
+                        option(value="general") Spam, wulgaryzmy, mowa nienawiści (Procedura standardowa - 72h)
+                        option(value="copyright") 🚨 Naruszenie majątkowych praw autorskich (Wniosek o natychmiastowe usunięcie)
+                div
+                    label(style="font-size: 12px; font-weight: bold; color: #bc2525; display: block; margin-bottom: 4px;") Dokładne uzasadnienie zgłoszenia:*
+                    textarea(name="content" required placeholder="Wpisz szczegółowe powody zgłoszenia treści..." style="width: 100%; height: 120px; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 14px; resize: none; outline: none; font-family: inherit;")
+                p(style="font-size: 11.5px; color: #65676b; margin: 0; line-height: 1.4; font-style: italic;") 
+                    | Narzędzie chronione przez system reCAPTCHA Enterprise. Twoja tożsamość pozostanie całkowicie anonimowa przed zaskarżonym autorem wpisu.
+            .custom-modal-footer
+                button.modal-btn-secondary(type="button" onclick="window.closeAbuseModal()") Anuluj
+                button.modal-btn-danger(type="submit" style="background: #bc2525; color: white;") Wyślij zgłoszenie

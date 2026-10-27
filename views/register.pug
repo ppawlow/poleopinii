@@ -1,0 +1,57 @@
+extends layout
+block head
+    script(src="/js/authApi.js")
+    
+block content
+    .login-container
+        .login-branding
+            img(src=LOGOTYP width="100%")
+        
+        .login-box(style="width: 440px;")
+            h3 Rejestracja nowego konta
+            
+            if error === 'exists'
+                .custom-modal-body(style="color: #bc2525; background: #fff3f3; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600;") ⚠️ Podany adres e-mail jest już zajęty.
+            
+            if error === 'validation'
+                .custom-modal-body(style="color: #bc2525; background: #fff3f3; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600;") 
+
+                    | ⚠️ #{customErrorMessage || 'Wystąpił błąd walidacji danych.'}
+
+            form#registerForm(data-csrf=csrfToken autocomplete="off" style="display: flex; flex-direction: column;")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                
+                label(style="font-size: 14px; font-weight: 600; color:#0a5b9d; display: block; margin-bottom: 4px;") Twój adres e-mail* 
+                    br
+                    i
+                        small(style="color:red; font-weight: normal;") Niezbędny do logowania. Nie będzie publicznie widoczny.
+                    
+                input(type="email" name="email" placeholder="np. jan@domena.pl" value=(formData ? formData.email : '') required autocomplete="off")
+
+                label(style="font-size: 14px; font-weight: 600; color:#0a5b9d; display: block; margin-bottom: 4px;") Twoje nazwisko lub pseudonim*
+                    br
+                    i
+                        small(style="color:red; font-weight: normal;") To będzie publicznie widoczna nazwa Twojego profilu.
+                
+                input(type="text" name="name" placeholder="np. Jan Kowalski" value=(formData ? formData.name : '') required autocomplete="off")
+                
+                //- SEKCJA ZGÓD FORMULARZA (OBLIGATORYJNE)
+                div(style="background: #f0f2f5; padding: 12px; border-radius: 6px; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px;")
+                    div(style="display: flex; align-items: flex-start; gap: 8px;")
+                        input(type="checkbox" name="terms" id="termsCheck" checked=(formData && formData.terms) style="width: auto; margin: 3px 0 0 0; cursor: pointer;" required)
+                        label(for="termsCheck" style="font-size: 12.5px; color: #1c1e21; cursor: pointer; user-select: none; line-height: 1.4;")
+                            | Oświadczam, że zapoznałem się i akceptuję postanowienia 
+                            a(href="/regulamin" target="_blank" style="color: #1877f2; font-weight: bold; text-decoration: underline;") Regulaminu Serwisu Pole Opinii*
+                    
+                    div(style="display: flex; align-items: flex-start; gap: 8px;")
+                        input(type="checkbox" name="privacy" id="privacyCheck" checked=(formData && formData.privacy) style="width: auto; margin: 3px 0 0 0; cursor: pointer;" required)
+                        label(for="privacyCheck" style="font-size: 12.5px; color: #1c1e21; cursor: pointer; user-select: none; line-height: 1.4;")
+                            | Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z zapisami 
+                            a(href="/polityka-prywatnosci" target="_blank" style="color: #1877f2; font-weight: bold; text-decoration: underline;") Polityki Prywatności*
+
+                button.register-submit(type="submit" style="margin-top: 4px;") Zarejestruj się
+            
+            hr
+            
+            div(style="text-align: center; margin-top: 15px;")
+                a(href="/auth/login" style="text-decoration: none; color: #1877f2; font-weight: 600; font-size: 14px;") Masz już konto? Zaloguj się

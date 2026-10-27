@@ -1,0 +1,153 @@
+extends layout
+block head
+    script(src="/js/verifyApi.js")
+    
+block content
+    style.
+        .data-span {
+            font-family: monospace;
+            font-size: 15px;
+            background: #e4e6eb;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #bc2525;
+            text-decoration: none;
+            cursor: pointer;
+            display: inline-block;
+            transition: background 0.2s;
+        }
+        .data-span:hover {
+            background: #d8dadf;
+        }
+        ul.benefits-list {
+            list-style: none;
+            padding: 0;
+            margin: 16px 0;
+        }
+        ul.benefits-list li {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            // font-size: 14px;
+            line-height: 1.5;
+            // color: #050505;
+        }
+        ul.benefits-list li::before {
+            content: "➔";
+            color: #1877f2;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        .transfer-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .transfer-table th {
+            text-align: left;
+            padding: 6px 10px 6px 0;
+            font-size: 13px;
+            color: #65676b;
+            vertical-align: middle;
+            width: 140px;
+        }
+        .transfer-table td {
+            padding: 6px 0;
+            vertical-align: middle;
+        }
+        #info {
+            font-size: 14px; 
+            color: #65676b; 
+            margin-bottom: 24px; 
+            line-height: 1.5;
+        }
+
+    script.
+        async function copyToClipboard(element) {
+            const tekstDoSchowka = element.innerText.trim();
+            try {
+                await navigator.clipboard.writeText(tekstDoSchowka);
+                const originalBg = element.style.background;
+                element.style.background = "#42b72a";
+                element.style.color = "#fff";
+                setTimeout(() => {
+                    element.style.background = "";
+                    element.style.color = "";
+                }, 800);
+            } catch (error) {
+                console.error('Błąd kopiowania:', error);
+            }
+        }    
+    
+    .main-container(style="grid-template-columns: 1fr; max-width: 750px; margin: 0 auto;")
+        main.feed
+            .create-post(style="padding: 24px;")
+                h2(style="margin-bottom: 12px; color: #1c1e21; font-size: 22px; font-weight: 700;") 🛡️ Weryfikacja Tożsamości
+                #info(style="font-size: 14px; color: #65676b; margin-bottom: 24px; line-height: 1.5;")
+                    p 
+                        | Aby zapobiegać działalności botów i chronić społeczność platformy, 
+                        | wymagamy ukończenia procedury potwierdzającej autentyczność profilu.
+                    p 
+                        | Weryfikacja polega na wykonaniu przelewu uwierzytelniającego w 
+                        | wysokości 1 zł, który zostanie zwrócony. Po tej operacji 
+                        | administrator systemu ustawi Twój profil na "Zweryfikowany". 
+                        | Pełna weryfikacja daje szereg korzyści:
+                        ul.benefits-list
+                            li Możesz nadać swoim tekstom status "publiczny", dzięki czemu docierają one do całej społeczności serwisu, jak również możesz je udostępniać na innych platformach.
+                            li Możesz brać pełny udział w publicznej dyskusji - publikować zgłoszenia polemiczne, pписать komentarze i oceniać innych twórców.
+                            li Możesz kontaktować się prywatnie z innymi twórcami poprzez wysyłanie do nich wiadomości e-mail bezpośrednio za pośrednictwem platformy.
+                            li W razie utraty dostępu do konta, możesz je łatwo odzyskać, przesyłając do administratora potwierdzenie wykonania przelewu pobrane z Twojego banku.
+                    p Pamietaj, że dane konto bankowe może być użyte do weryfikacji tylko jednego profilu. 
+
+                if msg === 'transfer_submitted'
+                    div(style="color: #1877f2; background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") 🏦 Dane przelewu zostały zarejestrowane. Oczekujemy na zaksięgowanie wpłaty.
+
+                //- KROK WERYFIKACJI
+                .verification-step(style=`border: 1px solid #e4e6eb; border-radius: 8px; padding: 16px; background: ${user.verificationTransferStatus === 'approved' ? '#f0fdf4' : '#fff'};`)
+                    div(style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;")
+                        h3(style="font-size: 16px; font-weight: 700; margin: 0;") Przelew uwierzytelniający (1.00 PLN)
+                        if user.verificationTransferStatus === 'approved'
+                            span(style="color: #42b72a; font-weight: bold; font-size: 14px;") ZALICZONE 
+                        else if user.verificationTransferStatus === 'processing'
+                            span(style="color: #1877f2; font-weight: bold; font-size: 14px;") TRWA WERYFIKACJA ⏳
+                        else
+                            span(style="color: #65676b; font-weight: bold; font-size: 14px;") DO ZROBIENIA ⏳
+
+                    if user.verificationTransferStatus === 'approved'
+                        p(style="font-size: 14px; color: #050505; margin: 0;") Rachunek bankowy powiązany z tożsamością fizyczną został poprawnie zweryfikowany.
+                    
+                    else if user.verificationTransferStatus === 'processing'
+                        p(style="font-size: 14px; font-style: italic; color: #1877f2; margin: 0; padding-top: 8px;") ℹ️ Dane Twojego zgłoszenia zostały przekazane do administratora. Trwa oczekiwanie na manualne zaksięgowanie wpłaty księgowej. Status konta zmieni się automatycznie po decyzji.
+                    
+                    else
+                        //- Dane do przelewu wyświetlamy WYŁĄCZNIE, gdy status nie jest w trakcie przetwarzania
+                        div(style="background: #f0f2f5; padding: 16px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; line-height: 1.6; margin-top: 12px;")
+                            h4(style="margin-top: 0; margin-bottom: 10px; font-size: 14px; color: #1c1e21; font-weight: 700;") 📋 Dane do wykonania przelewu (Kliknij pole, aby skopiować):
+                            table.transfer-table
+                                tr
+                                    th Nazwa odbiorcy:
+                                    td
+                                        span.data-span(title="Kliknij, aby skopiować" onclick="copyToClipboard(this)") #{BANK_TRANSFER_DATA.name}
+                                tr
+                                    th Nazwa banku:
+                                    td(style="font-weight: 600; color: #1c1e21; padding-left: 8px;") #{BANK_TRANSFER_DATA.bank}
+                                tr
+                                    th Numer konta:
+                                    td
+                                        span.data-span(title="Kliknij, aby skopiować" onclick="copyToClipboard(this)") #{BANK_TRANSFER_DATA.number}
+                                tr 
+                                    th(style="color: #bc2525; font-weight: bold;") Tytuł przelewu: 
+                                    td
+                                        span.data-span(style="border: 1px dashed #bc2525;" title="Klucz identyfikacyjny profilu. Musi być identyczny!" onclick="copyToClipboard(this)") #{dynamicTransferCode}
+                                tr
+                                    th Kwota: 
+                                    td
+                                        span.data-span(title="Kliknij, aby skopiować" onclick="copyToClipboard(this)") 1.00 PLN
+
+                        form(id="transferVerificationForm" action="/verify/submit-transfer" method="POST" style="display: flex; flex-direction: column; gap: 12px;")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            button(type="submit" style="background: #42b72a; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; width: fit-content;") Potwierdzam wykonanie przelewu

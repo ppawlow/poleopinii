@@ -1,0 +1,32 @@
+//- STRUMIEŃ ZGŁOSZEŃ NADUŻYĆ (REPORTY SYGNALISTÓW)
+if reports && reports.length > 0
+    div(style="display: flex; flex-direction: column; gap: 16px;")
+        each rep in reports
+            .post-card(style="border-left: 4px solid #bc2525; padding: 16px; background: #fff; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);")
+                .post-author-row(style="margin-bottom: 8px;")
+                    div
+                        h4(style="margin:0; font-size:15px;") Zgłaszający: #{rep.author}
+                        span(style="font-size:12px; color:#65676b;") Data dodania: #{new Date(rep.createdAt).toLocaleString('pl-PL')}
+                div(style="margin: 12px 0; background: #fff3f3; padding: 12px; border-radius: 6px; font-style: italic; color: #bc2525;")
+                    h5(style="font-size:14px; font-weight:bold; margin-bottom:4px;") Uzasadnienie nadużycia:
+                    div(id=`report-content-${rep._id}`)!= rep.content
+                if rep.parentPostId
+                    - const originalPostId = rep.parentPostId._id || rep.parentPostId
+                    - const isAlreadyLocked = rep.parentPostId && rep.parentPostId.isModeratorLocked === true
+                    - const threeDaysMs = 3 * 24 * 60 * 60 * 1000
+                    - const isTimeUp = (Date.now() - new Date(rep.createdAt).getTime()) >= threeDaysMs
+                    
+                    div(style="text-align: right; font-size: 13px; display: flex; justify-content: space-between; align-items: center; margin-top: 14px; width: 100%;")
+                        a(href=`/posts/${originalPostId}` style="color: #1877f2; text-decoration: none; font-weight: bold;") 🔗 Przejdź do zgłaszanego artykułu oryginału
+                        div(style="display: flex; gap: 8px; align-items: center;")
+                            if isTimeUp
+                                if isAlreadyLocked
+                                    button(type="button" id=`abuse-unlock-btn-${rep._id}` onclick=`executeAbusePanelUnlock('${rep._id}', '${originalPostId}')` style="background: #146c43; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;") 🔓 Cofnij blokadę artykułu
+                                else
+                                    button(type="button" id=`abuse-accept-btn-${rep._id}` onclick=`acceptAbuseReport('${rep._id}')` style="background: #bc2525; color: white; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;") ⚖️ Uznaj zgłoszenie (Przenieś do Restricted)
+                                button(type="button" onclick=`rejectAbuseReport('${rep._id}')` style="background: #e4e6eb; color: #050505; border: none; padding: 6px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;") ❌ Odrzuć zgłoszenie
+                            else
+                                - const remainingHours = Math.ceil((threeDaysMs - (Date.now() - new Date(rep.createdAt).getTime())) / (1000 * 60 * 60))
+                                span(style="color: #65676b; font-weight: 600; font-style: italic; background: #f0f2f5; padding: 4px 10px; border-radius: 4px;") ⏳ Oczekiwanie na obronę autora (zostało ok. #{remainingHours}h)
+else
+    .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #f0f2f5; border-radius: 6px;") Aktualnie brak zarejestrowanych zgłoszeń nadużyć w systemie.

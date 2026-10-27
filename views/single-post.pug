@@ -1,0 +1,115 @@
+extends layout
+
+block content
+    //- Prasowy kontener artykułu (Dodano atrybuty kompatybilności ID dla skryptów dynamicznych)
+    .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 40px auto; padding: 0 20px;")
+        main.editorial-article(id=`post-${post._id}` style="background: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);")
+            div(style="font-size: 13px; margin-top: 2px; text-align:right;")
+                span.publish-date Opublikowano: #{post.createdAt ? new Date(post.createdAt).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Przed chwilą'}
+
+            //- Blok Autora i Daty (Byline)
+            .post-author-row
+            .author-info
+                a(href=getProfileUrl(post.authorDetails) style="text-decoration:none; color:inherit;")
+                    h2(style="display: inline-flex; align-items: center; gap: 4px; margin: 20px;") 
+                        | #{ post.authorDetails ? post.authorDetails.name : post.author }
+
+            //- Nagłówek artykułu
+            header.article-header(style="margin-bottom: 32px; border-bottom: 1px solid #e4e6eb; padding-bottom: 24px;")
+                h1(style="font-size: 36px; font-weight: 800; color: #1c1e21; text-align:center; line-height: 1.25; margin: 0 0 16px 0; letter-spacing: -0.5px;")!= post.title || 'Wpis bez tytułu'
+                
+                //- NOWOŚĆ: Precyzyjna adnotacja zawierająca Tytuł oryginalnego wpisu
+                if post.parentPostId
+                    div(style="text-align: center; margin-top: -8px; margin-bottom: 8px; font-size: 15px; color: #65676b; font-family: sans-serif;")
+                        | Odpowiedź na artykuł: 
+                        a(href=`/posts/${post.parentPostId}` style="color: #1877f2; text-decoration: none; font-weight: 700; transition: text-decoration 0.2s;") 
+                            | "#{post.parentPostTitle}"
+                    
+            //- Główna sekcja zawartości
+            include partials/post-body.pug
+
+            //- Sekcja o autorze (Bio) na dole artykułu
+            section.article-author-box(style="margin-top: 40px; padding: 24px; background: #f0f2f5; border-radius: 8px; display: flex; gap: 16px; align-items: center;")
+                a(href=getProfileUrl(post.authorDetails))
+                    img(src=(post.authorDetails ? post.authorDetails.avatarUrl : DEFAULT_ASSETS.avatar) style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; box-shadow: 0 2px 5px rgba(0,0,0,0.1);")
+                div(style="flex: 1;")
+                    h4(style="margin: 0 0 4px 0; font-size: 16px; font-weight: 700; color: #1c1e21;") 
+                        | O autorze: #{ post.authorDetails ? post.authorDetails.name : post.author }
+                    p(style="margin: 0; font-size: 14px; color: #65676b; font-style: italic; font-family: sans-serif; line-height: 1.4;") #{authorBio}
+
+            if abuseReports && abuseReports.length > 0
+                section.abuse-reports-box(style="margin-top: 24px; padding: 16px; background: #fff3f3; border: 1px solid #f5c6cb; border-radius: 8px; font-family: sans-serif;")
+                    //- Pasek nagłówka pełniący funkcję interaktywnego przycisku do rozwijania
+                    div(onclick="toggleAbuseReportsVisibility()" style="cursor: pointer; user-select: none; display: flex; justify-content: space-between; align-items: center;")
+                        h3(style="font-size: 16px; font-weight: 700; color: #bc2525; margin: 0; display: inline-flex; align-items: center; gap: 8px;") 
+                            i.fa-solid.fa-triangle-exclamation
+                            | Zgłoszenia nadużyć powiązane z wpisem (#{abuseReports.length})
+                        i.fa-solid.fa-chevron-down#abuse-accordion-icon(style="color: #bc2525; transition: transform 0.3s;")
+                    
+                    //- Domyślnie ukryta lista zgłoszeń rozwijana przez JavaScript
+                    #abuse-reports-wrapper(style="display: none; margin-top: 16px; border-top: 1px dashed #f5c6cb; padding-top: 12px;")
+                        ul(style="list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 12px;")
+                            each report in abuseReports
+                                li(style="font-size: 14px; border-bottom: 1px solid #fff; padding-bottom: 8px;")
+                                    div(style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;")
+                                        b(style="color: #1c1e21;") Autor zgłoszenia: #{report.author} 
+                                        span(style="color:#65676b; font-size:12px;") #{new Date(report.createdAt).toLocaleDateString('pl-PL')}
+                                    div(style="color: #bc2525; font-style: italic; background: rgba(252, 242, 242, 0.7); padding: 10px; border-radius: 6px; border-left: 3px solid #bc2525;")!= report.content
+
+            //- Sekcja "Artykuły polemizujące" (Wstrzyknięta powyżej sekcji autora)
+            if debatePosts && debatePosts.length > 0
+                section.debate-posts-box(style="margin-top: 32px; padding: 20px 0; border-top: 1px dashed #e4e6eb;")
+                    h3(style="font-size: 18px; font-weight: 700; color: #bc2525; margin-bottom: 12px; font-family: sans-serif;") POLEMIKA
+                    ul(style="list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif;")
+                        each debate in debatePosts
+                            li(style="display: flex; align-items: center; gap: 8px; font-size: 15px;")
+                                if debate.visibility === 'public'
+                                    span(title="Publiczny" style="font-size: 12px;") 🌐
+                                else if debate.visibility === 'restricted'
+                                    span(title="Dla obserwujących" style="font-size: 12px;") 👥
+                                else if debate.visibility === 'private'
+                                    span(title="Prywatny" style="font-size: 12px;") 🔒
+                                
+                                a(href=`/posts/${debate._id}` style="color: #bc2525; text-decoration: none; font-weight: 600; transition: color 0.2s;") #{debate.title || 'Odpowiedź bez tytułu'}
+                                span(style="color: #65676b; font-size: 12px;") — autor: #{debate.authorDetails ? debate.authorDetails.name : debate.author} (#{debate.createdAt ? new Date(debate.createdAt).toLocaleDateString('pl-PL') : ''})
+
+            //- Sekcja "Tego samego autora"
+            if otherPosts && otherPosts.length > 0
+                section.other-posts-box(style="margin-top: 16px; padding: 20px 0; border-top: 1px dashed #e4e6eb;")
+                    h3(style="font-size: 18px; font-weight: 700; color: #1c1e21; margin-bottom: 12px; font-family: sans-serif;") TEGO SAMEGO AUTORA
+                    ul(style="list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif;")
+                        each other in otherPosts
+                            li(style="display: flex; align-items: center; gap: 8px; font-size: 15px;")
+                                if other.visibility === 'public'
+                                    span(title="Publiczny" style="font-size: 12px;") 🌐
+                                else if other.visibility === 'restricted'
+                                    span(title="Dla obserwujących" style="font-size: 12px;") 👥
+                                else if other.visibility === 'private'
+                                    span(title="Prywatny" style="font-size: 12px;") 🔒
+                                
+                                a(href=`/posts/${other._id}` style="color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.2s;") #{other.title || 'Wpis bez tytułu'}
+                                span(style="color: #65676b; font-size: 12px;") — #{other.createdAt ? new Date(other.createdAt).toLocaleDateString('pl-PL') : ''}
+                    
+            //- Dolny pasek interakcji
+            footer.article-footer(style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e4e6eb; display: block; margin-bottom: 24px;")
+                .article-stats(style="font-size: 14px; color: #65676b; font-family: sans-serif; margin-bottom: 16px; display: flex; justify-content: space-between;")
+                    //- POPRAWKA: Dodajemy klasę .likes-count, aby asynchroniczny skrypt JavaScript z mainApi.js mógł bez przeszkód zlokalizować ten element w strukturze DOM!
+                    span.likes-count(style="margin-right: 16px;") 
+                        i.fa-solid.fa-star(style="color: #E5A93C; margin-right: 4px;") 
+
+                        |  #{post.likesCount || 0} polubień
+                    span.comments-count(onclick=`toggleCommentsVisibility('${post._id}')` style="cursor: pointer; user-select: none; font-weight: 500; color: #1877f2;") 
+                        i.fa-solid.fa-comment(style="color: #42b72a; margin-right: 4px;") 
+                        | #{post.comments ? post.comments.length : 0} komentarzy
+            
+                //- IMPLEMENTACJA ZASADY DRY: Włączenie wydzielonego szablonu przycisków i komentarzy stopki
+                include partials/post-footer.pug
+        
+            //- POPRAWIONO: Myślnik przed instrukcją prawidłowo wykonuje kod JavaScript w Pug zamiast go renderować jako tekst
+            div(style="display: none;")
+                include partials/create-post.pug
+                
+        //- Uniwersalne okno powiększenia zdjęcia (Lightbox Image Modal)
+        #custom-lightbox-modal.custom-lightbox-backdrop(style="display: none;" onclick="closeLightbox()")
+            span.lightbox-close(onclick="closeLightbox()") &times;
+            img#lightbox-target-image.lightbox-content(src="" alt="Powiększone zdjęcie")

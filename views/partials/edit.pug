@@ -1,0 +1,75 @@
+if activePost.visibility === 'public' && activePost._id !== 'new'
+    if activePost.isModeratorLocked
+        //- TRYB BLOKADY AI / MODERATORA: Post publiczny został zablokowany z powodu fake-news lub bezpieczeństwa
+        div(style="background: #fff3f3; border: 1px solid #f5c6cb; padding: 16px; border-radius: 8px; margin-bottom: 8px; flex: 1; width: 100%; font-family: sans-serif;")
+            div(style="font-size:14px; color:#bc2525; margin-bottom:12px; font-weight:600;") ℹ️ Treść i tytuł wpisu publicznego zostały zablokowane ze względów bezpieczeństwa.
+            p(style="font-size:13px; color:#555; margin-bottom:16px; line-height:1.4;") Ten artykuł został oznaczony jako naruszający standardy lub zawierający błędy faktograficzne. Jeśli uważasz decyzję algorytmu za błędną, możesz poprosić o manualny audyt przez moderatora.
+            
+            div(style="display:flex; gap:8px;")
+                button(type="button" onclick=`revertToDraft('${activePost._id}')` style="background:#bc2525; color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;")
+                    | ↩️ Wycofaj do szkicu prywatnego
+                
+                button(type="button" onclick=`submitAiAppeal('${activePost._id}', this)` style="background:#1877f2; color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px; display:inline-flex; align-items:center; gap:6px;")
+                    | ⚖️ Poproś o weryfikację człowieka
+                    
+                button(type="button" onclick=`toggleInlineEdit('${activePost._id}')` style="background:#bcc0c4; color:#050505; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;")
+                    | Anuluj
+    else
+        //- TRYB DLA ZWYKŁEGO POSTA PUBLICZNEGO: Post jest poprawnie opublikowany i bezpieczny, ale edycja publiczna jest zablokowana (Notice and Takedown / DSA protection)
+        div(style="background: #f7f8fa; border: 1px solid #dddfe2; padding: 16px; border-radius: 8px; margin-bottom: 8px; flex: 1; width: 100%; font-family: sans-serif;")
+            div(style="font-size:14px; color:#1c1e21; margin-bottom:12px; font-weight:600;") 🌐 Ten post jest publicznie widoczny i zweryfikowany.
+            p(style="font-size:13px; color:#65676b; margin-bottom:16px; line-height:1.4;") Zgodnie z regulaminem, bezpośrednia modyfikacja opublikowanych artykułów publicznych jest zablokowana. Jeśli chcesz nanieść poprawki, wycofaj go z powrotem do prywatnego szkicu.
+            
+            div(style="display:flex; gap:8px;")
+                button(type="button" onclick=`revertToDraft('${activePost._id}')` style="background:#65676b; color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;")
+                    | ↩️ Wycofaj do szkicu i edytuj
+                    
+                button(type="button" onclick=`toggleInlineEdit('${activePost._id}')` style="background:#e4e6eb; color:#050505; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;")
+                    | Zamknij
+else
+    //- TRYB STANDARDOWY: Pełna, ujednolicona edycja (Dla nowych wpisów oraz istniejących prywatnych/restricted)
+    form(id=`editForm-${activePost._id}` data-csrf=csrfToken onsubmit=`prepareEditSubmit(event, '${activePost._id}')` enctype="multipart/form-data" style="display: block; flex: 1; width: 100%;")
+        input(id=`edit-parent-id-${activePost._id}` type="hidden" name="parentPostId" value="")
+        input(type="hidden" name="_csrf" value=csrfToken)
+        
+        div(style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; width: 100%;")
+            - var isNew = activePost._id === 'new'
+            select(
+                id=(isNew ? "visibility-select-node" : undefined) 
+                name="visibility" 
+                required 
+                style="padding: 6px 12px; border: 1px solid #1877f2; border-radius: 6px; font-size:13px; font-weight:600; cursor:pointer; background: #fff;"
+            )
+                option(value="" disabled selected=(isNew || !activePost.visibility)) 👁️ Wybierz widoczność wpisu
+                option(value="public" selected=(!isNew && activePost.visibility === 'public')) 🌐 Publiczne
+                option(value="restricted" selected=(!isNew && activePost.visibility === 'restricted')) 👥 Dla obserwujących
+                option(value="private" selected=(!isNew && activePost.visibility === 'private')) 🔒 Prywatne
+
+            if isNew
+                span#public-debate-warning-badge(style="display: none; font-size: 12px; color: #bc2525; background: #fff3f3; padding: 4px 10px; border-radius: 4px; font-weight: 600; border: 1px solid #f5c6cb;")
+
+        input.edit-title-field(id=`edit-title-${activePost._id}` type="text" name="title" value=(activePost.title || '') style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #dddfe2; border-radius:6px; font-weight:600;" placeholder=(activePost._id === 'new' ? "Dodaj tytuł postu" : ""))
+        
+        div(id=`edit-quill-${activePost._id}` style="height:120px; background:#fff; margin-bottom:8px;")
+        input(id=`edit-hidden-content-${activePost._id}` type="hidden" name="content")
+        
+        if activePost.imageUrl
+            div(id=`current-image-preview-${activePost._id}` style="margin-bottom:10px; max-height:150px; overflow:hidden; border-radius:6px; border: 1px solid #dddfe2; position: relative;")
+                span(style="display:block; font-size:12px; color:#65676b; padding:4px 8px; background:#f0f2f5;") Aktualne zdjęcie:
+                img(src=activePost.imageUrl style="width:100%; height:auto; object-fit:cover; max-height:120px;")
+                button(type="button" onclick=`removePostImage('${activePost._id}')` style="position: absolute; top: 28px; right: 8px; background: rgba(188, 37, 37, 0.85); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; z-index: 10;" title="Usuń tę grafikę") &times;
+        
+        div(id=`edit-image-preview-container-${activePost._id}` style="display:none; margin-bottom:10px; max-height:150px; overflow:hidden; border-radius:6px; border: 1px solid #45bd62; position: relative;")
+            span(style="display:block; font-size:12px; color:#fff; padding:4px 8px; background:#45bd62;") Nowe wybrane zdjęcie:
+            img(id=`edit-image-preview-${activePost._id}` src="" style="width:100%; height:auto; object-fit:cover; max-height:120px;")
+            button(type="button" onclick=`cancelSelectedImage('${activePost._id}')` style="position: absolute; top: 28px; right: 8px; background: rgba(188, 37, 37, 0.85); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; z-index: 10;" title="Usuń wybrane zdjęcie") &times;
+        
+        div(style="display:flex; gap:8px; align-items:center; margin-top:8px; justify-content: space-between; flex-wrap: wrap; width: 100%;")
+            div(style="display:flex; gap:8px; align-items:center; flex: 1;")
+                label.file-upload-label(for=`editPostImage-${activePost._id}` style="padding: 6px 12px; font-size: 13px; color: #45bd62; cursor: pointer; display: flex; align-items: center; gap: 6px; background-color: #f0f2f5; border-radius: 20px; font-weight: 600;")
+                    i.fa-regular.fa-image(title="Dodaj lub zmień zdjęcie/grafikę")
+                input(id=`editPostImage-${activePost._id}` type="file" name="editPostImage" accept="image/*" style="display:none;")
+            
+            div(style="display:flex; gap:8px;")
+                button(type="submit" style="background:#1877f2; color:white; border:none; padding:6px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;") Zapisz
+                button(type="button" onclick=`safeCancelInlineEdit('${activePost._id}')` style="background:#e4e6eb; color:#050505; border:none; padding:6px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;") Anuluj

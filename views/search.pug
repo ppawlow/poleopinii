@@ -1,0 +1,47 @@
+extends layout
+
+block content
+
+    .main-container(style="grid-template-columns: 1fr; max-width: 700px; margin: 0 auto;")
+        main.feed
+            // Formularz wyszukiwarki - ZAWSZE widoczny na górze strony
+            .create-post(style="padding: 24px; margin-bottom: 16px; font-family: sans-serif;")
+                form(action="/search" method="GET" style="display: flex; flex-direction: column; gap: 8px; width: 100%;")
+                    label(for="search-input-field" style="font-size: 14px; font-weight: 600; color: #1c1e21; display: block;") Wyszukaj autorów platformy:
+                    div(style="display: flex; gap: 10px; width: 100%; align-items: center;")
+                        input#search-input-field.search-bar(type="text" name="q" placeholder="Wpisz imię, nazwisko lub pseudonim (min. 3 znaki)..." value=query || '' required minlength="3" style="flex: 1; width: 100%; border: 1px solid #dddfe2; border-radius: 6px; padding: 10px 16px; font-size: 15px; transition: border-color 0.2s; background: #fff;")
+                        button(type="submit" style="background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 15px; cursor: pointer; transition: background-color 0.2s;") Szukaj
+            
+            // KRYTYCZNA POPRAWKA: Stały kontener-kotwica dla skryptu mainApi.js
+            #search-results-holder.accordion-container(style="width: 100%; display: flex; flex-direction: column;")
+                if query
+                    .create-post(style="padding: 16px; margin-bottom: 12px; box-shadow: none; border: 1px solid var(--color-border);")
+                        h3(style="font-size: 16px; margin: 0;") Wyniki wyszukiwania dla: "#{query}"
+                
+                if results && results.length > 0
+                    each resultUser in results
+                        .post-card.accordion-item(id=`user-result-${resultUser._id}` style="padding: 0; margin-bottom: 12px; overflow: hidden; width: 100%;")
+                            // Nagłówek akordeonu
+                            .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between;")
+                                div(style="display: flex; align-items: center; gap: 16px;")
+                                    img.profile-main-avatar(src=(resultUser.avatarUrl || DEFAULT_ASSETS.avatar) style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover;")
+                                    div
+                                        h3(style="font-size: 18px; font-weight: 600; color: #050505; margin: 0;") #{resultUser.displayName || resultUser.name}
+                                        span(style="color: #65676b; font-size: 12px;") Kliknij, aby zobaczyć opis...
+                                
+                                div(style="display: flex; align-items: center; gap: 12px;")
+                                    i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                            
+                            // Rozwijana zawartość akordeonu
+                            .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
+                                div(style="margin-bottom: 16px;")
+                                    h4(style="font-size: 14px; font-weight: 700; color: #65676b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px;") O sobie:
+                                    p(style="font-size: 15px; color: #050505; line-height: 1.5; font-style: italic; background: #fff; padding: 12px; border-radius: 6px; border: 1px solid #e4e6eb;") 
+
+                                        | #{resultUser.bio || 'Ten użytkownik nie dodał EACZ jeszcze żadnych informacji o sobie.'}
+                                
+                                div(style="display: flex; justify-content: flex-end;")
+                                    a.follow-btn(href=(resultUser.alias ? `/profile/${resultUser.alias}` : `/profile/${resultUser._id}`) style="text-decoration: none; display: inline-block; background-color: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: 600; font-size: 14px; transition: background-color 0.2s;") Zobacz pełny profil
+                else if query
+                    .login-prompt(style="text-align: center; padding: 32px; background: #fff; border-radius: 8px;")
+                        p(style="color: #65676b; font-size: 15px; margin: 0;") Nie znaleziono użytkowników pasujących do kryteriów wyszukiwania.

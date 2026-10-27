@@ -1,0 +1,1235 @@
+:root {
+  /* Wersja bazowa / Tryb Jasny (Light Mode) */
+  --color-primary: #0f5132; /* Głęboki Szmaragd - tożsamość marki */
+  --color-primary-hover: #0b3d25; /* Ciemniejszy szmaragd na efekty hover */
+
+  --color-secondary: #1a2536; /* Biznesowy Granat - teksty, nagłówki */
+
+  --color-accent: #e5a93c; /* Słoneczna Ochra - CTA, przyciski, akcenty */
+  --color-accent-hover: #ce932a; /* Ciemniejsza ochra na efekty hover */
+
+  --color-bg-main: #f8f9fa; /* Złamana Biel - główne tło (przyjazne dla oczu) */
+  --color-bg-card: #ffffff; /* Czysta biel - tło kart artykułów, sekcji */
+
+  /* Dodatkowe odcienie pomocnicze */
+  --color-border: #e2e8f0; /* Jasna szarość do ramek i linii podziału */
+  --color-text-muted: #64748b; /* Szary do mniej ważnych tekstów (np. data, autor) */
+}
+
+/* varela-round-regular - latin */
+@font-face {
+  font-display: swap;
+  font-family: "Varela Round";
+  font-style: normal;
+  font-weight: 400;
+  src: url("../fonts/varela-round-v21-latin-regular.woff2") format("woff2");
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-primary: #198754;
+    --color-primary-hover: #146c43;
+
+    --color-secondary: #f8f9fa;
+
+    --color-accent: #e5a93c;
+    --color-accent-hover: #ce932a;
+
+    --color-bg-main: #0b111a;
+    --color-bg-card: #1a2536;
+
+    --color-border: #2d3748;
+    --color-text-muted: #94a3b8;
+  }
+}
+
+/* =========================================================================
+   1. RESET I STYLE GLOBALNE
+   ========================================================================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family:
+    Segoe UI,
+    Helvetica,
+    Arial,
+    sans-serif;
+}
+
+body {
+  background-color: #f0f2f5;
+  color: #050505;
+  padding-top: 56px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page-main-content {
+  flex: 1 0 auto;
+  width: 100%;
+}
+
+.site-footer {
+  flex-shrink: 0;
+  background-color: #ffffff;
+  border-top: 1px solid var(--color-border, #e4e6eb);
+  padding: 16px 0;
+  width: 100%;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.02);
+  font-family: sans-serif;
+  margin-top: auto;
+}
+
+/* =========================================================================
+   2. GÓRNY PASEK NAWIGACJI
+   ========================================================================= */
+.fb-navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 56px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  z-index: 100;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 220px;
+}
+
+.nav-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+}
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
+}
+
+.nav-left h1 {
+  font-family: "Varela Round", sans-serif;
+  white-space: nowrap;
+  font-size: 22px;
+  color: #214e87;
+  letter-spacing: -0.3px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.search-bar {
+  background-color: #f0f2f5;
+  border: none;
+  border-radius: 50px;
+  padding: 10px 16px;
+  font-size: 14px;
+  outline: none;
+  width: 240px;
+  max-width: 100%;
+  transition: width 0.2s ease;
+}
+
+.nav-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 110px;
+  height: 100%;
+  color: #65676b;
+  font-size: 20px;
+  text-decoration: none;
+  border-bottom: 3px solid transparent;
+}
+
+.nav-icon:hover {
+  background-color: #f2f2f2;
+  border-radius: 8px;
+  height: 90%;
+  margin-top: 3px;
+}
+
+.nav-icon.active {
+  color: #1877f2;
+  border-bottom-color: #1877f2;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.user-nav-link.active-profile {
+  border-bottom: 3px solid #1877f2;
+  height: 56px;
+  padding-top: 3px;
+}
+
+.logout-btn,
+.login-btn {
+  color: #1877f2;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.logout-btn:hover,
+.login-btn:hover {
+  background-color: #f0f2f5;
+}
+
+/* =========================================================================
+   3. STRUKTURA DROPDOWN MENU
+   ========================================================================= */
+.nav-dropdown-container {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-dropdown-btn {
+  background-color: #f0f2f5;
+  color: #050505;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+  flex-shrink: 0;
+}
+
+.nav-dropdown-btn:hover {
+  background-color: #e4e6eb;
+}
+
+.nav-dropdown-content {
+  display: none;
+  position: absolute;
+  right: 0;
+  top: 48px;
+  background-color: #ffffff;
+  min-width: 200px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  padding: 8px;
+  z-index: 200;
+}
+
+.nav-dropdown-content.show {
+  display: block;
+}
+
+.dropdown-item {
+  color: #050505;
+  padding: 10px 12px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover {
+  background-color: #f2f2f2;
+}
+
+.dropdown-item i {
+  width: 18px;
+  text-align: center;
+  color: #65676b;
+}
+
+.dropdown-item.logout-link:hover {
+  background-color: #ffebe9;
+  color: #bc2525;
+}
+
+.dropdown-item.logout-link:hover i {
+  color: #bc2525;
+}
+
+.dropdown-divider {
+  border: 0;
+  border-top: 1px solid #e4e6eb;
+  margin: 6px 0;
+}
+
+/* =========================================================================
+   4. GŁÓWNY KONTENER I BOCZNE PANELE (SIDEBARY)
+   ========================================================================= */
+.main-container {
+  display: grid;
+  grid-template-columns: minmax(150px, 320px) 650px minmax(150px, 320px);
+  justify-content: center;
+  gap: 24px;
+  max-width: 1424px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  width: 100%;
+  flex: 1 0 auto;
+}
+
+.left-sidebar,
+.right-sidebar {
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  height: fit-content;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.sidebar-item:hover {
+  background-color: #e4e6eb;
+}
+
+.sidebar-item i {
+  font-size: 20px;
+  color: #1877f2;
+  width: 28px;
+  text-align: center;
+}
+
+.right-sidebar h4 {
+  color: #65676b;
+  margin-bottom: 12px;
+  font-size: 17px;
+}
+
+/* =========================================================================
+   5. STRUMIEŃ WPISÓW (FEED) I KARTY POSTÓW
+   ========================================================================= */
+.feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.create-post,
+.post-card,
+.login-prompt {
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding: 12px 16px;
+}
+
+.create-post .post-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.create-post form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 8px;
+}
+
+.create-post input {
+  flex: 1;
+  background-color: #f0f2f5;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 16px;
+  font-size: 15px;
+  outline: none;
+}
+
+.post-author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.author-info h4 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.author-info span {
+  font-size: 12px;
+  color: #65676b;
+}
+
+.post-direct-link:hover {
+  color: #1877f2 !important;
+}
+
+.follow-btn {
+  background: #e4e6eb;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.follow-btn:hover {
+  background: #d8dadf;
+}
+
+.post-content-html {
+  font-size: 15px;
+  line-height: 1.5;
+  margin-bottom: 12px;
+  color: #050505;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.post-image-container {
+  margin: 12px -16px;
+  background-color: #f0f2f5;
+  display: flex;
+  justify-content: center;
+  width: calc(100% + 32px);
+}
+
+.post-media {
+  max-width: 100%;
+  max-height: 500px;
+  object-fit: contain;
+}
+
+.post-stats {
+  display: flex;
+  justify-content: space-between;
+  color: #65676b;
+  font-size: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e4e6eb;
+}
+
+.likes-count i {
+  color: #1877f2;
+}
+
+.post-actions {
+  display: flex;
+  padding: 4px 0;
+  border-bottom: 1px solid #e4e6eb;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.post-actions form {
+  flex: 1;
+}
+
+.post-like-form {
+  margin: 0;
+  padding: 0;
+  display: contents;
+}
+
+.action-btn {
+  background-color: #f0f2f5;
+  border: none;
+  padding: 0 16px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  color: #050505;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.2s;
+  font-family: sans-serif;
+  height: 36px;
+  line-height: 36px;
+  box-sizing: border-box;
+  width: auto;
+}
+
+.action-btn:hover:not([disabled]) {
+  background-color: #f2f2f2;
+}
+
+/* =========================================================================
+   6. SEKCJA KOMENTARZY
+   ========================================================================= */
+.comments-section {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comment-card {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.comment-content {
+  background-color: #f0f2f5;
+  padding: 8px 12px;
+  border-radius: 18px;
+  max-width: calc(100% - 40px);
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.comment-content h5 {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.comment-content p {
+  font-size: 14px;
+}
+
+.comment-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+.comment-form textarea {
+  flex: 1;
+  background-color: #f0f2f5;
+  border: none;
+  border-radius: 18px;
+  padding: 8px 12px;
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  line-height: 1.4;
+  box-sizing: border-box;
+}
+/* =========================================================================
+7. WIZUALNE KOMPONENTY INTEGRALNE
+========================================================================= */
+.nav-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: #ddd;
+}
+.comment-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.file-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background-color: #f0f2f5;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #45bd62;
+}
+.ql-container.ql-snow {
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  border-color: #dddfe2 !important;
+}
+.ql-toolbar.ql-snow {
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  border-color: #dddfe2 !important;
+  background: #f7f8fa;
+}
+/* =========================================================================
+8. SYSTEM CUSTOMOWYCH OKIEN MODALNYCH
+========================================================================= */
+.custom-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.custom-modal-box {
+  background-color: #ffffff;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  animation: modalFadeIn 0.2s ease-out;
+}
+.custom-modal-header {
+  padding: 16px;
+  border-bottom: 1px solid #e4e6eb;
+}
+.custom-modal-header h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1c1e21;
+}
+.custom-modal-body {
+  padding: 20px 16px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #050505;
+}
+.custom-modal-footer {
+  padding: 12px 16px;
+  background-color: #f0f2f5;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.custom-modal-footer button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.modal-btn-primary {
+  background-color: #1877f2;
+  color: #fff;
+}
+.modal-btn-secondary {
+  background-color: #e4e6eb;
+  color: #050505;
+}
+.modal-btn-danger {
+  background-color: #bc2525;
+  color: #fff;
+}
+@keyframes modalFadeIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+/* =========================================================================
+9. SYSTEM AUTORYZACJI (LOGOWANIE I REJESTRACJA)
+========================================================================= */
+.login-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1000px;
+  margin: 80px auto 0 auto;
+  padding: 0 40px;
+}
+.login-branding {
+  max-width: 500px;
+  padding-bottom: 40px;
+}
+.login-branding h1 {
+  color: #1877f2;
+  font-size: 60px;
+  font-weight: bold;
+  letter-spacing: -1px;
+}
+.login-box,
+.login-branding {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 396px;
+}
+.login-box h3 {
+  margin-bottom: 12px;
+  font-size: 18px;
+  color: #1c1e21;
+}
+.login-box input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #dddfe2;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 12px;
+  outline: none;
+}
+.login-box input:focus {
+  border-color: #1877f2;
+  box-shadow: 0 0 0 2px #e7f3ff;
+}
+.login-box hr {
+  border: 0;
+  border-top: 1px solid #dadde1;
+  margin: 20px 0;
+}
+.login-submit {
+  width: 100%;
+  background-color: #1877f2;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 20px;
+  font-weight: bold;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.register-submit {
+  width: 100%;
+  background-color: #42b72a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 17px;
+  font-weight: bold;
+  padding: 10px 0;
+  cursor: pointer;
+}
+/* =========================================================================
+10. WIDOK PROFILU UŻYTKOWNIKA
+========================================================================= */
+.profile-container {
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 0 16px 40px 16px;
+}
+.profile-header-card {
+  background-color: #fff;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+}
+.cover-photo-wrapper {
+  position: relative;
+  width: 100%;
+  height: 350px;
+  background-color: #f0f2f5;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
+  overflow: hidden;
+}
+.cover-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-avatar-row {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 32px;
+  margin-top: -30px;
+  position: relative;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.avatar-wrapper {
+  width: 168px;
+  height: 168px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  overflow: hidden;
+  background-color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+.profile-main-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.profile-user-details {
+  margin-bottom: 16px;
+  flex: 1;
+}
+.profile-user-details h2 {
+  font-size: 32px;
+  font-weight: 700;
+}
+.upload-action-btn,
+.profile-follow-btn {
+  background-color: #e4e6eb;
+  color: #050505;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  border: none;
+}
+.profile-follow-btn {
+  background-color: #1877f2;
+  color: white;
+}
+.profile-body-layout {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 16px;
+}
+.info-box {
+  background-color: #fff;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+/* =========================================================================
+11. GLOBALNE REGUŁY RESPONSIVE (RWD MEDIA QUERIES)
+========================================================================= */
+@media (max-width: 992px) {
+  .profile-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0px !important;
+  }
+  .profile-header-card,
+  .cover-photo-wrapper,
+  .cover-photo {
+    border-radius: 0 !important;
+  }
+  .profile-header-card {
+    margin-bottom: 12px;
+  }
+  .cover-photo-wrapper {
+    height: 260px;
+  }
+  .profile-avatar-row {
+    padding: 0 16px !important;
+    margin-top: -40px;
+  }
+  .avatar-wrapper {
+    width: 130px;
+    height: 130px;
+  }
+  .profile-body-layout {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0px !important;
+    margin: 0px !important;
+  }
+  .profile-info-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-bottom: 12px;
+    padding: 0 8px !important;
+  }
+  main.profile-feed {
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0px !important;
+    padding: 0px !important;
+  }
+  main.profile-feed .accordion-container,
+  main.profile-feed #accordion-posts-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0px !important;
+    margin: 0px !important;
+  }
+  .main-container,
+  .editorial-article {
+    margin-top: 0px !important;
+    margin-bottom: 0px !important;
+  }
+}
+@media (max-width: 900px) {
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .main-container {
+    grid-template-columns: 1fr;
+  }
+  .left-sidebar,
+  .right-sidebar,
+  .nav-center {
+    display: none;
+  }
+  .fb-navbar {
+    left: 0 !important;
+    right: 0 !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+    padding: 0 16px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+  .nav-left {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .fb-navbar .nav-left form {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+  }
+  .fb-navbar .search-bar {
+    width: 200px !important;
+    max-width: 200px !important;
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+  .nav-right {
+    flex: 0 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    min-width: 40px;
+  }
+  .fb-navbar .nav-right .user-nav-link {
+    display: none !important;
+  }
+
+  .login-container {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 40px;
+    padding: 0 16px !important;
+    width: 100% !important;
+  }
+  .login-branding {
+    display: none;
+  }
+  .login-box {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+  }
+  /
+    ------------------------------------------------------------------------
+    */
+    .main-container {
+    padding: 12px 0px !important;
+    gap: 12px !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+  }
+  main.feed,
+  .accordion-container,
+  #accordion-posts-wrapper {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0px !important;
+    margin: 0px !important;
+  }
+  .create-post,
+  .post-card,
+  .login-prompt,
+  .accordion-item {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0px !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 12px 16px !important;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    box-shadow: 0 1px 0px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .create-post form,
+  .post-inline-edit-mode form {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+  .create-post .ql-toolbar,
+  .create-post .ql-container,
+  .post-inline-edit-mode .ql-toolbar,
+  .post-inline-edit-mode .ql-container {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  /
+    ------------------------------------------------------------------------
+    */
+    .post-image-container {
+    margin: 12px -16px !important;
+    width: calc(100% + 32px) !important;
+  }
+}
+@media (max-width: 768px) {
+  .profile-avatar-row {
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    align-items: center;
+  }
+  footer .footer-container {
+    flex-direction: column !important;
+    text-align: center !important;
+    justify-content: center !important;
+    gap: 16px !important;
+  }
+}
+/* =========================================================================
+12. STYLE DLA WIDOKU POJEDYNCZEGO ARTYKUŁU (SINGLE POST)
+========================================================================= */
+.editorial-article {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background: #ffffff;
+}
+.article-header h1 {
+  font-size: 38px !important;
+  font-weight: 800;
+  color: #1c1e21;
+  text-align: center;
+  line-height: 1.25;
+  margin: 0 0 16px 0;
+  letter-spacing: -0.5px;
+  text-justify: none !important;
+}
+.article-text-content p {
+  text-align: justify !important;
+  text-justify: inter-word !important;
+  text-wrap: pretty !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+  margin: 0 !important;
+  font-size: 16.5px !important;
+  line-height: 1.65 !important;
+}
+.article-text-content h1,
+.article-text-content h2,
+.article-text-content h3 {
+  text-align: left !important;
+  text-justify: none !important;
+  clear: none !important;
+  font-weight: 700 !important;
+  color: #1c1e21 !important;
+  display: block !important;
+  padding-top: 24px !important;
+  padding-bottom: 12px !important;
+  margin: 0 !important;
+}
+.article-text-content h1 {
+  font-size: 28px !important;
+}
+.article-text-content h2 {
+  font-size: 24px !important;
+}
+.article-text-content h3 {
+  font-size: 20px !important;
+}
+.article-text-content ul,
+.article-text-content ol {
+  margin-left: 24px !important;
+  padding-top: 8px !important;
+  padding-bottom: 8px !important;
+}
+.article-text-content li {
+  padding-top: 4px !important;
+  padding-bottom: 4px !important;
+  font-size: 16px !important;
+}
+.article-featured-image {
+  float: right !important;
+  max-width: 40% !important;
+  margin: 0 0 12px 16px !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+@media (max-width: 768px) {
+  .article-featured-image {
+    float: none !important;
+    max-width: 100% !important;
+    margin: 0 0 20px 0 !important;
+  }
+  .editorial-article {
+    padding: 20px !important;
+  }
+  .editorial-article .article-header h1 {
+    font-size: 30px !important;
+  }
+}
+.post-card .post-static-title,
+.post-card .post-title-display h2 {
+  font-size: 22px !important;
+  font-weight: 700 !important;
+  color: #1c1e21 !important;
+  text-align: left !important;
+  text-justify: none !important;
+  padding-top: 6px !important;
+  padding-bottom: 6px !important;
+}
+/* =========================================================================
+13. SYSTEM POWIĘKSZANIA ZDJĘĆ (GLOBAL LIGHTBOX MODAL)
+========================================================================= */
+.post-media,
+.article-featured-image img {
+  cursor: zoom-in;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+}
+.post-media:hover,
+.article-featured-image img:hover {
+  transform: scale(1.005);
+  filter: brightness(1.03);
+}
+.custom-lightbox-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  cursor: zoom-out;
+  animation: lightboxFadeIn 0.25s ease-out;
+}
+.lightbox-content {
+  max-width: 90%;
+  max-height: 85%;
+  object-fit: contain;
+  border-radius: 4px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  user-select: none;
+  cursor: default;
+}
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 25px;
+  color: #f1f1f1;
+  font-size: 40px;
+  font-weight: bold;
+  transition: color 0.15s;
+  cursor: pointer;
+  z-index: 10001;
+}
+.lightbox-close:hover {
+  color: var(--color-accent, #e5a93c);
+}
+@keyframes lightboxFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@media (max-width: 768px) {
+  .lightbox-content {
+    max-width: 95%;
+    max-height: 75%;
+  }
+}
+
+@media (max-width: 900px) {
+  /* 1. Maksymalne rozszerzenie białej karty i zredukowanie marginesów do absolutnego minimum */
+  .create-post,
+  .post-card {
+    padding-left: 2px !important;
+    padding-right: 2px !important;
+  }
+
+  /* 2. Nagłówek (Redakcja / Tworzenie nowego wpisu) */
+  .create-post .post-header {
+    padding-left: 0px !important;
+    padding-right: 0px !important;
+    width: 100% !important;
+  }
+
+  /* 3. Ujednolicenie selektora widoczności wpisu */
+  .create-post select[name="visibility"],
+  .post-inline-edit-mode select[name="visibility"] {
+    max-width: 100% !important;
+  }
+
+  /* 4. ROZWIĄZANIE PROBLEMU: Tytuł i edytor Quill dostają identyczną szerokość 100% */
+  .edit-title-field {
+    width: 100% !important;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 5. Rozciągnięcie komponentów Quill na pełną szerokość formularza */
+  .create-post .ql-toolbar.ql-snow,
+  .create-post .ql-container.ql-snow,
+  .post-inline-edit-mode .ql-toolbar.ql-snow,
+  .post-inline-edit-mode .ql-container.ql-snow {
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 6. Wyrównanie dolnego paska z przyciskami (Zapisz / Anuluj) */
+  .create-post form > div:last-child,
+  .post-inline-edit-mode form > div:last-child {
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  #visibility-select-node {
+    width: 100%;
+  }
+}

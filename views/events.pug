@@ -1,0 +1,45 @@
+extends layout
+
+block content
+    .main-container(style="grid-template-columns: 1fr; max-width: 750px; margin: 0 auto;")
+        main.feed
+            .create-post(style="padding: 24px;")
+                h2(style="margin-bottom: 20px; color: #1c1e21; font-size: 22px; font-weight: 700;") 🔔 Powiadomienia i aktywność konta
+
+                //- ZMIANA: Dodano unikalny identyfikator id="events-list-wrapper"
+                #events-list-wrapper(style="display: flex; flex-direction: column; gap: 12px;")
+                    if events && events.length > 0
+                        each ev in events
+                            .comment-card(id=`event-row-${ev._id}` style="display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);")
+                                div(style="display: flex; align-items: center; gap: 12px; font-size: 15px; color: #050505;")
+                                    if ev.type === 'like_post'
+                                        i.fa-solid.fa-thumbs-up(style="color: #1877f2; font-size: 18px; width: 24px; text-align: center;")
+                                        span
+                                            a(href=getProfileUrl(ev.senderId) style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
+                                            |  polubił 
+                                            a(href=`/posts/${ev.postId}` style="font-weight: 600; color: #050505; text-decoration: underline;") Twój post ("#{ev.postTitle}")
+                                    
+                                    else if ev.type === 'comment_post'
+                                        i.fa-solid.fa-comment(style="color: #42b72a; font-size: 18px; width: 24px; text-align: center;")
+                                        span
+                                            a(href=getProfileUrl(ev.senderId) style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
+                                            |  skomentował 
+                                            a(href=`/posts/${ev.postId}#comment-edit-block-${ev.commentId || ''}` style="font-weight: 600; color: #050505; text-decoration: underline;") Twój post ("#{ev.postTitle}")
+                                    
+                                    else if ev.type === 'reply_comment'
+                                        i.fa-solid.fa-reply(style="color: #9360f7; font-size: 18px; width: 24px; text-align: center;")
+                                        span
+                                            a(href=getProfileUrl(ev.senderId) style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
+                                            |  odpowiedział na 
+                                            a(href=`/posts/${ev.postId}` style="font-weight: 600; color: #050505; text-decoration: underline;") Twój komentarz w dyskusji
+                                    
+                                    else if ev.type === 'follow'
+                                        i.fa-solid.fa-user-plus(style="color: #1877f2; font-size: 18px; width: 24px; text-align: center;")
+                                        span
+                                            a(href=getProfileUrl(ev.senderId) style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
+                                            |  zaczął Cię obserwować
+                                
+                                span(style="font-size: 12px; color: #65676b; white-space: nowrap; margin-left: 8px;") 
+                                    | #{new Date(ev.createdAt).toLocaleDateString('pl-PL')} o #{new Date(ev.createdAt).toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})}
+                    else
+                        .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #f0f2f5; border-radius: 6px; width: 100%;") Nie masz jeszcze żadnych powiadomień systemowych.

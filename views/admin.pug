@@ -1,0 +1,23 @@
+//- views/admin.pug
+extends layout
+block append head
+    script(src="/js/adminApi.js")
+
+block content
+    .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
+        main.feed
+            .create-post(style="padding: 24px;")
+                h2(style="margin-bottom: 12px; color: #bc2525; font-size: 22px; font-weight: 700;") ⚖️ Panel Zarządzania Systemem (Centrum Administracji)
+                p(style="font-size: 14px; color: #65676b; margin-bottom: 24px;") Poniżej znajduje się zestawienie zgłoszeń nadużyć oraz procesów weryfikacji tożsamości społeczności platformy.
+
+                //- INKLUDOWANIE PANELU ZGŁOSZEŃ NADUŻYĆ (abuse.pug)
+                include partials/abuse.pug
+
+                //- INKLUDOWANIE PANELU WERYFIKACJI UŻYTKOWNIKÓW (verify-user.pug posiada już wbudowane komunikaty)
+                include partials/verify-user.pug
+                
+                //- INTEGRACJA SEGMENTU REJESTRU I STATYSTYK UŻYTKOWNIKÓW
+                include partials/admin-users.pug
+
+                //- INKLUDOWANIE PODWIDOKU LOGÓW OPERACYJNYCH I AUDYTU ZUŻYCIA AI (logs.pug)
+                include partials/admin-logs.pug

@@ -1,0 +1,32 @@
+extends layout
+
+block content
+    .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
+        main.feed
+            .create-post(style="padding: 32px 40px; font-family: sans-serif;")
+                h2(style="margin-bottom: 8px; color: #1877f2; font-size: 24px; font-weight: 700;") 🛡️ Polityka Prywatności i Ochrony Danych Osobowych
+                p(style="font-size: 13px; color: #65676b; margin-bottom: 24px; font-style: italic;") Ostatnia aktualizacja: 25 października 2026 r.
+
+                .article-text-content(style="font-size: 15px; line-height: 1.6; color: #1c1e21; text-align: justify;")
+                    
+                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") 1. Administrator Danych Osobowych
+                    p Administratorem danych osobowych przetwarzanych w strukturach bazy danych platformy „Pole Opinii” jest <strong>Kooperatywa Pracy Organicznej</strong> z siedzibą w Nest Banku przypisanym do rozliczeń systemowych. Kontakt operacyjny realizowany jest pod adresem: <code>admin@poleopinii.pl</code>.
+
+                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") 2. Zakres i Metody Przetwarzania Danych
+                    p 1. System przetwarza dane identyfikacyjne profilu (nazwa, biogram, pliki graficzne awatara i tła) oraz dane transmisyjne (adresy IP, ciasteczka sesyjne, tokeny CSRF).
+                    p 2. W procesie weryfikacji tożsamości, surowy numer rachunku bankowego nadawcy przelewu podlega natychmiastowemu zatarciu i kryptograficznemu przekształceniu w nieodwracalny skrót <strong>SHA-256</strong>. Aplikacja nie przechowuje na stałe numerów kont bankowych użytkowników w postaci jawnej.
+
+                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") 3. Cel i Podstawa Prawna Przetwarzania
+                    p Dane osobowe przetwarzane są w celu realizacji umowy świadczenia usług drogą elektroniczną (Art. 6 ust. 1 lit. b RODO), a także w celu realizacji prawnie uzasadnionego interesu Administratora (Art. 6 ust. 1 lit. f RODO), polegającego na ochronie platformy przed atakami sybil (tworzenie wielu kont przez boty) oraz automatycznym audycie rzetelności informacji.
+
+                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") 4. Anonimowość Sygnalistów i Bezpieczeństwo Zgłoszeń
+                    p W trosce o komfort i bezpieczeństwo społeczności, platforma wdraża restrykcyjny reżim poufności procesów moderacyjnych. Wszelkie dane identyfikacyjne użytkownika zgłaszającego nadużycie (adres e-mail, identyfikator ObjectId, unikalny alias) są kaskadowo usuwane w algorytmach agregacji bazy danych i podmieniane na ciąg stały „Anonimowy Użytkownik” przed przekazaniem widoku do renderowania. Dane zgłaszającego są niewidoczne dla zaskarżonego autora oraz osób postronnych.
+
+                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") 5. Mechanizm Komunikacji Prywatnej (Peer-to-Peer)
+                    p Użytkownik w zakładce ustawień konta może dobrowolnie aktywować przesyłanie prywatnych wiadomości e-mail. System nie udostępnia bezpośrednio Twojej skrzynki osobom trzecim, jednak nadanie wiadomości za pośrednictwem formularza platformy skutkuje jawnym wstrzyknięciem Twojego adresu e-mail do nagłówka <code>Reply-To</code> wiadomości, co pozwala odbiorcy na bezpośrednią odpowiedź zwrotną.
+
+                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") 6. Środki Ochrony Technicznej
+                    p Dostęp do danych wrażliwych zabezpieczony jest wielowarstwowo: hasła są hashowane algorytmem <strong>bcrypt</strong> (12 rund soli), sesje są autoryzowane w bazie MongoDB z automatycznym czasem wygasania (TTL 14 dni), a zapytania HTTP są monitorowane przez limitery częstotliwości żądań (Rate-limiting).
+
+            div(style="text-align: center; margin-top: 20px; margin-bottom: 40px;")
+                a(href="/" style="text-decoration: none; color: #1877f2; font-weight: 600; font-size: 14px;") Powrót do strony głównej

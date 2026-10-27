@@ -1,0 +1,9 @@
+.article-body(style="display: block; font-size: 16px; line-height: 1.6; color: #2c3e50; font-family: sans-serif;")
+    if post.imageUrl
+        .article-featured-image(style="float: right; max-width: 40%; margin: 0 0 12px 16px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.08);")
+            img.post-media(src=post.imageUrl alt=post.title title="Kliknij, aby powiększyć" style="width: 100%; height: auto; display: block; object-fit: cover;")
+
+    .article-text-content(lang="pl")!= post.content
+    //- DODANO: Ukryte źródło surowej treści dla edytora Quill
+    div(id=`content-html-${post._id}` style="display: none;")!= post.content
+    div(style="clear: both;")

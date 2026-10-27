@@ -1,0 +1,18 @@
+//- views/partials/profile-contact-modal.pug
+#contact-mail-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box(style="max-width: 480px;")
+        .custom-modal-header
+            h3 Skontaktuj się z użytkownikiem <span id="contactModalTargetName"></span>
+        form(action="/profile/send-private-email" method="POST" onsubmit="submitContactEmail(event)")
+            input(type="hidden" name="_csrf" value=csrfToken)
+            input#contactTargetId(type="hidden" name="targetUserId")
+            .custom-modal-body
+                div(style="background: #fff3f3; border: 1px solid #f5c6cb; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 12px; color: #bc2525; font-weight: 600;")
+                    | ⚠️ UWAGA: Wysyłając tę wiadomość za pośrednictwem serwera, Twój adres e-mail zostanie ujawniony odbiorcy w polu odpowiedzi bezpośredniej (Reply-To).
+                label(style="font-size: 12px; font-weight: bold; color: #65676b; display: block; margin-bottom: 4px;") Temat wiadomości:
+                input(type="text" name="subject" required style="width:100%; padding:8px; border:1px solid #dddfe2; border-radius:6px; margin-bottom:12px;")
+                label(style="font-size: 12px; font-weight: bold; color: #65676b; display: block; margin-bottom: 4px;") Treść wiadomości:
+                textarea(name="message" required style="width:100%; height:120px; padding:8px; border:1px solid #dddfe2; border-radius:6px; resize: none; font-family: inherit;")
+            .custom-modal-footer
+                button.modal-btn-secondary(type="button" onclick="document.getElementById('contact-mail-modal').style.display='none'") Anuluj
+                button.modal-btn-primary(type="submit") Wyślij e-mail

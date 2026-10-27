@@ -1,0 +1,124 @@
+extends layout
+block head
+    script(src="/js/profileApi.js")
+    
+block content
+    .main-container(style="grid-template-columns: 1fr; max-width: 600px; margin: 0 auto;")
+        main.feed
+            div(style="margin-bottom: 8px;")
+                a(href=`/profile/${user.id}` style="text-decoration: none; color: #1877f2; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;")
+                    i.fa-solid.fa-arrow-left
+                    | Powrót do profilu
+
+            .create-post(style="padding: 24px;")
+                h2(style="margin-bottom: 20px; color: #1c1e21; font-size: 22px; font-weight: 700;") Ustawienia konta
+
+                if error === 'password_required'
+                    div(style="color: #1877f2; background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") 🔒 Zmiana danych wrażliwych (e-mail) wymaga autoryzacji. Wprowadź hasło w oknie poniżej.
+                    
+                if error === 'exists'
+                    div(style="color: #bc2525; background: #fff3f3; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") ⚠️ Podany adres e-mail jest już zajęty przez innego użytkownika.
+                    
+                if error === 'invalid_password'
+                    div(style="color: #bc2525; background: #fff3f3; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") ⚠️ Podane hasło autoryzacyjne jest nieprawidłowe. Zmiana adresu e-mail została odrzucona.
+                    
+                if error === 'server'
+                    div(style="color: #bc2525; background: #fff3f3; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") 
+
+                        | ⚠️ #{customMsg || 'Błąd zapisu danych. Sprawdź poprawność pól i spróbuj ponownie.'}
+                        
+                if msg === 'updated'
+                    div(style="color: #42b72a; background: #f0fdf4; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") 🎉 Dane profilu zostały pomyślnie zapisane.
+                    
+                if msg === 'email_pending'
+                    div(style="color: #1877f2; background: #e7f3ff; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") ✉️ Profil zapisany! Link aktywacyjny lub resetujący został wysłany na adres e-mail.
+
+                form#settingsForm(action="/profile/settings" method="POST" style="display: flex; flex-direction: column; gap: 16px; width: 100%;")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    input#hiddenCurrentPassword(type="hidden" name="currentPassword" value="")
+
+                    div
+                        label(style="font-size: 13px; font-weight: 600; color: #65676b; display: block; margin-bottom: 6px;") Nazwisko lub pseudonim
+                        input(type="text" name="name" value=user.name required style="width: 100%; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 15px; outline: none;")
+
+                    div
+                        label(style="font-size: 13px; font-weight: 600; color: #65676b; display: block; margin-bottom: 6px;") Adres e-mail
+                        input#settingsEmailField(type="email" name="email" value=user.email required style="width: 100%; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 15px; outline: none;")
+                    
+                    div
+                        label(style="font-size: 13px; font-weight: 600; color: #65676b; display: block; margin-bottom: 6px;") Niestandardowy alias profilu (Direct Link URL)
+                        div(style="display: flex; align-items: center; background: #f0f2f5; border: 1px solid #dddfe2; border-radius: 6px; padding-left: 10px;")
+                            span(style="color: #65676b; font-size: 14px; user-select: none;") /profile/
+                            input(type="text" name="alias" value=currentAlias placeholder="np. jan-kowalski" style="flex: 1; padding: 10px 10px 10px 2px; border: none; background: transparent; font-size: 15px; outline: none;")
+        
+                    div
+                        label(style="font-size: 13px; font-weight: 600; color: #65676b; display: block; margin-bottom: 6px;") Napisz kilka zdań o sobie
+                        textarea(name="bio" maxlength="160" placeholder="Napisz coś o sobie..." style="width: 100%; height: 70px; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 15px; font-family: inherit; resize: none; outline: none;") #{user.bio === 'Nie dodano jeszcze żadnych informacji o sobie.' ? '' : user.bio}
+                        
+                    div(style="background: #f0f2f5; padding: 12px; border-radius: 6px; display: flex; align-items: center; gap: 10px;")
+                        input(type="checkbox" name="allowPrivateEmails" id="allowPrivateEmailsCheck" checked=user.allowPrivateEmails style="width: auto; margin-bottom: 0; cursor: pointer;")
+                        label(for="allowPrivateEmailsCheck" style="font-size: 13px; font-weight: 600; color: #1c1e21; cursor: pointer; user-select: none; margin-bottom: 0;") 
+                            | Zgadzam się na odbieranie/wysyłanie prywatnych wiadomości e-mail od/do innych użytkowników za pośrednictwem serwisu. Rozumiem, że mój adres e-mail nie będzie udostępniony nikomu postronnemu. 
+
+                    hr(style="border: 0; border-top: 1px solid #e4e6eb; margin: 8px 0;")
+                    
+                    div(style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;")
+                        a(href=`/profile/${user._id}` style="background: #e4e6eb; color: #050505; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px;") Anuluj
+                        button(type="submit" style="background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;") Zapisz zmiany
+            if(!user.isFullyVerified)
+                h4 Pamiętaj również o weryfikacji swojego profilu, aby korzystać ze wszystkich narzędzi
+                button(type="button" onclick="location='/verify'" style="background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;") Weryfikacja profilu użytkownika
+                
+            //- Sekcja bezpieczeństwa konta
+            .create-post(style="padding: 24px; margin-top: 16px; border-top: 3px solid #1877f2;")
+                h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin-bottom: 8px;") Bezpieczeństwo konta
+                p(style="font-size: 13px; color: #65676b; margin-bottom: 16px; line-height: 1.4;") Chcesz zmienić swoje hasło dostępu? Kliknij poniższy przycisk, aby wygenerować bezpieczny link autoryzacyjny bezpośrednio na Twój zarejestrowany adres e-mail.
+                
+                form#passwordResetRequestForm(action="/auth/forgot-password" method="POST" style="margin:0; display: block;")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    input(type="hidden" name="email" value=user.email)
+                    button(type="submit" style="background: #42b72a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; width: auto;") 🔑 Wyślij link do zmiany hasła
+
+            //- Sekcja RODO
+            .create-post(style="padding: 24px; margin-top: 16px; border-top: 3px solid #bc2525;")
+                h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin-bottom: 8px;") 🛡️ Panel Prywatności i Zarządzania RODO
+                p(style="font-size: 13px; color: #65676b; margin-bottom: 16px; line-height: 1.4;") 
+                  | Zgodnie z Ogólnym Rozporządzeniem o Ochronie Danych Osobowych (RODO) posiadasz pełne prawo do wglądu, przenoszenia oraz trwałego usunięcia swoich danych osobowych zgromadzonych w bazie danych aplikacji.
+
+                div(style="display: flex; gap: 12px; flex-wrap: wrap;")
+                    a(href="/profile/settings/export-data" target="_blank" style="background: #1877f2; color: white; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px;")
+                        i.fa-solid.fa-file-arrow-down
+                        | Pobierz pakiet danych (JSON)
+                    
+                    button(type="button" onclick="window.triggerDeleteAccountModal()" style="background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;")
+                        i.fa-solid.fa-user-slash
+                        | Usuń trwale konto
+
+    //- MODALE WYRZUCONE POZA GŁÓWNY NURT STRUMIENIA (Gwarantuje poprawne zachowanie stopek Flexbox)
+    #rodo-delete-modal.custom-modal-backdrop(style="display: none;")
+        .custom-modal-box(style="max-width: 440px;")
+            .custom-modal-header(style="background: #fff3f3; border-bottom: 1px solid #f5c6cb;")
+                h3(style="color: #bc2525; margin: 0;") 🚨 Bezpieczne usuwanie profilu (RODO)
+            form(id="rodoDeleteAccountForm" onsubmit="window.executeAccountErasure(event)" data-email=user.email)
+                .custom-modal-body(style="padding: 16px; font-family: sans-serif; font-size: 13.5px; line-height: 1.5;")
+                    p(style="color: #bc2525; font-weight: bold; margin-bottom: 12px;") 🔒 Autoryzacja dwuetapowa poza pasmem
+                    p(style="color: #1c1e21; margin-bottom: 12px;") Ze względów bezpieczeństwa na Twój adres e-mail zostanie wysłany specjalny, jednorazowy link aktywacyjny. Kliknięcie w link ostatecznie wymaje Twoje dane.
+                    p(style="color: #65676b; margin-bottom: 14px;") Aby wygenerować link usuwający konto, przepisz swój adres e-mail poniżej:
+                    input#rodoConfirmEmailField(type="email" required placeholder=user.email style="width: 100%; padding: 10px; border: 1px solid #f5c6cb; border-radius: 6px; font-size: 14px; outline: none; background: #fff3f3;")
+                    div#rodoModalError(style="display:none; color: #bc2525; font-weight: bold; margin-top: 6px;") ✕ Wpisany adres e-mail jest niezgodny z adresem zalogowanego konta!
+                .custom-modal-footer
+                    button.modal-btn-secondary(type="button" onclick="document.getElementById('rodo-delete-modal').style.display='none'") Anuluj
+                    button.modal-btn-danger(type="submit" style="background: #bc2525; color: white;") Wyślij link usuwający
+
+    #password-auth-modal.custom-modal-backdrop(style="display: none;")
+        .custom-modal-box(style="max-width: 400px;")
+            .custom-modal-header(style="background: #f0f2f5; border-bottom: 1px solid #dddfe2;")
+                h3 🔐 Weryfikacja bezpieczeństwa
+            .custom-modal-body(style="padding: 16px;")
+                p(style="font-size: 14px; color: #1c1e21; margin-bottom: 12px; font-weight: 600;") Wykryto próbę zmiany adresu e-mail. 
+                p(style="font-size: 13px; color: #65676b; margin-bottom: 14px;") Wprowadź swoje aktualne hasło, aby potwierdzić tożsamość:
+                input#modalPasswordField(type="password" placeholder="Twoje aktualne hasło" style="width: 100%; padding: 10px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 15px; outline: none;")
+                div#modalErrorMsg(style="display:none; color: #bc2525; font-size: 12px; font-weight: bold; margin-top: 8px;") ⚠️ Hasło nie może być puste!
+            .custom-modal-footer
+                button#modalCancelBtn.modal-btn-secondary Anuluj
+                button#modalConfirmBtn.modal-btn-primary Potwierdź i zapisz

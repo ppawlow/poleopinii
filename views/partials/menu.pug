@@ -1,0 +1,57 @@
+.nav-dropdown-container
+    button#navDropdownBtn.nav-dropdown-btn(title="Menu konto")
+        i.fa-solid.fa-ellipsis-v
+    
+    #navDropdownContent.nav-dropdown-content
+        a.dropdown-item(href=`/`)
+            i.fa-solid.fa-home
+            | Strona główna
+            
+        if user
+            a.dropdown-item(href=`/topics`)
+                i.fa-solid.fa-newspaper
+                | Przegląd dnia
+            
+        a.dropdown-item(href=`/search`)
+            i.fa-solid.fa-magnifying-glass
+            | Szukaj...
+            
+        hr.dropdown-divider
+        
+        if user
+            a.dropdown-item(href=`/profile/${user.id}`)
+                i.fa-solid.fa-user
+                | Mój profil
+            a.dropdown-item(href="/profile/settings")
+                i.fa-solid.fa-gear
+                | Ustawienia konta
+
+            //- Wykorzystanie bezpiecznej zmiennej Boolean przekazanej bezpośrednio z serwera
+            if user.isAdmin
+                a.dropdown-item(href="/admin" style="color: #bc2525; font-weight: 600;")
+                    i.fa-solid.fa-shield-halved(style="color: #bc2525;")
+                    | Panel Administratora
+
+            if !user.isFullyVerified
+                a.dropdown-item(href="/verify")
+                    i.fa-solid.fa-circle-check
+                    | Zweryfikuj swoje konto
+
+            hr.dropdown-divider
+            a.dropdown-item(href=`/following-feed`)
+                i.fa-solid.fa-rss
+                | Obserwowani
+            a.dropdown-item(href=`/events`)
+                i.fa-solid.fa-bell
+                | Reakcje
+            hr.dropdown-divider
+            a.dropdown-item.logout-link(href="/auth/logout")
+                i.fa-solid.fa-sign-out-alt
+                | Wyloguj się
+        else
+            a.dropdown-item(href="/auth/login")
+                i.fa-solid.fa-sign-in-alt
+                | Zaloguj się
+            a.dropdown-item(href="/auth/register")
+                i.fa-solid.fa-user-plus
+                | Zarejestruj się

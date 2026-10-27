@@ -1,0 +1,19 @@
+a.nav-icon(href="/" title="Strona główna" class=(currentTab === 'home' ? 'active' : ''))
+    i.fa-solid.fa-house
+    
+a.nav-icon(href=`/topics` title="Przegląd dnia" class=(currentTab === 'topics' ? 'active' : ''))
+    i.fa-solid.fa-newspaper
+
+a.nav-icon(href="/search" title="Szukaj..." class=(currentTab === 'search' ? 'active' : ''))
+    i.fa-solid.fa-magnifying-glass
+
+if user
+    a.nav-icon(href="/following-feed" title="Aktywność obserwowanych" class=(currentTab === 'following' ? 'active' : ''))
+        i.fa-solid.fa-rss
+        
+    a.nav-icon(href="/events" title="Powiadomienia i zdarzenia" class=(currentTab === 'events' ? 'active' : ''))
+        i.fa-solid.fa-bell
+
+    if user.isAdmin
+        a.nav-icon(href="/admin" title="Panel administratora" class=(currentTab === 'admin' ? 'active' : ''))
+            i.fa-solid.fa-shield-halved

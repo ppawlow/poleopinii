@@ -1,0 +1,115 @@
+doctype html
+html(lang="pl")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        meta(name="csrf-token" content=csrfToken)
+        
+        //- Tagi Open Graph (Facebook, LinkedIn, Messenger)
+        meta(property="og:type" content="article")
+        meta(property="og:title" content=post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME)
+        meta(property="og:description" content=post && post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) : "Przeczytaj najnowsze publicystyki i opinie w serwisie " + SERVICE_NAME)
+        if post && post.imageUrl
+            meta(property="og:image" content=windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl)
+        else
+            meta(property="og:image" content=windowOrigin ? windowOrigin + LOGOTYP : LOGOTYP)
+        
+        //- Tagi Twitter Cards / X
+        meta(name="twitter:card" content="summary_large_image")
+        meta(name="twitter:title" content=post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME)
+        meta(name="twitter:description" content=post && post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) : "Przeczytaj najnowsze publicystyki i opinie w serwisie " + SERVICE_NAME)
+        if post && post.imageUrl
+            meta(name="twitter:image" content=windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl)
+        else
+            meta(name="twitter:image" content=windowOrigin ? windowOrigin + LOGOTYP : LOGOTYP)
+
+        title #{title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME}
+        // link(rel="preconnect" href="https://googleapis.com")
+        // link(rel="preconnect" href="https://gstatic.com" crossorigin)
+        // link(href="https://googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet")
+        link(rel="stylesheet" href="/quill/quill.snow.css")
+        script(src="/quill/quill.js")
+        if RECAPTCHA_SITE_KEY && !useRecaptcha
+            script(src="https://www.google.com/recaptcha/api.js?render=" + RECAPTCHA_SITE_KEY)
+            script.
+                window.env = { 
+                    RECAPTCHA_SITE_KEY: "!{RECAPTCHA_SITE_KEY}",
+                    useRecaptcha: !{useRecaptcha || false}
+                };                
+        link(rel="stylesheet" href="/css/style.css")
+        link(rel="shortcut icon" href=FAVICON)
+        // link(rel="stylesheet" href="https://cloudflare.com")
+
+        // Podpięcie wspólnego pliku akordeonów i komentarzy
+        script(src="/js/accordion.js")
+        script(src="/js/mainApi.js")
+        script(src="https://kit.fontawesome.com/8861df8022.js" crossorigin="anonymous")
+        script(src="/js/feed.js")
+        // script(src="https://google.com")
+
+        block head
+    body
+        if user
+            script.
+                window.appUser = { 
+                    id: "!{user.id || user._id}",
+                    displayName: "!{user.displayName || user.name}",
+                    avatarUrl: "!{user.avatarUrl || DEFAULT_ASSETS.avatar}",
+                    isVerified: !{user.isFullyVerified} 
+                };
+        
+        header.fb-navbar
+            .nav-left
+                include partials/logotype.pug
+            .nav-center
+                include partials/navigation.pug
+            
+            .nav-right
+                if user
+                    .user-visitcard(style="display: flex; align-items: center; gap: 8px; height: 100%;")
+                        a.user-nav-link(
+                            href=getProfileUrl(user) 
+                            style="display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit; height:100%; padding:0 8px;"
+                            class=(currentTab === 'profile' ? 'active-profile' : '')
+                        )
+                            img.nav-avatar(src=(user.avatarUrl || DEFAULT_ASSETS.avatar) alt="Avatar")
+                            span.user-name #{user.displayName}
+                                if user.isFullyVerified
+                                    sup(title="Profil Zweryfikowany" style="color: #1877f2; display: inline-flex;") 
+                                        i.fa-solid.fa-circle-check
+                                else
+                                    sup(title="Profil Niezweryfikowany" style="color: #8a8d91; display: inline-flex;") 
+                                        i.fa-solid.fa-circle-xmark
+                
+                include partials/menu.pug
+        //Login prompt
+        if !user && currentTab
+            div(style="padding:20px; text-align:center;")
+                h4 Chcesz współtworzyć naszą społeczność? Zapraszamy!
+                    br
+                    a(href="/auth/login" title="Logowanie") Zaloguj się 
+                    | lub 
+                    a(href="/auth/register" title="Rejestracja") Utwórz konto
+
+        //- KRYTYCZNA POPRAWKA: Całą zawartość dynamiczną pakujemy w kontener głównego nurtu
+        .page-main-content
+            block content
+
+        footer.site-footer
+            .footer-container(style="max-width: 1000px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;")
+                div(style="font-size: 13px; color: var(--color-text-muted, #65676b); font-weight: 500;")
+                    | © 2026 #{SERVICE_NAME}. Wszelkie prawa zastrzeżone. Wydawca: 
+                    a(href="kooporg.pl") Kooperatywa Pracy Organicznej.
+                
+                div(style="display: flex; gap: 20px; align-items: center;")
+                    a(href="/regulamin" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.15s;") ⚖️ Regulamin
+                    a(href="/polityka-prywatnosci" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.15s;") 🛡️ Polityka prywatności       
+        //- Banner informacyjny o plikach cookies (Zgodny z RODO/ePrivacy)
+        #cookie-law-banner(style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 600px; background: #ffffff; border: 1px solid var(--color-border, #e4e6eb); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 16px; z-index: 10005; font-family: sans-serif; box-sizing: border-box;")
+            div(style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;")
+                p(style="font-size: 13px; color: #1c1e21; margin: 0; line-height: 1.4; flex: 1; min-width: 250px;")
+                    | 🍪 Nasz serwis wykorzystuje techniczne pliki cookies w celu utrzymania sesji logowania oraz ochrony przed atakami (CSRF). Pozostając na stronie, wyrażasz zgodę na ich stosowanie. Szczegóły znajdziesz w 
+                    a(href="/polityka-prywatnosci" style="color: #1877f2; font-weight: bold; text-decoration: underline;") Polityce prywatności.
+                button(type="button" onclick="window.acceptCookieLaw()" style="background: #42b72a; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background 0.2s; white-space: nowrap;") Rozumiem
+        
+        include partials/modal.pug

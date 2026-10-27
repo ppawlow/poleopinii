@@ -1,0 +1,36 @@
+//- views/partials/profile-bio.pug
+.info-box(style="background: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px;")
+    h3(style="font-size: 17px; font-weight: 700; margin-bottom: 12px; color: #1c1e21;") O sobie
+    
+    #bio-view-mode(style="display: block;")
+        p#bio-text-content(style="font-size: 14px; color: #050505; line-height: 1.4; text-align: center; margin-bottom: 16px; font-style: italic;") #{profileUser.bio}
+        
+        if user && String(user.id) === String(profileUser._id)
+            button.upload-action-btn(
+                type="button" 
+                onclick="document.getElementById('bio-view-mode').style.display='none'; document.getElementById('bio-edit-mode').style.display='block';"
+                style="width: 100%; text-align: center; justify-content: center; background-color: #e4e6eb; border: none; padding: 8px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;"
+            ) Edytuj informacje o sobie
+    
+    if user && String(user.id) === String(profileUser._id)
+        #bio-edit-mode(style="display: none;")
+            form#bio-edit-form(action="/profile/update-bio" method="POST")
+                input(type="hidden" name="_csrf" value=csrfToken)
+
+                textarea(
+                    name="bio" 
+                    maxlength="160" 
+                    placeholder="Napisz coś o sobie..." 
+                    style="width: 100%; height: 80px; padding: 8px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 14px; font-family: inherit; resize: none; outline: none; margin-bottom: 8px;"
+                ) #{profileUser.bio === 'Nie dodano jeszcze żadnych informacji o sobie.' ? '' : profileUser.bio}
+                
+                div(style="display: flex; gap: 8px; justify-content: flex-end;")
+                    button(
+                        type="button" 
+                        onclick="document.getElementById('bio-view-mode').style.display='block'; document.getElementById('bio-edit-mode').style.display='none';"
+                        style="background: #e4e6eb; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;"
+                    ) Anuluj
+                    button(
+                        type="submit" 
+                        style="background: #1877f2; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;"
+                    ) Zapisz

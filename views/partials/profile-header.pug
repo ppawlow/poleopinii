@@ -1,0 +1,58 @@
+//- views/partials/profile-header.pug
+.profile-header-card
+    .cover-photo-wrapper
+        img.cover-photo(src=profileUser.coverUrl alt="Cover photo")
+    .profile-avatar-row
+        .avatar-wrapper
+            img.profile-main-avatar(src=profileUser.avatarUrl alt="Avatar")
+        .profile-user-details
+            h2(style="display: inline-flex; align-items: center; gap: 8px; margin: 0;") 
+                | #{profileUser.displayName}
+
+            div(style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;")
+                if currentRank
+                    div.profile-rank-badge(style=`display: inline-flex; align-items: center; background: ${currentRank.bg}; color: ${currentRank.color}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid ${currentRank.color};` title=`Próg punktowy poziomu wynosi: ${currentRank.minLikes} lajków`)
+                        span #{currentRank.name}
+                        
+                    if profileUser.isFullyVerified
+                        span(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
+                            i.fa-solid.fa-circle-check
+                    else
+                        span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
+                            i.fa-solid.fa-circle-xmark
+
+        if user && String(user.id) === String(profileUser._id)
+            div.update-photos-container(style="display: flex; gap: 12px; margin-bottom: 16px; margin-left: auto; flex-wrap: wrap;")
+                form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0;")
+                    label.upload-action-btn(for="avatar-file-input")
+                        i.fa-solid.fa-camera
+                        |  Zmień awatar
+                    input#avatar-file-input(type="file" name="avatar" accept="image/*" style="display: none;" onchange="uploadProfilePhoto(this)")
+
+                form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0;")
+                    label.upload-action-btn(for="cover-file-input")
+                        i.fa-solid.fa-image
+                        |  Zmień tło
+                    input#cover-file-input(type="file" name="cover" accept="image/*" style="display: none;" onchange="uploadProfilePhoto(this)")
+        
+                .upload-action-btn(onclick="location=`/profile/settings`")
+                    i.fa-solid.fa-gear
+                    |  Ustawienia
+                    
+        else if user
+            div(style="display:flex; gap:8px; margin-bottom:16px; margin-left: auto; align-items: center;")
+                form.dynamic-follow-form(action=`/follow/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0;")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    button.profile-follow-btn(type="submit")
+                        | #{followingList.includes(String(profileUser._id)) ? 'Obserwujesz' : 'Obserwuj'}
+
+                form.dynamic-block-form(action=`/block/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0;")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    button.profile-block-main-btn(type="submit" style=`background-color: #bc2525; color: white; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 15px; border:none; cursor:pointer;`)
+                        | #{userBlocks.includes(String(profileUser._id)) ? 'Odblokuj' : 'Zablokuj'}
+                        
+                if profileUser.allowPrivateEmails
+                    if hasPermission(user, 'user', 'canSendMail', profileUser)
+                        button(type="button" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')` style="background-color: #42b72a; color: white; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 15px; border:none; cursor:pointer; white-space: nowrap;") ✉️ Wyślij wiadomość
+                    else if !user.isFullyVerified
+                        button.restricted-feature-trigger(type="button" title="Wymaga weryfikacji profilu" data-reason="private_mail_unverified" style="background-color: #e4e6eb; color: #65676b; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 15px; border:none; cursor: pointer; white-space: nowrap;") ✉️ Wyślij wiadomość

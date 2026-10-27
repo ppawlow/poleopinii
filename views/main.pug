@@ -1,0 +1,50 @@
+extends layout
+
+block content
+    .main-container
+        // Lewy Sidebar z listą obserwowanych
+        aside.left-sidebar
+            if user
+                a.sidebar-item(href="/following-feed" style="text-decoration: none; color: inherit; border-bottom: 1px solid var(--color-border); padding-bottom: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s;")
+                    i.fa-solid.fa-rss(style="color: var(--color-primary);")
+                    span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Obserwowani autorzy
+                    
+                if followingProfiles && followingProfiles.length > 0
+                    each followed in followingProfiles
+                        a.sidebar-item(href=`/profile/${followed._id}` style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px; transition: background 0.2s;")
+                            img.nav-avatar(src=(followed.avatarUrl || DEFAULT_ASSETS.avatar) style="width:28px; height:28px; object-fit: cover;")
+                            span(style="font-size: 14px; font-weight: 500;") #{followed.displayName}
+                else
+                    p(style="font-size: 12px; color: #65676b; padding: 8px 12px; font-style: italic;") Nie obserwujesz jeszcze żadnych autorów.
+            
+        // Główny strumień wpisów
+        main.feed
+            if user && !user.isFullyVerified
+                .verification-reminder-banner(style="background: #e7f3ff; border: 1px solid #1877f2; padding: 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-family: sans-serif;")
+                    div(style="flex: 1; padding-right: 16px;")
+                        h4(style="margin: 0 0 4px 0; color: #0a5b9d; font-size: 15px; font-weight: bold;") 🛡️ Twój profil nie jest jeszcze w pełni aktywny
+                        p(style="margin: 0; font-size: 13px; color: #1c1e21; line-height: 1.4;") Aby odblokować wszystkie możliwości profilu, np. zamieszczać artykuły publiczne, brać udział w dyskusjach, kontaktować się prywatnie z innymi użytkownikami, potwierdź swoją autentyczność.
+                    a(href="/verify" style="background: #1877f2; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; white-space: nowrap;") Zweryfikuj konto
+
+            include partials/create-post.pug
+
+            #accordion-posts-wrapper.accordion-container
+                if posts && posts.length > 0
+                    each post in posts
+                        include partials/post-card.pug
+                else
+                    .no-posts(style="text-align: center; padding: 20px; color: #65676b; background: #ffffff; border-radius: 8px; border: 1px solid var(--color-border);") Brak wpisów do wyświetlenia.
+
+            if hasMore
+                #load-more-container(style="text-align: center; margin-top: 20px;")
+                    button#load-more-btn(onclick="loadMorePosts()" style="background:#fff; border:1px solid #dddfe2; padding:10px 24px; border-radius:6px; font-weight:600; cursor:pointer; color:#1877f2; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;") Pokaż więcej
+
+        // Prawy Sidebar - Tematy dnia przez AI posortowane wg ważności
+        aside.right-sidebar
+            if user
+                a.sidebar-item(href="/topics" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s;")
+                    i.fa-solid.fa-newspaper(style="color: var(--color-primary);")
+                    span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Przegląd dnia
+
+                //- INKLUDOWANIE WSPÓLNEGO SZABLONU (Identyczny wygląd i stopka jak na podstronie!)
+                include partials/news-feed.pug

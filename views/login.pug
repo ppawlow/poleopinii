@@ -1,0 +1,38 @@
+extends layout
+block head
+    script(src="/js/authApi.js")
+    
+block content
+    .login-container
+        .login-branding
+            img(src=LOGOTYP width="100%")
+            
+        .login-box
+            h3 Logowanie
+            
+            if error === '1'
+                .custom-modal-body(style="color: #bc2525; background: #fff3f3; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600;") ⚠️ Niepoprawny adres e-mail lub hasło.
+            if error === 'invalid_token'
+                .custom-modal-body(style="color: #bc2525; background: #fff3f3; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600;") ⚠️ Link weryfikacyjny jest nieprawidłowy lub wygasł.
+            if msg === 'verified'
+                .custom-modal-body(style="color: #42b72a; background: #f0fdf4; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600;") 🎉 Konto aktywowane pomyślnie!
+
+            form(action="/auth/login" method="POST")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                input(type="email" name="email" placeholder="Adres e-mail" required)
+                // input(type="password" name="password" placeholder="Hasło" required)
+                label(style="font-size: 13px; color: #65676b; display: block; margin-bottom: 6px;") Hasło dostępu:
+                div(style="position: relative; width: 100%;")
+                    input#loginPasswordField(type="password" name="password" placeholder="Hasło" required style="width: 100%; padding-right: 40px;")
+                    i.fa-regular.fa-eye#toggleLoginPassword(style="position: absolute; right: 12px; top: 14px; cursor: pointer; color: #65676b;")
+
+                button.login-submit(type="submit") Zaloguj się
+                
+                div(style="text-align: center; margin-top: 10px;")
+                a(href="/auth/forgot-password" style="text-decoration: none; color: #1877f2; font-size: 13px;") Zapomniałeś hasła?
+
+            hr
+            
+            div(style="text-align: center; margin-top: 15px;")
+                p(style="font-size: 14px; color: #65676b; margin-bottom: 10px;") Nie masz jeszcze konta?
+                a.register-submit(href="/auth/register" style="text-decoration: none; display: block; text-align: center; line-height: 24px;") Utwórz nowe konto

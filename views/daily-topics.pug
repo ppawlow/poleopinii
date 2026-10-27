@@ -1,0 +1,25 @@
+//- views/daily-topics.pug
+extends layout
+
+block content
+    .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto; padding-top: 30px;")
+        main.feed
+            div(style="margin-bottom: 12px; font-family: sans-serif;")
+                a(href="/" style="text-decoration: none; color: #1877f2; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 6px;")
+                  i.fa-solid.fa-arrow-left
+                  | Powrót do strony głównej
+
+            .create-post(style="padding: 24px; border: 1px solid var(--color-border); border-radius: 8px;")
+                h2(style="margin-bottom: 8px; color: #1c1e21; font-size: 24px; font-weight: 700; font-family: sans-serif; display: flex; align-items: center; gap: 10px;") 
+                    i.fa-solid.fa-newspaper(style="color: var(--color-accent);")
+                    | Przegląd dnia
+                p(style="font-size: 14px; color: #65676b; margin-bottom: 24px; line-height: 1.4; font-family: sans-serif;")
+                    | Przegląd najważniejszych wydarzeń dnia jest tworzony przez AI i może zawierać błędy. Zawsze sprawdzaj fakty w niezależnych źródłach!
+
+                //- KROK JEDYNY I GENIALNY: Wstrzykujemy brakujący kreator postów na podstronę!
+                include partials/create-post.pug
+                
+                div(style="margin-bottom: 24px;")
+
+                //- INKLUDOWANIE WSPÓLNEGO SZABLONU NEWSÓW
+                include partials/news-feed.pug

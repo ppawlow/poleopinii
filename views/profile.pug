@@ -1,0 +1,34 @@
+//- views/profile.pug
+extends layout
+block head
+    script(src="/js/profileApi.js")
+    
+block content
+    .profile-container
+        //- Nagłówek profilu (Tło, Awatar, Akcje)
+        include partials/profile-header.pug
+
+        // Układ dolny profilu
+        .profile-body-layout
+            aside.profile-info-sidebar
+                //- Blok "O sobie" (Bio)
+                include partials/profile-bio.pug
+
+                //- Listy relacji społecznościowych (Obserwowani, Obserwujący, Blokady)
+                include partials/profile-relations.pug
+
+            main.profile-feed
+                if user && String(user.id) === String(profileUser._id)
+                    include partials/create-post.pug
+                    div(style="margin-bottom: 20px;")
+                
+                if posts && posts.length > 0
+                    .accordion-container#accordion-posts-wrapper
+                        each post in posts
+                            include partials/post-card.pug
+                else
+                    .accordion-container#accordion-posts-wrapper
+                        .no-posts(style="text-align: center; padding: 20px; color: #65676b; background:#fff; border-radius:8px;") Brak wpisów autora.
+
+        //- Dołączenie modalnego formularza kontaktowego e-mail
+        include partials/profile-contact-modal.pug

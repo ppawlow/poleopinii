@@ -1,0 +1,68 @@
+//- views/partials/profile-relations.pug
+
+// Blok: Obserwowani (Akordeon)
+.info-box.accordion-item(style="background: #fff; padding: 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden;")
+    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; user-select: none;")
+        div(style="display: flex; align-items: center; gap: 8px;")
+            i.fa-solid.fa-user-check(style="color: #1877f2; font-size: 16px;")
+            h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 0;") Obserwowani
+        div(style="display: flex; align-items: center; gap: 12px;")
+            span(style="font-size: 14px; color: #65676b; font-weight: 600;") #{followingProfiles ? followingProfiles.length : 0}
+            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; font-size: 14px;")
+    
+    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
+        if followingProfiles && followingProfiles.length > 0
+            div(style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;")
+                each followed in followingProfiles
+                    a(href=getProfileUrl(followed._id) style="text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%;")
+                        img(src=(followed.avatarUrl || DEFAULT_ASSETS.avatar) style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f0f2f5; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);")
+                        span(style="display: block; font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; max-height: 2.4em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; padding: 0 2px; width: 100%; word-break: break-word;") #{followed.name}
+        else
+            p(style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0;") Ten użytkownik nikogo jeszcze nie obserwuje.
+
+// Blok: Obserwujący (Akordeon)
+.info-box.accordion-item(style="background: #fff; padding: 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden;")
+    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; user-select: none;")
+        div(style="display: flex; align-items: center; gap: 8px;")
+            i.fa-solid.fa-users(style="color: #42b72a; font-size: 16px;")
+            h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 0;") Obserwujący
+        div(style="display: flex; align-items: center; gap: 12px;")
+            span#followers-count-badge(style="font-size: 14px; color: #65676b; font-weight: 600;" data-count=(followersProfiles ? followersProfiles.length : 0)) #{followersProfiles ? followersProfiles.length : 0}
+            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; font-size: 14px;")
+    
+    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
+        div#followers-grid-container(style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;")
+            if followersProfiles && followersProfiles.length > 0
+                each follower in followersProfiles
+                    a(href=getProfileUrl(follower._id) data-user-id=String(follower._id) style="text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%;")
+                        img(src=(follower.avatarUrl || DEFAULT_ASSETS.avatar) style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f0f2f5; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);")
+                        span(style="display: block; font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; max-height: 2.4em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; padding: 0 2px; width: 100%; word-break: break-word;") #{follower.name}
+            else
+                p#no-followers-fallback-text(style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;") Tego użytkownika nikt jeszcze nie obserwuje.
+
+// Blok: Zablokowani (Akordeon - widoczny tylko dla właściciela profilu)
+if user && String(user.id) === String(profileUser._id)
+    .info-box.accordion-item(style="background: #fff; padding: 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; border-top: 3px solid #bc2525;")
+        .accordion-header(style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; user-select: none;")
+            div(style="display: flex; align-items: center; gap: 8px;")
+                i.fa-solid.fa-user-slash(style="color: #bc2525; font-size: 15px;")
+                h3(style="font-size: 16px; font-weight: 700; color: #bc2525; margin: 0;") Zablokowani
+            div(style="display: flex; align-items: center; gap: 12px;")
+                span(style="font-size: 14px; color: #65676b; font-weight: 600;") #{blockedProfiles ? blockedProfiles.length : 0}
+                i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; font-size: 14px;")
+        
+        .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
+            if blockedProfiles && blockedProfiles.length > 0
+                div(style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;")
+                    each blocked in blockedProfiles
+                        div(style="text-align: center; display: block;")
+                            a(href=getProfileUrl(blocked._id) style="text-decoration: none; color: inherit; display: block;")
+                                img(src=(blocked.avatarUrl || DEFAULT_ASSETS.avatar) style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f0f2f5; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); filter: grayscale(40%);")
+                                span(style="display: block; font-size: 12px; font-weight: 600; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 2px;") #{blocked.name}
+                            
+                            .block-toggle-container(style="margin-top: 6px;")
+                                label.switch(title="Przełącz, aby odblokować")
+                                    input(type="checkbox" checked onclick=`toggleBlockSlider(this, '${blocked._id}')`)
+                                    span.slider
+            else
+                p(style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0;") Nie zablokowałeś jeszcze nikogo.

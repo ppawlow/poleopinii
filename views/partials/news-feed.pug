@@ -1,0 +1,33 @@
+//- views/partials/news-feed.pug
+if dailyTopics && dailyTopics.length > 0
+    .accordion-container(style="display: flex; flex-direction: column; gap: 10px; width: 100%;")
+        each topic in dailyTopics
+            - var isCritical = topic.importance >= 8
+            .post-card.accordion-item(style="padding: 0; margin-bottom: 0; border: 1px solid var(--color-border); overflow: hidden; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.02); width: 100%; background: #fff;")
+                //- Nagłówek akordeonu
+                .accordion-header(style="cursor: pointer; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; background: #fff; gap: 16px;")
+                    h3(style="font-size: 15px; font-weight: 700; color: #1c1e21; margin: 0; line-height: 1.4; word-break: break-word;") #{topic.title}
+                    i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; font-size: 13px; transition: transform 0.3s; flex-shrink: 0; margin-top: 2px;")
+                
+                //- Rozwijana zawartość akordeonu
+                .accordion-content(style="display: none; padding: 16px 20px; border-top: 1px solid var(--color-border); background-color: #fafbfc; width: 100%;")
+                    //- Skrót wiadomości
+                    p(style="font-size: 14px; color: #050505; line-height: 1.6; margin: 0 0 16px 0; font-family: sans-serif; text-align: justify;") #{topic.summary}
+                    
+                    //- Dolny pasek (Stopka): Ważność oraz Przycisk interakcji
+                    div(style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 14px; flex-wrap: wrap; gap: 10px; width: 100%;")
+                        span(title='Ranga informacji' style=`display: inline-flex; align-items: center; justify-content: center; background: ${isCritical ? '#fff3f3' : '#fffbf0'}; color: ${isCritical ? '#bc2525' : 'var(--color-accent)'}; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; border: 1px solid ${isCritical ? '#f5c6cb' : '#e5a93c'}; white-space: nowrap;`) 
+                            | 🔥 #{topic.importance}/10
+                            
+                        if user && user.isAdmin
+                            button.action-btn(type="button" onclick=`window.executeAdminDeleteTopic('${topic._id}', '${topic.title.replace(/'/g, "\\'")}')` style="background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;")
+                                i.fa-solid.fa-trash-can
+                                | Usuń news
+                        
+                        if user
+                            button.action-btn(type="button" onclick=`window.initAiTopicDiscussion('${topic.title.replace(/'/g, "\\'")}', '${topic.summary.replace(/'/g, "\\'")}')` style="display:block; float:right; background: var(--color-primary, #0f5132); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: auto; line-height: normal; transition: background 0.2s;")
+                                i.fa-regular.fa-comment-dots
+                                | Napisz co o tym myślisz?
+else
+    .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #fff; border-radius: 8px; font-size: 13px; border: 1px dashed var(--color-border); font-family: sans-serif; width: 100%;") 
+        | ⏳ Trwa pobieranie aktualnych komunikatów. Odśwież stronę za chwilę...

@@ -1,0 +1,23 @@
+extends layout
+
+block content
+    .login-container
+            .login-branding
+            img(src=LOGOTYP width="100%")
+            
+        .login-box
+            if verified
+                div(style="font-size: 48px; margin-bottom: 16px;") 🌿
+                h3(style="font-size: 22px; font-weight: 700; color: #1c1e21; margin-bottom: 12px;") #{customHeading || 'Adres e-mail został zmieniony!'}
+                
+                div(style="color: #146c43; background: #d1e7dd; border: 1px solid #badbcc; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px; line-height: 1.5; font-weight: 500;") 
+
+                    | #{customMessage || '🟢 Twój nowy adres e-mail został pomyślnie zweryfikowany i ustawiony jako główny identyfikator konta.'}
+                
+                a.login-submit(href="/" style="text-decoration: none; display: block; text-align: center; line-height: 24px; font-size: 16px; background-color: var(--color-primary);") Powrót do strony głównej
+            else
+                div(style="font-size: 48px; margin-bottom: 16px;") ⚠️
+                h3(style="font-size: 22px; font-weight: 700; color: #bc2525; margin-bottom: 12px;") Autoryzacja nieudana
+                div(style="color: #bc2525; background: #fff3f3; border: 1px solid #f5c6cb; padding: 16px; border-radius: 8px; margin-bottom: 24px; font-size: 14px; line-height: 1.5; font-weight: 500;") 
+                    | Odnośnik bezpieczeństwa jest nieprawidłowy, został już wykorzystany lub jego token ważności wygasł.
+                a.login-submit(href="/" style="text-decoration: none; display: block; text-align: center; line-height: 24px; font-size: 16px;") Strona główna

@@ -1,0 +1,8 @@
+node_modules/
+.env
+plan_testowania.odt
+todo.txt
+public/uploads/*
+mails.txt
+list.txt
+list.sh
