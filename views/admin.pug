@@ -1,6 +1,10 @@
 //- views/admin.pug
 extends layout
 block append head
+    //- Dołączenie jQuery oraz DataTables z CDN
+    script(src="https://jquery.com")
+    link(rel="stylesheet" href="https://datatables.net")
+    script(src="https://datatables.net")
     script(src="/js/adminApi.js")
 
 block content

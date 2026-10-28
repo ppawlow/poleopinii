@@ -62,7 +62,8 @@ app.use(
           "'self'",
           "'unsafe-inline'",
           "https://fontawesome.com",
-          "https://*.fontawesome.com"
+          "https://*.fontawesome.com",
+          "https://datatables.net",
         ],
         // Bezpieczne skrypty reCAPTCHA Google (poprawione wieloznaczniki)
         "script-src-elem": [
@@ -96,7 +97,8 @@ app.use(
           "https://google.com",
           "https://*.googleapis.com",
           "https://cloudflare.com",
-          "https://*.cloudflare.com"
+          "https://*.cloudflare.com",
+          "https://datatables.net"
         ],
         // Pobieranie plików binarnych czcionek (.woff2) z serwerów gstatic Google
         "font-src": [

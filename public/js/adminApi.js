@@ -190,20 +190,28 @@ window.executeAbusePanelUnlock = async function (reportId, originalPostId) {
 };
 
 document.addEventListener("DOMContentLoaded", () => {
-  // Globalne nasłuchiwanie na formularze zatwierdzania przelewów weryfikacyjnych
   document.body.addEventListener("submit", async function (e) {
     const form = e.target;
     if (!form || !form.classList.contains("admin-approve-form")) return;
 
-    // Blokujemy domyślne przeładowanie strony formularza synchronicznego
     e.preventDefault();
 
     const csrfToken = document
       .querySelector('meta[name="csrf-token"]')
       .getAttribute("content");
       
-    // Pakujemy dane formularza (w tym numer konta z ewentualnymi spacjami)
-    const formData = new URLSearchParams(new FormData(form)).toString();
+    // 1. POBIERAMY SUROWE DANE Z FORMULARZA
+    const rawFormData = new FormData(form);
+    
+    // 2. KRYTYCZNA POPRAWKA: Wyciągamy numer konta, usuwamy z niego WSZYSTKIE spacje w locie
+    const rawBankAccount = rawFormData.get("bankAccount") || "";
+    const cleanBankAccount = String(rawBankAccount).replace(/\s+/g, "");
+    
+    // 3. Wstrzykujemy oczyszczony numer z powrotem, aby serwer dostał czyste 26 cyfr
+    rawFormData.set("bankAccount", cleanBankAccount);
+
+    // Konwertujemy na format tekstowy URL-encoded wymagany przez serwer
+    const formData = new URLSearchParams(rawFormData).toString();
 
     try {
       const response = await fetch(form.action, {
@@ -216,14 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
       });
 
       if (response.ok) {
-        // Jeśli serwer zwrócił redirect po sukcesie (lub status ok), odświeżamy stronę panelu
-        // by wyświetlić zielony banner informacyjny
         window.location.href = "/admin?msg=user_approved";
       } else {
-        // Serwer zwrócił status błędu (np. 400 Bad Request przy złej sumie kontrolnej)
         const errorText = await response.text();
-        
-        // Wywołujemy systemowy Custom Alert Modal zamiast białej strony
         if (typeof window.Alert === "function") {
           await window.Alert(
             `<div style="text-align: left; line-height: 1.4;">
@@ -243,4 +246,50 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
   });
+});
+
+// public/js/adminApi.js -> Dodaj na końcu pliku
+
+$(document).ready(function() {
+  const PolishLanguageConfig = {
+    processing: "Trwa przetwarzanie...",
+    search: "Szukaj:",
+    lengthMenu: "Pokaż _MENU_ pozycji",
+    info: "Pozycje od _START_ do _END_ z _TOTAL_ łącznie",
+    infoEmpty: "Pozycji 0 z 0 dostępnych",
+    infoFiltered: "(przefiltrowano z _MAX_ wszystkich pozycji)",
+    loadingRecords: "Trwa ładowanie...",
+    zeroRecords: "Nie znaleziono pasujących pozycji",
+    emptyTable: "Brak danych w tabeli",
+    paginate: {
+      first: "Pierwsza",
+      previous: "Poprzednia",
+      next: "Następna",
+      last: "Ostatnia"
+    },
+    aria: {
+      sortAscending: ": aktywuj, by posortować kolumnę rosnąco",
+      sortDescending: ": aktywuj, by posortować kolumnę malejąco"
+    }
+  };
+
+  // Inicjalizacja tabeli użytkowników
+  if ($('#usersTable').length) {
+    $('#usersTable').DataTable({
+      language: PolishLanguageConfig,
+      pageLength: 10, // Domyślna liczba wierszy na stronę
+      lengthMenu:,
+      order: [[0, 'asc']] // Domyślne sortowanie po pierwszej kolumnie (Alfabetycznie po nazwie)
+    });
+  }
+
+  // Inicjalizacja tabeli logów systemowych
+  if ($('#logsTable').length) {
+    $('#logsTable').DataTable({
+      language: PolishLanguageConfig,
+      pageLength: 25, // Logi bywają długie, ustawiamy domyślnie 25 wierszy
+      lengthMenu:,
+      order: [[0, 'desc']] // Domyślne sortowanie po pierwszej kolumnie malejąco (Najnowsze logi na górze)
+    });
+  }
 });
