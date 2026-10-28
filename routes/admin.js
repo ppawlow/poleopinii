@@ -274,6 +274,12 @@ async function postUnlockModeratorFlag(req, res) {
 async function postAdminApproveUser(req, res) {
   const { userId } = req.params;
 
+  // KRYTYCZNA POPRAWKA: Ręcznie usuwamy wszystkie spacje z req.body.bankAccount 
+  // ZANIM express-validator w ogóle go dotknie i zacznie walidować.
+  if (req.body && req.body.bankAccount) {
+    req.body.bankAccount = String(req.body.bankAccount).replace(/\s+/g, "");
+  }
+
   // Pobranie i obsługa błędów walidacji matematycznej numeru konta
   const { validationResult } = require("express-validator");
   const errors = validationResult(req);
@@ -284,17 +290,15 @@ async function postAdminApproveUser(req, res) {
       .map((e) => e.msg)
       .join(" ");
 
-    // KRYTYCZNA POPRAWKA: Zwracamy status 400 z komunikatem błędu.
-    // Zapobiega to otwieraniu nowej białej karty w przeglądarce.
     return res.status(400).send(errorMsg);
   }
 
-  const { bankAccount } = req.body; // Zawiera już oczyszczony numer dzięki customSanitizer!
+  const { bankAccount } = req.body; 
 
   try {
     const cleanAccount = bankAccount;
 
-    // Generujemy nieodwracalny, bezpieczny skrót SHA-256 z w pełni oczyszczonego numeru
+    // Generujemy nieodwracalny, bezpieczny skrót SHA-256
     const hashedAccount = crypto
       .createHash("sha256")
       .update(cleanAccount)
@@ -307,7 +311,6 @@ async function postAdminApproveUser(req, res) {
     });
 
     if (duplicateExists) {
-      // Zwracamy status 400 również dla duplikatu konta, by wyświetlić to w modalu
       return res.status(400).send(
         "Blokada: To konto bankowe było już użyte i przypisane do innego profilu!"
       );
@@ -316,7 +319,6 @@ async function postAdminApproveUser(req, res) {
     const targetUser = await User.findById(userId);
     if (!targetUser) return res.status(404).send("Nie odnaleziono użytkownika.");
 
-    // Pozytywna autoryzacja manualna
     targetUser.verificationBankAccount = hashedAccount;
     targetUser.verificationTransferStatus = "approved";
     targetUser.isVerified = true;
@@ -328,7 +330,6 @@ async function postAdminApproveUser(req, res) {
     );
     await mailer.sendVerificationSuccessEmail(targetUser);
 
-    // Sukces - tradycyjne przekierowanie z komunikatem
     return res.redirect("/admin?msg=user_approved");
   } catch (err) {
     console.error(err);
