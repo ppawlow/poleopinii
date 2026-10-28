@@ -1,19 +1,8 @@
+//- views/admin.pug
 extends layout
+include partials/dataTable.pug
+
 block append head
-    //- Rdzeń JS biblioteki DataTables
-    script(src="https://datatables.net")
-
-    link(href="https://datatables.net", rel='stylesheet')
-    script(src="https://datatables.net")
-    
-    //- Select
-    link(rel="stylesheet" href="https://datatables.net")
-    script(src="https://datatables.net")
-    
-    //- Responsive
-    link(rel="stylesheet" href="https://datatables.net")
-    script(src="https://datatables.net")
-
     script(src="/js/adminApi.js")
 
 block content
@@ -25,13 +14,15 @@ block content
 
             .accordion-container(style="display: flex; flex-direction: column; gap: 12px; width: 100%;")
                 
-                //- 1. PANEL ZGŁOSZEŃ NADUŻYĆ (Domyślnie otwarty - najwyższy priorytet)
+                //- 1. PANEL ZGŁOSZEŃ NADUŻYĆ
                 .post-card.accordion-item(id="admin-panel-abuse" style="padding: 0; overflow: hidden;")
                     .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;")
                         h3(style="font-size: 16px; font-weight: 700; color: #bc2525; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
                             i.fa-solid.fa-triangle-exclamation
                             | Zgłoszenia nadużyć i moderacja treści
-                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; transform: rotate(180deg);")
+                        div(style="display: flex; align-items: center; gap: 12px;")
+                            span(style="background: #fff3f3; color: #bc2525; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #f5c6cb;") #{reports.length}
+                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; transform: rotate(180deg);")
                     .accordion-content(style="display: block; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
                         include partials/abuse.pug
 
@@ -41,7 +32,9 @@ block content
                         h3(style="font-size: 16px; font-weight: 700; color: #1877f2; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
                             i.fa-solid.fa-bank
                             | Oczekujące przelewy uwierzytelniające
-                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                        div(style="display: flex; align-items: center; gap: 12px;")
+                            span(style="background: #e7f3ff; color: #1877f2; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #dddfe2;") #{pendingUsers.length}
+                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
                     .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
                         include partials/verify-user.pug
                 
@@ -51,7 +44,9 @@ block content
                         h3(style="font-size: 16px; font-weight: 700; color: #2d3748; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
                             i.fa-solid.fa-users
                             | Rejestr i aktywność użytkowników
-                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                        div(style="display: flex; align-items: center; gap: 12px;")
+                            span(style="background: #f0f2f5; color: #4a5568; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #e4e6eb;") #{systemUsers.length}
+                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
                     .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
                         include partials/admin-users.pug
 
@@ -61,6 +56,8 @@ block content
                         h3(style="font-size: 16px; font-weight: 700; color: #4a5568; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
                             i.fa-solid.fa-scroll
                             | Logi operacyjne i audyt użycia AI
-                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                        div(style="display: flex; align-items: center; gap: 12px;")
+                            span(style="background: #f0f2f5; color: #4a5568; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #e4e6eb;") #{logs.length}
+                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
                     .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
                         include partials/admin-logs.pug

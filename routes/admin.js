@@ -24,7 +24,6 @@ module.exports = express
   )
   .post("/verify-user/:userId/reject", postAdminRejectUser)
   .delete("/topics/:topicId", postDeleteAiTopic);
-// routes/admin.js - Utrwalona funkcja main
 
 async function main(req, res) {
   try {
@@ -38,15 +37,14 @@ async function main(req, res) {
       verificationTransferStatus: "processing",
     }).lean();
 
-    // POPRAWKA: Pobieramy cały obiekt relacji userId, aby gołe _id było dostępne w partialu logs.pug
     const logs = await SystemLog.find({})
       .sort({ createdAt: -1 })
       .limit(50)
-      .populate("userId") // Dynamiczne złączenie bez restrykcji polowych
+      .populate("userId")
       .lean();
 
     // =========================================================================
-    // ZINTEGROWANE MAPOWANIE LOGÓW: Przekazywanie referencji obiektu i formatu Name@IP
+    // MODYFIKACJA: Rozdzielenie nazwy użytkownika od adresu IP
     // =========================================================================
     const formattedLogs = logs.map((log) => {
       const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
@@ -54,19 +52,19 @@ async function main(req, res) {
 
       if (log.userId) {
         const currentName = log.userId.name || "Użytkownik";
-        const shortId = String(log.userId._id).substring(18); // Końcówka ID do wyświetlenia w nawiasie
+        const shortId = String(log.userId._id).substring(18);
         displayUser = `${currentName} (${shortId})`;
       }
 
       return {
         createdAt: log.createdAt,
-        userId: log.userId, // Przekazujemy pełny dokument (zawiera log.userId._id) do widoku Pug
-        userDisplayName: `${displayUser}@${ip}`, // Wygenerowany ciąg tekstowy
+        userId: log.userId,
+        userDisplayName: displayUser, // Tylko tożsamość
+        ipAddress: ip,               // IP w osobnym polu
         action: log.action,
       };
     });
 
-    // --- Agregacja pełnych statystyk użytkowników dla administratora ---
     const usersStats = await User.aggregate([
       {
         $lookup: {
@@ -83,7 +81,6 @@ async function main(req, res) {
           alias: 1,
           aiBlockedSafetyCount: { $ifNull: ["$aiBlockedSafetyCount", 0] },
           aiBlockedFactCheckCount: { $ifNull: ["$aiBlockedFactCheckCount", 0] },
-          // Zliczanie postów według kategorii widoczności
           publicCount: {
             $size: {
               $filter: {
@@ -116,7 +113,6 @@ async function main(req, res) {
               },
             },
           },
-          // Sumowanie wszystkich polubień (gwiazdek) na postach użytkownika
           totalStars: {
             $reduce: {
               input: "$userPosts",
@@ -131,7 +127,7 @@ async function main(req, res) {
           },
         },
       },
-      { $sort: { name: 1 } }, // Sortowanie alfabetyczne po nazwie
+      { $sort: { name: 1 } },
     ]);
 
     res.render("admin", {
@@ -139,7 +135,7 @@ async function main(req, res) {
       reports: reports || [],
       pendingUsers: pendingUsers || [],
       logs: formattedLogs || [],
-      systemUsers: usersStats || [], // Przekazanie statystyk do widoku
+      systemUsers: usersStats || [],
       currentTab: "admin",
       queryError: req.query.error || null,
       queryMsg: req.query.msg || null,
