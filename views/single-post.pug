@@ -105,8 +105,8 @@ block content
                 //- IMPLEMENTACJA ZASADY DRY: Włączenie wydzielonego szablonu przycisków i komentarzy stopki
                 include partials/post-footer.pug
         
-            //- POPRAWIONO: Myślnik przed instrukcją prawidłowo wykonuje kod JavaScript w Pug zamiast go renderować jako tekst
-            div(style="display: none;")
+            //Edutor polemiki
+            .article-reply-editor-container(style="margin-top: 32px; border-top: 1px dashed #e4e6eb; padding-top: 24px;")
                 include partials/create-post.pug
                 
         //- Uniwersalne okno powiększenia zdjęcia (Lightbox Image Modal)

@@ -291,11 +291,20 @@ body {
   gap: 24px;
   max-width: 1424px;
   margin: 0 auto;
-  padding: 20px 16px;
+  padding: 16px 16px; /* Zmniejszony górny padding z 20px na 16px dla lepszego dosunięcia */
   width: 100%;
   flex: 1 0 auto;
+  
+  /* KRYTYCZNA POPRAWKA: Blokujemy pionowe rozciąganie i centrowanie kolumn.
+     Wszystkie panele i główny feed będą idealnie przyklejone do góry, tuż pod promptem. */
+  align-items: start !important;
 }
 
+/* Dodatkowe zabezpieczenie dla wyśrodkowanego feedu gościa */
+main.feed[style*="grid-column"] {
+  margin-top: 0px !important;
+  padding-top: 0px !important;
+}
 .left-sidebar,
 .right-sidebar {
   position: sticky;
@@ -1165,6 +1174,24 @@ body {
 .lightbox-close:hover {
   color: var(--color-accent, #e5a93c);
 }
+
+/* 
+   Likwidacja nadmiarowej przestrzeni pionowej między promptem logowania 
+   a strumieniem artykułów dla niezalogowanego gościa 
+*/
+.page-main-content:has(.login-prompt) + .main-container,
+.page-main-content:has(div[style*="text-align: center"]) .main-container {
+  padding-top: 4px !important;
+}
+
+/* Dostosowanie samego bloku feed w trybie niezalogowanym */
+.main-container > main.feed[style*="grid-column"] {
+  margin-top: 0px !important;
+  padding-top: 0px !important;
+}
+
+
+
 @keyframes lightboxFadeIn {
   from {
     opacity: 0;
@@ -1231,5 +1258,278 @@ body {
   }
   #visibility-select-node {
     width: 100%;
+  }
+   .post-card:not(:has(form)),
+   .accordion-item:not(:has(form)),
+  .login-prompt {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0px !important;
+    border-left: none !important;
+    border-right: none !important;
+    padding: 12px 16px !important;
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    box-shadow: 0 1px 0px rgba(0, 0, 0, 0.08) !important;
+  }
+  .create-post:has(form),
+  .post-card:has(form),
+  .login-box {
+    width: calc(100% - 16px) !important;
+    margin-left: 8px !important;
+    margin-right: 8px !important;
+    border-radius: 8px !important;
+  }
+    .main-container {
+    display: block !important;
+    padding: 12px 0px !important;
+    gap: 12px !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+  }
+
+  .left-sidebar,
+  .right-sidebar,
+  .nav-center {
+    display: none;
+  }
+    .post-card:not(:has(form)),
+  .accordion-item:not(:has(form)),
+  .login-prompt {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0px !important;
+    border: none !important; /* Usuwa pionowe i poziome ramki wokół postów */
+    padding: 16px 16px !important; /* Lekko podniesiony padding dla lepszej czytelności tekstu */
+    margin-left: 0px !important;
+    margin-right: 0px !important;
+    margin-top: 0px !important;    /* Likwiduje szary pasek nad postem */
+    margin-bottom: 0px !important; /* Likwiduje szary pasek pod postem */
+    box-shadow: none !important;   /* Usuwa delikatny cień, który tworzył efekt odcięcia segmentów */
+    border-bottom: 1px solid #f0f2f5 !important; /* Opcjonalnie: zostawia minimalną, płaską linię 1px między postami */
+  }
+
+  /* Upewniamy się, że sam kontener strumienia nie dodaje zbędnych przerw */
+  main.feed, 
+  .accordion-container, 
+  #accordion-posts-wrapper {
+    gap: 0px !important; /* Likwiduje odstępy flex/grid pomiędzy kolejnymi boksami wpisów */
+  }
+
+  /* 
+     Zapewniamy elastyczne odklejenie boksów zawierających formularze (tworzenie postów), 
+     aby były czytelne, ale nie tworzyły gigantycznych dziur w tle
+  */
+  .create-post:has(form),
+  .post-card:has(form),
+  .login-box {
+    width: calc(100% - 16px) !important;
+    margin: 8px auto !important; /* Centruje boks formularza z minimalnym odstępem pionowym */
+    border-radius: 8px !important;
+    border: 1px solid #e4e6eb !important;
+  }
+    /* 1. Zerujemy globalne tło i paddingi głównego kontenera, aby nic nie rozpychało osi */
+  body {
+    max-width: 100vw;
+    overflow-x: hidden;
+    background-color: #ffffff !important; /* Zamieniamy szare tło aplikacji na czystą biel na telefonach */
+  }
+
+  .main-container {
+    display: block !important;
+    padding: 0px !important; /* Całkowity brak marginesów wewnętrznych w pionie i poziomie */
+    margin: 0px !important;
+    gap: 0px !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+  }
+
+  /* 2. Likwidujemy absolutnie wszelkie odstępy pionowe z kontenerów grupujących */
+  main.feed, 
+  .accordion-container, 
+  #accordion-posts-wrapper,
+  .profile-feed,
+  .profile-body-layout {
+    gap: 0px !important;
+    margin: 0px !important;
+    padding: 0px !important;
+    display: block !important;
+  }
+
+  /* 3. Bezwzględne wyzerowanie odstępów dla wszystkich kart i segmentów informacyjnych */
+  .post-card,
+  .accordion-item,
+  .login-prompt,
+  .info-box,
+  .comment-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 0px !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 16px 16px !important;
+    margin: 0px !important; /* Drastyczne cięcie: usuwa wszelkie pionowe i poziome marginesy */
+  }
+
+  /* Dodajemy płaską, elegancką linię separacyjną 1px, aby teksty nie zlały się chaotycznie */
+  .post-card:not(:last-child),
+  .accordion-item:not(:last-child) {
+    border-bottom: 1px solid #e4e6eb !important; 
+  }
+
+  /* 4. Kontrola boksów z formularzami (np. rejestracja, logowanie), aby nie tworzyły dziur */
+  .create-post:has(form),
+  .login-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0px !important;
+    padding: 16px !important;
+    border-radius: 0px !important;
+    border: none !important;
+    border-bottom: 2px solid #e4e6eb !important;
+  }
+
+  .left-sidebar,
+  .right-sidebar,
+  .nav-center {
+    display: none !important;
+  }
+    .login-container {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-top: 16px !important;    /* Drastyczne zmniejszenie przerwy powyżej formularza */
+    margin-bottom: 16px !important; /* Bezpieczny odstęp od dolnej strefy/stopki */
+    padding: 0 16px !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  /* 
+     Dopasowanie boksu logowania: Usuwamy sztywne podbicia cieni, 
+     redukujemy paddingi pionowe, aby formularz stał się bardziej kompaktowy.
+  */
+  .login-box {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+    padding: 24px 20px !important; /* Zmniejszony padding wewnętrzny dla oszczędności miejsca */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important; /* Subtelniejszy cień */
+    border: 1px solid #e4e6eb !important;
+    border-radius: 8px !important; /* Przywracamy estetyczny wygląd dedykowanej karty logowania */
+  }
+
+  /* Kompaktowe pola formularza */
+  .login-box input {
+    padding: 11px 14px !important; /* Nieco niższe pola wejściowe */
+    margin-bottom: 10px !important;
+  }
+
+  .login-box hr {
+    margin: 14px 0 !important; /* Mniejsza linia podziału */
+  }
+
+  /* Obrazek brandingowy/logo wewnątrz formularza */
+  .login-branding,
+  .login-container > .login-box:first-child:has(img:not(.login-submit)) {
+    display: none !important;
+  }
+
+  /* Zapewniamy, że wyświetla się wyłącznie właściwy boks z polami formularza */
+  .login-box {
+    width: 100% !important;
+    max-width: 400px !important;
+    margin: 0 auto !important;
+    padding: 24px 20px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    border: 1px solid #e4e6eb !important;
+    border-radius: 8px !important;
+  }
+    /* 
+     OPTYMALIZACJA FORMULARZA EDYCJI I TWORZENIA POSTÓW:
+     Maksymalnie rozciągamy obszar formularza do krawędzi, eliminując puste przestrzenie.
+  */
+  .create-post form,
+  .post-inline-edit-mode form {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important; /* Zmniejszony odstęp pionowy między elementami formularza */
+  }
+
+  /* Zacieśnienie odstępu nad polami wyboru widoczności i ostrzeżeniami */
+  .create-post form > div:first-child,
+  .post-inline-edit-mode form > div:first-child {
+    margin-bottom: 4px !important;
+    padding: 0 4px !important;
+  }
+
+  /* 
+     POLE TYTUŁU:
+     Zmniejszamy margines dolny oraz wewnętrzne paddingi, 
+     aby nie wypychać edytora tekstu w dół ekranu.
+  */
+  .edit-title-field {
+    width: 100% !important;
+    padding: 8px 10px !important; /* Mniejszy padding wewnątrz pola tytułu */
+    margin-bottom: 2px !important; /* Minimalny odstęp od edytora */
+    font-size: 15px !important;
+    border-radius: 4px !important;
+  }
+
+  /* 
+     PASEK NARZĘDZIOWY QUILL (TOOLBAR):
+     Zmniejszamy wewnętrzne odstępy między ikonkami formatowania, 
+     dzięki czemu zajmuje on mniej linii w pionie na wąskich ekranach.
+  */
+  .create-post .ql-toolbar.ql-snow,
+  .post-inline-edit-mode .ql-toolbar.ql-snow {
+    padding: 4px 6px !important;
+    margin: 0 !important;
+    border-top-left-radius: 0px !important;
+    border-top-right-radius: 0px !important;
+    border-left: none !important;
+    border-right: none !important;
+  }
+  
+  .create-post .ql-toolbar .ql-formats,
+  .post-inline-edit-mode .ql-toolbar .ql-formats {
+    margin-right: 6px !important;
+  }
+
+  /* 
+     GŁÓWNE POLE WPISYWANIA TEKSTU (QUILL CONTAINER):
+     Drastycznie zwiększamy wysokość startową pola i redukujemy marginesy boczne tekstu,
+     aby pisanie na klawiaturze smartfona było komfortowe.
+  */
+  .create-post .ql-container.ql-snow,
+  .post-inline-edit-mode .ql-container.ql-snow {
+    min-height: 220px !important; /* Zwiększona wysokość, by widzieć więcej tekstu podczas pisania */
+    margin: 0 !important;
+    border-bottom-left-radius: 0px !important;
+    border-bottom-right-radius: 0px !important;
+    border-left: none !important;
+    border-right: none !important;
+    font-size: 16px !important; /* Zapobiega automatycznemu przybliżaniu ekranu (zoom) w iOS */
+  }
+
+  /* Redukcja marginesów wewnętrznych samego tekstu w edytorze */
+  .create-post .ql-editor,
+  .post-inline-edit-mode .ql-editor {
+    padding: 8px 10px !important; /* Tekst przysuwa się bliżej krawędzi ekranu smartfona */
+  }
+
+  /* 
+     DOLNY PASEK AKCJI (PRZYCISKI ZAPISZ/ANULUJ/MULTIMEDIA):
+     Zmniejszamy odstępy, by cały formularz zamknął się w zwartej przestrzeni.
+  */
+  .create-post form > div:last-child,
+  .post-inline-edit-mode form > div:last-child {
+    padding: 4px 8px 0 8px !important;
+    margin: 0 !important;
+    width: 100% !important;
   }
 }

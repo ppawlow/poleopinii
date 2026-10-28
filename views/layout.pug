@@ -35,8 +35,10 @@ html(lang="pl")
                 window.env = { 
                     RECAPTCHA_SITE_KEY: "!{RECAPTCHA_SITE_KEY}",
                     useRecaptcha: !{useRecaptcha || false}
-                };                
-        link(rel="stylesheet" href="/css/style.css")
+                };
+        // link(rel="stylesheet" href="/css/style.css")
+        link(rel="stylesheet" href="/css/global.css")
+        link(rel="stylesheet" href="/css/mobile.css")
         link(rel="shortcut icon" href=FAVICON)
         // link(rel="stylesheet" href="https://cloudflare.com")
 
@@ -66,7 +68,7 @@ html(lang="pl")
             
             .nav-right
                 if user
-                    .user-visitcard(style="display: flex; align-items: center; gap: 8px; height: 100%;")
+                    .user-visitcard
                         a.user-nav-link(
                             href=getProfileUrl(user) 
                             style="display:flex; align-items:center; gap:8px; text-decoration:none; color:inherit; height:100%; padding:0 8px;"
@@ -83,23 +85,24 @@ html(lang="pl")
                 
                 include partials/menu.pug
         //Login prompt
-        if !user && currentTab
-            div(style="padding:20px; text-align:center;")
-                h4 Chcesz współtworzyć naszą społeczność? Zapraszamy!
-                    br
-                    a(href="/auth/login" title="Logowanie") Zaloguj się 
-                    | lub 
-                    a(href="/auth/register" title="Rejestracja") Utwórz konto
-
-        //- KRYTYCZNA POPRAWKA: Całą zawartość dynamiczną pakujemy w kontener głównego nurtu
         .page-main-content
+            // Prompt logowania dla gościa (wyświetli się na samej górze, tuż pod navbaru)
+            if !user && currentTab
+                div(style="padding:20px; text-align:center; background: #ffffff; border-bottom: 1px solid var(--color-border);")
+                    h4(style="font-size: 15px; color: #1c1e21; font-family: sans-serif;") Chcesz współtworzyć naszą społeczność? Zapraszamy!
+                        br
+                        a(href="/auth/login" title="Logowanie" style="color: #1877f2; text-decoration: none; font-weight: bold;") Zaloguj się 
+                        |  lub 
+                        a(href="/auth/register" title="Rejestracja" style="color: #42b72a; text-decoration: none; font-weight: bold;") Utwórz konto
+
+            // Właściwa zawartość podstrony (np. wyszukiwarka) wpadnie od razu pod spód
             block content
 
         footer.site-footer
             .footer-container(style="max-width: 1000px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;")
                 div(style="font-size: 13px; color: var(--color-text-muted, #65676b); font-weight: 500;")
                     | © 2026 #{SERVICE_NAME}. Wszelkie prawa zastrzeżone. Wydawca: 
-                    a(href="kooporg.pl") Kooperatywa Pracy Organicznej.
+                    a(href="https://kooporg.pl") Kooperatywa Pracy Organicznej.
                 
                 div(style="display: flex; gap: 20px; align-items: center;")
                     a(href="/regulamin" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.15s;") ⚖️ Regulamin
