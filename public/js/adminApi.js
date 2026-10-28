@@ -285,7 +285,7 @@ $(document).ready(function() {
   if ($('#logsTable').length) {
     $('#logsTable').DataTable({
       language: PolishLanguageConfig,
-      pageLength: 25,
+      pageLength: 10,
       lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "Wszystkie"] ],
       order: [[0, 'desc']] 
     });
