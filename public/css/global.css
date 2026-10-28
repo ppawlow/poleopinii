@@ -968,3 +968,36 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
   gap: 10px;
   width: 100%;
 }
+
+.article-featured-image {
+  float: right;
+  max-width: 40%;
+  width: 300px;
+  margin: 4px 0 16px 24px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.article-featured-image img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+}
+
+/* Zabezpieczenie dla tekstu, aby nie przyklejał się do grafiki */
+.article-text-content {
+  display: block;
+  min-width: 0;
+}
+
+/* KRYTYCZNA POPRAWKA DLA SREDRNICH I MAŁYCH EKRANÓW (RESPONSOWNOŚĆ) */
+@media (max-width: 768px) {
+  .article-featured-image {
+    float: none;       /* Wyłącza opływanie na telefonach */
+    max-width: 100%;   /* Obrazek zajmuje pełną dostępną szerokość */
+    width: 100%;
+    margin: 0 0 20px 0; /* Margines tylko na dole, oddzielający od tekstu */
+  }
+}
