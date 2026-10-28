@@ -271,7 +271,6 @@ async function postUnlockModeratorFlag(req, res) {
   }
 }
 
-// routes/main.js - Poprawny handler postAdminApproveUser
 async function postAdminApproveUser(req, res) {
   const { userId } = req.params;
 
@@ -285,18 +284,17 @@ async function postAdminApproveUser(req, res) {
       .map((e) => e.msg)
       .join(" ");
 
-    // KRYTYCZNA POPRAWKA: Zwracamy status 400 z komunikatem błędu (np. o niepoprawnej sumie kontrolnej)
-    // Dzięki temu front-end natychmiast wyświetli okno modalne administratorowi.
+    // KRYTYCZNA POPRAWKA: Zwracamy status 400 z komunikatem błędu.
+    // Zapobiega to otwieraniu nowej białej karty w przeglądarce.
     return res.status(400).send(errorMsg);
   }
 
-  const { bankAccount } = req.body;
+  const { bankAccount } = req.body; // Zawiera już oczyszczony numer dzięki customSanitizer!
 
   try {
-    // req.body.bankAccount został już w 100% oczyszczony ze spacji przez customSanitizer!
     const cleanAccount = bankAccount;
 
-    // Generujemy nieodwracalny, bezpieczny skrót SHA-256
+    // Generujemy nieodwracalny, bezpieczny skrót SHA-256 z w pełni oczyszczonego numeru
     const hashedAccount = crypto
       .createHash("sha256")
       .update(cleanAccount)
@@ -309,17 +307,14 @@ async function postAdminApproveUser(req, res) {
     });
 
     if (duplicateExists) {
-      // KOREKTA: Zwracamy status 400 również dla duplikatu konta
-      return res
-        .status(400)
-        .send(
-          "Blokada: To konto bankowe było już użyte i przypisane do innego profilu!",
-        );
+      // Zwracamy status 400 również dla duplikatu konta, by wyświetlić to w modalu
+      return res.status(400).send(
+        "Blokada: To konto bankowe było już użyte i przypisane do innego profilu!"
+      );
     }
 
     const targetUser = await User.findById(userId);
-    if (!targetUser)
-      return res.status(404).send("Nie odnaleziono użytkownika.");
+    if (!targetUser) return res.status(404).send("Nie odnaleziono użytkownika.");
 
     // Pozytywna autoryzacja manualna
     targetUser.verificationBankAccount = hashedAccount;
@@ -329,11 +324,11 @@ async function postAdminApproveUser(req, res) {
 
     await createLog(
       req,
-      `[ADMIN - WERYFIKACJA] Zweryfikowano pomyślnie profil: ${targetUser.displayName}`,
+      `[ADMIN - WERYFIKACJA] Zweryfikowano pomyślnie profil: ${targetUser.displayName}`
     );
     await mailer.sendVerificationSuccessEmail(targetUser);
 
-    // Jeśli wszystko poszło pomyślnie, odsyłamy status 200 OK lub robimy standardowe przekierowanie sukcesu
+    // Sukces - tradycyjne przekierowanie z komunikatem
     return res.redirect("/admin?msg=user_approved");
   } catch (err) {
     console.error(err);

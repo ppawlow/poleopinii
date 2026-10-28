@@ -188,3 +188,59 @@ window.executeAbusePanelUnlock = async function (reportId, originalPostId) {
     console.error("Błąd podczas zdejmowania blokady z panelu:", err);
   }
 };
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Globalne nasłuchiwanie na formularze zatwierdzania przelewów weryfikacyjnych
+  document.body.addEventListener("submit", async function (e) {
+    const form = e.target;
+    if (!form || !form.classList.contains("admin-approve-form")) return;
+
+    // Blokujemy domyślne przeładowanie strony formularza synchronicznego
+    e.preventDefault();
+
+    const csrfToken = document
+      .querySelector('meta[name="csrf-token"]')
+      .getAttribute("content");
+      
+    // Pakujemy dane formularza (w tym numer konta z ewentualnymi spacjami)
+    const formData = new URLSearchParams(new FormData(form)).toString();
+
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-CSRF-Token": csrfToken,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        // Jeśli serwer zwrócił redirect po sukcesie (lub status ok), odświeżamy stronę panelu
+        // by wyświetlić zielony banner informacyjny
+        window.location.href = "/admin?msg=user_approved";
+      } else {
+        // Serwer zwrócił status błędu (np. 400 Bad Request przy złej sumie kontrolnej)
+        const errorText = await response.text();
+        
+        // Wywołujemy systemowy Custom Alert Modal zamiast białej strony
+        if (typeof window.Alert === "function") {
+          await window.Alert(
+            `<div style="text-align: left; line-height: 1.4;">
+              <p style="color: #bc2525; font-weight: bold; margin-bottom: 8px;">✕ Błąd autoryzacji rachunku</p>
+              <p>${errorText}</p>
+             </div>`, 
+            "Błąd weryfikacji konta"
+          );
+        } else {
+          alert(`Błąd weryfikacji konta:\n\n${errorText}`);
+        }
+      }
+    } catch (err) {
+      console.error("Błąd sieciowy panelu administratora:", err);
+      if (typeof window.Alert === "function") {
+        window.Alert("Wystąpił krytyczny błąd połączenia sieciowego podczas autoryzacji przelewu.", "Błąd sieci");
+      }
+    }
+  });
+});

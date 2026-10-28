@@ -521,28 +521,23 @@ tools.verifyValidationRules = [
 tools.adminApprovalValidationRules = [
   body("bankAccount")
     .trim()
-    // 1. Akceptujemy spacje - usuwamy je przed dalszą walidacją matematyczną
+    // 1. Akceptujemy spacje - usuwamy je przed dalszą walidacją matematyczną i hashującą
     .customSanitizer((value) => (value || "").replace(/\s+/g, ""))
     .matches(/^\d{26}$/)
-    .withMessage("Numer konta musi składać się z dokładnie 26 cyfr.")
+    .withMessage("Numer konta musi składać się z dokładnie 26 cyfr (spacje są dozwolone).")
     // 2. Walidacja cyfr kontrolnych standardu NRB/IBAN (Modulo 97)
     .custom((accountNumber) => {
       if (!accountNumber || accountNumber.length !== 26) return false;
 
-      // Przekształcamy polski NRB na format międzynarodowy IBAN:
-      // Przepisujemy numer konta, dodając na końcu kod kraju "PL" zamieniony na cyfry (2521)
-      // oraz dwie pierwsze cyfry kontrolne z początku konta.
       const digitsControl = accountNumber.substring(2);
       const countryCode = "2521";
       const firstTwoDigits = accountNumber.substring(0, 2);
-
       const preparedString = digitsControl + countryCode + firstTwoDigits;
 
-      // Algorytm Modulo 97 na bardzo dużych liczbach (BigInt chroni przed utratą precyzji w JS)
       const isChecksumValid = BigInt(preparedString) % 97n === 1n;
       if (!isChecksumValid) {
         throw new Error(
-          "Wprowadzony numer konta bankowego ma niepoprawną sumę kontrolną (błąd cyfr kontrolnych).",
+          "Wprowadzony numer konta bankowego ma niepoprawną sumę kontrolną (błąd cyfr kontrolnych)."
         );
       }
       return true;
