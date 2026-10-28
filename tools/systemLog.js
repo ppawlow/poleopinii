@@ -6,15 +6,18 @@ const logSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId, 
     ref: "User", 
     default: null 
-  }, // Trwałe i niezmienne powiązanie relacyjne
-  fallbackName: { type: String, default: "Gość" }, // Dla Gości lub logów systemowych
+  },
+  fallbackName: { type: String, default: "Gość" },
   action: { type: String, required: true },
   ipAddress: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
+  createdAt: { 
+    type: Date, 
+    default: Date.now,
+    expires: 30 * 24 * 60 * 60 // Automatyczne usuwanie po 30 dniach
+  },
 });
 
 const SystemLog = mongoose.model("SystemLog", logSchema);
-
 async function createLog(req, actionText, explicitIdentifier = null) {
   try {
     const ip = req.ip || "127.0.0.1";

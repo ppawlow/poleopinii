@@ -1,29 +1,43 @@
+// routes/admin.js
 const express = require("express");
 const { ObjectId } = require("mongodb");
 const mailer = require("../tools/mailer");
 const crypto = require("crypto");
-
 const { User, Post, SystemLog, createLog } = require("../tools/db");
-
 const { adminControl } = require("../tools/security");
-
 const { adminApprovalValidationRules } = require("../tools/validation");
 
-//Dostęp tylko dla adminów
 module.exports = express
   .Router()
   .use(adminControl)
   .get("/", main)
+  .get("/logs/api", getLogsApi) // Nowy endpoint dla asynchronicznego selektora daty
   .post("/:reportId/accept", postAcceptAbuseReport)
   .post("/:reportId/reject", postRejectAbuseReport)
   .post("/posts/:postId/unlock", postUnlockModeratorFlag)
-  .post(
-    "/verify-user/:userId/approve",
-    adminApprovalValidationRules,
-    postAdminApproveUser,
-  )
+  .post("/verify-user/:userId/approve", adminApprovalValidationRules, postAdminApproveUser)
   .post("/verify-user/:userId/reject", postAdminRejectUser)
   .delete("/topics/:topicId", postDeleteAiTopic);
+
+// Pomocnicza funkcja formatująca wpis logu prasowego
+function mapLogDocument(log) {
+  const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
+  let displayUser = log.fallbackName || "Gość";
+
+  if (log.userId) {
+    const currentName = log.userId.name || "Użytkownik";
+    const shortId = String(log.userId._id).substring(18);
+    displayUser = `${currentName} (${shortId})`;
+  }
+
+  return {
+    createdAt: log.createdAt,
+    userId: log.userId,
+    userDisplayName: displayUser,
+    ipAddress: ip,
+    action: log.action,
+  };
+}
 
 async function main(req, res) {
   try {
@@ -37,97 +51,29 @@ async function main(req, res) {
       verificationTransferStatus: "processing",
     }).lean();
 
-    const logs = await SystemLog.find({})
+    // DOMYŚLNY FILTR: Ostatnie 24 godziny dla widoku startowego
+    const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const logs = await SystemLog.find({ createdAt: { $gte: twentyFourHoursAgo } })
       .sort({ createdAt: -1 })
-      .limit(50)
       .populate("userId")
       .lean();
 
-    // =========================================================================
-    // MODYFIKACJA: Rozdzielenie nazwy użytkownika od adresu IP
-    // =========================================================================
-    const formattedLogs = logs.map((log) => {
-      const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
-      let displayUser = log.fallbackName || "Gość";
-
-      if (log.userId) {
-        const currentName = log.userId.name || "Użytkownik";
-        const shortId = String(log.userId._id).substring(18);
-        displayUser = `${currentName} (${shortId})`;
-      }
-
-      return {
-        createdAt: log.createdAt,
-        userId: log.userId,
-        userDisplayName: displayUser, // Tylko tożsamość
-        ipAddress: ip,               // IP w osobnym polu
-        action: log.action,
-      };
-    });
+    const formattedLogs = logs.map(mapLogDocument);
 
     const usersStats = await User.aggregate([
-      {
-        $lookup: {
-          from: "posts",
-          localField: "_id",
-          foreignField: "authorId",
-          as: "userPosts",
-        },
-      },
+      { $lookup: { from: "posts", localField: "_id", foreignField: "authorId", as: "userPosts" } },
       {
         $project: {
-          name: 1,
-          email: 1,
-          alias: 1,
+          name: 1, email: 1, alias: 1,
           aiBlockedSafetyCount: { $ifNull: ["$aiBlockedSafetyCount", 0] },
           aiBlockedFactCheckCount: { $ifNull: ["$aiBlockedFactCheckCount", 0] },
-          publicCount: {
-            $size: {
-              $filter: {
-                input: "$userPosts",
-                as: "p",
-                cond: {
-                  $and: [
-                    { $eq: ["$$p.visibility", "public"] },
-                    { $ne: ["$$p.isAbuseReport", true] },
-                  ],
-                },
-              },
-            },
-          },
-          restrictedCount: {
-            $size: {
-              $filter: {
-                input: "$userPosts",
-                as: "p",
-                cond: { $eq: ["$$p.visibility", "restricted"] },
-              },
-            },
-          },
-          privateCount: {
-            $size: {
-              $filter: {
-                input: "$userPosts",
-                as: "p",
-                cond: { $eq: ["$$p.visibility", "private"] },
-              },
-            },
-          },
-          totalStars: {
-            $reduce: {
-              input: "$userPosts",
-              initialValue: 0,
-              in: {
-                $sum: [
-                  "$$value",
-                  { $size: { $ifNull: ["$$this.likedBy", []] } },
-                ],
-              },
-            },
-          },
-        },
+          publicCount: { $size: { $filter: { input: "$userPosts", as: "p", cond: { $and: [{ $eq: ["$$p.visibility", "public"] }, { $ne: ["$$p.isAbuseReport", true] }] } } } },
+          restrictedCount: { $size: { $filter: { input: "$userPosts", as: "p", cond: { $eq: ["$$p.visibility", "restricted"] } } } },
+          privateCount: { $size: { $filter: { input: "$userPosts", as: "p", cond: { $eq: ["$$p.visibility", "private"] } } } },
+          totalStars: { $reduce: { input: "$userPosts", initialValue: 0, in: { $sum: ["$$value", { $size: { $ifNull: ["$$this.likedBy", []] } }] } } }
+        }
       },
-      { $sort: { name: 1 } },
+      { $sort: { name: 1 } }
     ]);
 
     res.render("admin", {
@@ -142,8 +88,40 @@ async function main(req, res) {
       customMsg: req.query.customMsg || null,
     });
   } catch (err) {
-    console.error("Krytyczny błąd funkcji głównej admina:", err);
+    console.error(err);
     res.status(500).send("Błąd serwera.");
+  }
+}
+
+// Handler asynchronicznego API filtrujący po dacie (wybrany dzień od 00:00:00 do 23:59:59)
+async function getLogsApi(req, res) {
+  try {
+    const { date } = req.query;
+    if (!date) return res.status(400).send("Brak parametru daty.");
+
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const logs = await SystemLog.find({
+      createdAt: { $gte: startOfDay, $lte: endOfDay }
+    })
+    .sort({ createdAt: -1 })
+    .populate("userId")
+    .lean();
+
+    const formattedLogs = logs.map(mapLogDocument);
+
+    // Renderujemy partial i odsyłamy czysty kod HTML w formacie JSON
+    req.app.render("partials/admin-logs-rows", { logs: formattedLogs }, (err, html) => {
+      if (err) return res.status(500).send("Błąd generowania wierszy tabeli.");
+      res.json({ success: true, count: formattedLogs.length, html });
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Błąd serwera API logów." });
   }
 }
 
