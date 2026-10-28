@@ -228,13 +228,15 @@ async function getSearchApi(req, res) {
   const query = req.query.q;
   try {
     const cleanQuery = query ? query.trim() : "";
-    
+
     // Jeśli brak parametru, zwracamy pusty HTML
     if (cleanQuery.length === 0) return res.json({ html: "" });
 
     // Zabezpieczenie serwerowe: Odrzucenie prób zapytań krótszych niż 3 znaki
     if (cleanQuery.length < 3) {
-      return res.status(400).send("Fraza wyszukiwania musi składać się z co najmniej 3 znaków.");
+      return res
+        .status(400)
+        .send("Fraza wyszukiwania musi składać się z co najmniej 3 znaków.");
     }
 
     const escapedQuery = cleanQuery.replace(/[.*+?^\${}()|[\]\\]/g, "\\$&");
@@ -262,7 +264,9 @@ async function getSearchApi(req, res) {
         _id: doc._id,
         name: doc.name,
         avatarUrl: doc.avatarUrl || "/uploads/default-avatar.png",
-        bio: doc.bio || "Ten użytkownik nie dodał jeszcze żadnych informacji o sobie.",
+        bio:
+          doc.bio ||
+          "Ten użytkownik nie dodał jeszcze żadnych informacji o sobie.",
         profileUrl: doc.alias ? `/profile/${doc.alias}` : `/profile/${doc._id}`,
       };
 

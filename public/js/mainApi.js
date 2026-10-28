@@ -10,11 +10,14 @@ document.addEventListener("DOMContentLoaded", () => {
       const wrapper =
         document.querySelector(".accordion-container") ||
         document.querySelector("main.feed");
-      
+
       // Warunek walidacji: minimum 3 znaki
       if (queryValue.length < 3) {
         if (typeof window.Alert === "function") {
-          window.Alert("Fraza wyszukiwania musi składać się z co najmniej 3 znaków.", "Wyszukiwanie");
+          window.Alert(
+            "Fraza wyszukiwania musi składać się z co najmniej 3 znaków.",
+            "Wyszukiwanie",
+          );
         }
         return;
       }
@@ -175,7 +178,10 @@ window.sharePost = async function (postId, postTitle) {
       return;
     } catch (err) {
       if (err.name !== "AbortError") {
-        console.warn("Systemowe udostępnianie zgłosiło błąd, uruchamiam fallback modal:", err);
+        console.warn(
+          "Systemowe udostępnianie zgłosiło błąd, uruchamiam fallback modal:",
+          err,
+        );
       } else {
         return;
       }
@@ -190,21 +196,34 @@ window.sharePost = async function (postId, postTitle) {
 
   if (modal && copyInput) {
     copyInput.value = shareUrl;
-    const popupFeatures = "width=600,height=450,resizable=yes,scrollbars=yes,status=no";
+    const popupFeatures =
+      "width=600,height=450,resizable=yes,scrollbars=yes,status=no";
 
     if (fbBtn) {
       fbBtn.onclick = function () {
-        window.open(`https://facebook.com{encodeURIComponent(shareUrl)}`, "_blank", popupFeatures);
+        window.open(
+          `https://facebook.com{encodeURIComponent(shareUrl)}`,
+          "_blank",
+          popupFeatures,
+        );
       };
     }
     if (xBtn) {
       xBtn.onclick = function () {
-        window.open(`https://twitter.com{encodeURIComponent(shareUrl)}&text=${encodeURIComponent(postTitle)}`, "_blank", popupFeatures);
+        window.open(
+          `https://twitter.com{encodeURIComponent(shareUrl)}&text=${encodeURIComponent(postTitle)}`,
+          "_blank",
+          popupFeatures,
+        );
       };
     }
     if (liBtn) {
       liBtn.onclick = function () {
-        window.open(`https://linkedin.com{encodeURIComponent(shareUrl)}`, "_blank", popupFeatures);
+        window.open(
+          `https://linkedin.com{encodeURIComponent(shareUrl)}`,
+          "_blank",
+          popupFeatures,
+        );
       };
     }
 

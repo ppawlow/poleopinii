@@ -536,7 +536,7 @@ tools.adminApprovalValidationRules = [
       const isChecksumValid = BigInt(preparedString) % 97n === 1n;
       if (!isChecksumValid) {
         throw new Error(
-          "Wprowadzony numer konta bankowego ma niepoprawną sumę kontrolną (błąd cyfr kontrolnych)."
+          "Wprowadzony numer konta bankowego ma niepoprawną sumę kontrolną (błąd cyfr kontrolnych).",
         );
       }
       return true;

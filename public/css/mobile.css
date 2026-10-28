@@ -8,44 +8,47 @@
     width: 100%;
     padding: 0;
   }
-  
-  .profile-header-card, .cover-photo-wrapper, .cover-photo {
+
+  .profile-header-card,
+  .cover-photo-wrapper,
+  .cover-photo {
     border-radius: 0;
   }
-  
+
   .profile-header-card {
     margin-bottom: 12px;
   }
-  
+
   .cover-photo-wrapper {
     height: 260px;
   }
-  
+
   .profile-avatar-row {
     padding: 0 16px;
     margin-top: -40px;
   }
-  
+
   .avatar-wrapper {
     width: 130px;
     height: 130px;
   }
-  
-  .profile-body-layout, main.profile-feed {
+
+  .profile-body-layout,
+  main.profile-feed {
     display: block;
     width: 100%;
     max-width: 100%;
     padding: 0;
     margin: 0;
   }
-  
+
   .profile-info-sidebar {
     width: 100%;
     max-width: 100%;
     margin-bottom: 12px;
     padding: 0 8px;
   }
-  
+
   main.profile-feed .accordion-container,
   main.profile-feed #accordion-posts-wrapper {
     width: 100%;
@@ -53,8 +56,9 @@
     padding: 0;
     margin: 0;
   }
-  
-  .main-container, .editorial-article {
+
+  .main-container,
+  .editorial-article {
     margin-top: 0;
     margin-bottom: 0;
   }
@@ -68,7 +72,12 @@
   }
 
   /* Ukrywanie zbędnych elementów na telefonach */
-  .left-sidebar, .right-sidebar, .nav-center, .login-branding, .fb-navbar .nav-right .user-nav-link, .user-visitcard {
+  .left-sidebar,
+  .right-sidebar,
+  .nav-center,
+  .login-branding,
+  .fb-navbar .nav-right .user-nav-link,
+  .user-visitcard {
     display: none !important;
   }
 
@@ -118,7 +127,11 @@
   }
 
   /* Likwidacja przerw między postami w strumieniu */
-  main.feed, .accordion-container, #accordion-posts-wrapper, .profile-feed, .profile-body-layout {
+  main.feed,
+  .accordion-container,
+  #accordion-posts-wrapper,
+  .profile-feed,
+  .profile-body-layout {
     gap: 0;
     margin: 0;
     padding: 0;
@@ -126,7 +139,11 @@
   }
 
   /* Płaskie posty (krawędź do krawędzi) */
-  .post-card, .accordion-item, .login-prompt, .info-box, .comment-card {
+  .post-card,
+  .accordion-item,
+  .login-prompt,
+  .info-box,
+  .comment-card {
     width: 100%;
     max-width: 100%;
     border-radius: 0;
@@ -136,12 +153,14 @@
     margin: 0;
   }
 
-  .post-card:not(:last-child), .accordion-item:not(:last-child) {
+  .post-card:not(:last-child),
+  .accordion-item:not(:last-child) {
     border-bottom: 1px solid #e4e6eb;
   }
 
   /* Formularze tworzenia i edycji jako odrębne sekcje */
-  .create-post:has(form), .login-box {
+  .create-post:has(form),
+  .login-box {
     width: 100%;
     max-width: 100%;
     margin: 0;
@@ -152,7 +171,8 @@
   }
 
   /* Optymalizacja samego formularza i edytora tekstu */
-  .create-post form, .post-inline-edit-mode form {
+  .create-post form,
+  .post-inline-edit-mode form {
     padding: 0;
     margin: 0;
     width: 100%;
@@ -161,7 +181,8 @@
     gap: 6px;
   }
 
-  .create-post form > div:first-child, .post-inline-edit-mode form > div:first-child {
+  .create-post form > div:first-child,
+  .post-inline-edit-mode form > div:first-child {
     margin-bottom: 4px;
     padding: 0 4px;
   }
@@ -176,7 +197,8 @@
   }
 
   /* Kompaktowy pasek narzędzi edytora */
-  .create-post .ql-toolbar.ql-snow, .post-inline-edit-mode .ql-toolbar.ql-snow {
+  .create-post .ql-toolbar.ql-snow,
+  .post-inline-edit-mode .ql-toolbar.ql-snow {
     padding: 4px 6px;
     margin: 0;
     border-radius: 0;
@@ -185,13 +207,15 @@
     width: 100%;
     box-sizing: border-box;
   }
-  
-  .create-post .ql-toolbar .ql-formats, .post-inline-edit-mode .ql-toolbar .ql-formats {
+
+  .create-post .ql-toolbar .ql-formats,
+  .post-inline-edit-mode .ql-toolbar .ql-formats {
     margin-right: 6px;
   }
 
   /* Wyższy kontener tekstowy Quill na mobile */
-  .create-post .ql-container.ql-snow, .post-inline-edit-mode .ql-container.ql-snow {
+  .create-post .ql-container.ql-snow,
+  .post-inline-edit-mode .ql-container.ql-snow {
     min-height: 220px;
     margin: 0;
     border-radius: 0;
@@ -202,11 +226,13 @@
     box-sizing: border-box;
   }
 
-  .create-post .ql-editor, .post-inline-edit-mode .ql-editor {
+  .create-post .ql-editor,
+  .post-inline-edit-mode .ql-editor {
     padding: 8px 10px;
   }
 
-  .create-post form > div:last-child, .post-inline-edit-mode form > div:last-child {
+  .create-post form > div:last-child,
+  .post-inline-edit-mode form > div:last-child {
     padding: 4px 8px 0 8px;
     margin: 0;
     width: 100%;
@@ -330,7 +356,7 @@
     background-color: #1877f2 !important;
     color: white !important;
   }
-  
+
   .profile-guest-actions-mobile .profile-block-main-btn {
     background-color: #bc2525 !important;
     color: white !important;

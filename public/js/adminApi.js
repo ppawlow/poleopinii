@@ -199,14 +199,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const csrfToken = document
       .querySelector('meta[name="csrf-token"]')
       .getAttribute("content");
-      
+
     // 1. POBIERAMY SUROWE DANE Z FORMULARZA
     const rawFormData = new FormData(form);
-    
+
     // 2. KRYTYCZNA POPRAWKA: Wyciągamy numer konta, usuwamy z niego WSZYSTKIE spacje w locie
     const rawBankAccount = rawFormData.get("bankAccount") || "";
     const cleanBankAccount = String(rawBankAccount).replace(/\s+/g, "");
-    
+
     // 3. Wstrzykujemy oczyszczony numer z powrotem, aby serwer dostał czyste 26 cyfr
     rawFormData.set("bankAccount", cleanBankAccount);
 
@@ -232,8 +232,8 @@ document.addEventListener("DOMContentLoaded", () => {
             `<div style="text-align: left; line-height: 1.4;">
               <p style="color: #bc2525; font-weight: bold; margin-bottom: 8px;">✕ Błąd autoryzacji rachunku</p>
               <p>${errorText}</p>
-             </div>`, 
-            "Błąd weryfikacji konta"
+             </div>`,
+            "Błąd weryfikacji konta",
           );
         } else {
           alert(`Błąd weryfikacji konta:\n\n${errorText}`);
@@ -242,13 +242,16 @@ document.addEventListener("DOMContentLoaded", () => {
     } catch (err) {
       console.error("Błąd sieciowy panelu administratora:", err);
       if (typeof window.Alert === "function") {
-        window.Alert("Wystąpił krytyczny błąd połączenia sieciowego podczas autoryzacji przelewu.", "Błąd sieci");
+        window.Alert(
+          "Wystąpił krytyczny błąd połączenia sieciowego podczas autoryzacji przelewu.",
+          "Błąd sieci",
+        );
       }
     }
   });
 });
 
-$(document).ready(function() {
+$(document).ready(function () {
   const PolishLanguageConfig = {
     processing: "Trwa przetwarzanie...",
     search: "Szukaj:",
@@ -263,41 +266,50 @@ $(document).ready(function() {
       first: "Pierwsza",
       previous: "Poprzednia",
       next: "Następna",
-      last: "Ostatnia"
+      last: "Ostatnia",
     },
     aria: {
       sortAscending: ": aktywuj, by posortować kolumnę rosnąco",
-      sortDescending: ": aktywuj, by posortować kolumnę malejąco"
-    }
+      sortDescending: ": aktywuj, by posortować kolumnę malejąco",
+    },
   };
 
   // Inicjalizacja tabeli użytkowników
-  if ($('#usersTable').length) {
-    $('#usersTable').DataTable({
+  if ($("#usersTable").length) {
+    $("#usersTable").DataTable({
       language: PolishLanguageConfig,
       pageLength: 10,
-      lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "Wszystkie"] ],
-      order: [[0, 'asc']] 
+      lengthMenu: [
+        [10, 25, 50, -1],
+        [10, 25, 50, "Wszystkie"],
+      ],
+      order: [[0, "asc"]],
     });
   }
 
   // Inicjalizacja tabeli logów systemowych
-  if ($('#logsTable').length) {
-    $('#logsTable').DataTable({
+  if ($("#logsTable").length) {
+    $("#logsTable").DataTable({
       language: PolishLanguageConfig,
       pageLength: 10,
-      lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "Wszystkie"] ],
-      order: [[0, 'desc']] 
+      lengthMenu: [
+        [10, 25, 50, 100, -1],
+        [10, 25, 50, 100, "Wszystkie"],
+      ],
+      order: [[0, "desc"]],
     });
   }
-    // Fix szerokości kolumn DataTables po rozwinięciu ukrytego akordeonu
-  $('.accordion-header[data-table-trigger]').on('click', function() {
-    const tableId = $(this).data('table-trigger');
-    
+  // Fix szerokości kolumn DataTables po rozwinięciu ukrytego akordeonu
+  $(".accordion-header[data-table-trigger]").on("click", function () {
+    const tableId = $(this).data("table-trigger");
+
     // Dajemy 5ms opóźnienia, aby kontener zdążył zmienić display na 'block'
     setTimeout(() => {
-      if ($.fn.DataTable.isDataTable('#' + tableId)) {
-        $('#' + tableId).DataTable().columns.adjust().responsive.recalc();
+      if ($.fn.DataTable.isDataTable("#" + tableId)) {
+        $("#" + tableId)
+          .DataTable()
+          .columns.adjust()
+          .responsive.recalc();
       }
     }, 5);
   });

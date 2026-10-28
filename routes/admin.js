@@ -43,13 +43,21 @@ async function main(req, res) {
       .limit(50)
       .lean();
 
-    const formattedLogs = logs.map((log) => ({
-      createdAt: log.createdAt,
-      userDisplayName: log.email || "Gość",
-      action: log.action,
-    }));
+    // =========================================================================
+    // INTEGRACJA: Dynamiczne formatowanie i łączenie Podmiotu z adresem IP
+    // =========================================================================
+    const formattedLogs = logs.map((log) => {
+      const userIdentifier = log.email ? log.email.trim() : "Gość";
+      const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
 
-    // --- NOWOŚĆ: Agregacja pełnych statystyk użytkowników dla administratora ---
+      return {
+        createdAt: log.createdAt,
+        userDisplayName: `${userIdentifier}@${ip}`, // Format: user@1.2.3.4
+        action: log.action,
+      };
+    });
+
+    // --- Agregacja pełnych statystyk użytkowników dla administratora ---
     const usersStats = await User.aggregate([
       {
         $lookup: {
@@ -121,14 +129,14 @@ async function main(req, res) {
       reports: reports || [],
       pendingUsers: pendingUsers || [],
       logs: formattedLogs || [],
-      systemUsers: usersStats || [], // <-- PRZEKAZANIE STATYSTYK DO WIDOKU
+      systemUsers: usersStats || [], // Przekazanie statystyk do widoku
       currentTab: "admin",
       queryError: req.query.error || null,
       queryMsg: req.query.msg || null,
       customMsg: req.query.customMsg || null,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Krytyczny błąd funkcji głównej admina:", err);
     res.status(500).send("Błąd serwera.");
   }
 }
@@ -274,7 +282,7 @@ async function postUnlockModeratorFlag(req, res) {
 async function postAdminApproveUser(req, res) {
   const { userId } = req.params;
 
-  // KRYTYCZNA POPRAWKA: Ręcznie usuwamy wszystkie spacje z req.body.bankAccount 
+  // KRYTYCZNA POPRAWKA: Ręcznie usuwamy wszystkie spacje z req.body.bankAccount
   // ZANIM express-validator w ogóle go dotknie i zacznie walidować.
   if (req.body && req.body.bankAccount) {
     req.body.bankAccount = String(req.body.bankAccount).replace(/\s+/g, "");
@@ -293,7 +301,7 @@ async function postAdminApproveUser(req, res) {
     return res.status(400).send(errorMsg);
   }
 
-  const { bankAccount } = req.body; 
+  const { bankAccount } = req.body;
 
   try {
     const cleanAccount = bankAccount;
@@ -311,13 +319,16 @@ async function postAdminApproveUser(req, res) {
     });
 
     if (duplicateExists) {
-      return res.status(400).send(
-        "Blokada: To konto bankowe było już użyte i przypisane do innego profilu!"
-      );
+      return res
+        .status(400)
+        .send(
+          "Blokada: To konto bankowe było już użyte i przypisane do innego profilu!",
+        );
     }
 
     const targetUser = await User.findById(userId);
-    if (!targetUser) return res.status(404).send("Nie odnaleziono użytkownika.");
+    if (!targetUser)
+      return res.status(404).send("Nie odnaleziono użytkownika.");
 
     targetUser.verificationBankAccount = hashedAccount;
     targetUser.verificationTransferStatus = "approved";
@@ -326,7 +337,7 @@ async function postAdminApproveUser(req, res) {
 
     await createLog(
       req,
-      `[ADMIN - WERYFIKACJA] Zweryfikowano pomyślnie profil: ${targetUser.displayName}`
+      `[ADMIN - WERYFIKACJA] Zweryfikowano pomyślnie profil: ${targetUser.displayName}`,
     );
     await mailer.sendVerificationSuccessEmail(targetUser);
 
