@@ -4,44 +4,58 @@ block content
     .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
         main.feed
             .create-post(style="padding: 32px 40px; font-family: sans-serif;")
-                h2(style="margin-bottom: 8px; color: #bc2525; font-size: 24px; font-weight: 700;") ⚖️ Regulamin Świadczenia Usług Drogą Elektroniczną
-                p(style="font-size: 13px; color: #65676b; margin-bottom: 24px; font-style: italic;") Ostatnia aktualizacja: 25 października 2026 r.
+                h2(style="text-align:center") 
+                    | Regulamin Świadczenia Usług Drogą Elektroniczną
+                p(style="font-size: 13px; color: #65676b; margin:10px; margin-bottom: 24px; font-style: italic; text-align:center;") 
+                    | Ostatnia aktualizacja: #{lastUpdate}
 
                 .article-text-content(style="font-size: 15px; line-height: 1.6; color: #1c1e21; text-align: justify;")
                     
-                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") § 1. Postanowienia ogólne
-                    p 1. Niniejszy regulamin (dalej: <strong>„Regulamin”</strong>) określa zasady funkcjonowania, warunki korzystania oraz prawa i obowiązki użytkowników platformy publicystyczno-blogowej <strong>„Pole Opinii”</strong> (dalej: <strong>„Serwis”</strong>).
-                    p 2. Właścicielem i administratorem Serwisu jest <strong>Kooperatywa Pracy Organicznej</strong>, wydawca tytułu prasowego platformy.
-                    p 3. Serwis umożliwia użytkownikom przeglądanie treści, publikację własnych artykułów, prowadzenie debat polemicznych, komentowanie oraz ocenianie wpisów innych autorów.
+                    h3 § 1. Postanowienia ogólne
+                    ol
+                        li Niniejszy regulamin określa zasady funkcjonowania, warunki korzystania oraz prawa i obowiązki użytkowników platformy publicystyczno-blogowej <strong>„PoleOpinii.pl”</strong> (dalej: <strong>„Serwis”</strong>).
+                        li Właścicielem i administratorem Serwisu jest <strong>Kooperatywa Pracy Organicznej</strong>, REGON: 545261951, NIP: 9452333584.
+                        li Serwis umożliwia użytkownikom przeglądanie treści, publikację własnych artykułów, prowadzenie debat polemicznych, komentowanie oraz ocenianie wpisów innych autorów.
 
-                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") § 2. Definicje
-                    p 1. <strong>Użytkownik</strong> – każda osoba fizyczna posiadająca pełną zdolność do czynności prawnych, która zarejestrowała konto w Serwisie.
-                    p 2. <strong>Gość</strong> – osoba odwiedzająca Serwis bez uwierzytelnienia, posiadająca dostęp wyłącznie do publicznych zasobów platformy.
-                    p 3. <strong>Profil Zweryfikowany (Wiarygodny Profil)</strong> – konto użytkownika, którego tożsamość została potwierdzona procedurą uwierzytelnienia i manualnie zatwierdzona przez Administratora.
-                    p 4. <strong>Wpis / Artykuł</strong> – treść cyfrowa wraz z załącznikami graficznymi opublikowana przez Użytkownika w strukturach Serwisu.
+                    h3 § 2. Definicje
+                    ol
+                        li <strong>Użytkownik</strong> – każda osoba fizyczna posiadająca pełną zdolność do czynności prawnych, która zarejestrowała konto w Serwisie.
+                        li <strong>Gość</strong> – osoba odwiedzająca Serwis bez uwierzytelnienia, posiadająca dostęp wyłącznie do publicznych zasobów platformy.
+                        li <strong>Profil Zweryfikowany</strong> – konto użytkownika, którego tożsamość została potwierdzona procedurą uwierzytelnienia zatwierdzona przez Administratora Serwisu.
+                        li <strong>Wpis / Artykuł</strong> – treść cyfrowa wraz z załącznikami graficznymi zapisana i opublikowana przez Użytkownika w infrastrukturze Serwisu.
+                        li <strong>Interakcje</strong> - komentarze i polemiki, ocena treści (tzw. lajki) oraz wysyłanie wiadomości prywatnych do innych Użytkowników.
 
-                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") § 3. Rejestracja i Weryfikacja Tożsamości
-                    p 1. Rejestracja konta wymaga podania nazwy profilu (nazwiska lub pseudonimu) oraz adresu e-mail, który podlega walidacji za pomocą unikalnego tokenu bezpieczeństwa.
-                    p 2. Hasło dostępu do konta musi spełniać kryteria bezpieczeństwa określone przez wyrażenie regularne systemu (minimum 8 znaków, mała i duża litera oraz cyfra).
-                    p 3. W celu odblokowania pełnych uprawnień publicystycznych, Użytkownik zobowiązany jest przejść procedurę weryfikacji tożsamości poprzez nadanie zwrotnego przelewu bankowego na kwotę 1.00 PLN z unikalnym kodem identyfikacyjnym sesji.
-                    p 4. Jeden rachunek bankowy może być wykorzystany do uwierzytelnienia wyłącznie jednego unikalnego profilu użytkownika.
+                    h3 § 3. Rejestracja i Weryfikacja Tożsamości
+                    ol
+                        li Rejestracja konta wymaga podania nazwy profilu (nazwiska lub pseudonimu) oraz adresu e-mail, który podlega walidacji za pomocą unikalnego tokenu bezpieczeństwa.
+                        li Hasło dostępu do konta musi spełniać kryteria bezpieczeństwa określone przez wyrażenie regularne systemu (minimum 8 znaków, mała i duża litera oraz cyfra).
+                        li W celu odblokowania pełnych uprawnień publicystycznych, Użytkownik zobowiązany jest przejść procedurę weryfikacji tożsamości poprzez nadanie zwrotnego przelewu bankowego na kwotę 1.00 PLN z unikalnym kodem identyfikacyjnym sesji.
+                        li Jeden rachunek bankowy może być wykorzystany do uwierzytelnienia wyłącznie jednego unikalnego profilu użytkownika.
 
-                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") § 4. Zasady Publikacji i Poziomy Widoczności
-                    p 1. Platforma udostępnia trzy zcentralizowane strefy widoczności wpisów: publiczną (globalną), restricted (dla obserwowanych) oraz prywatną (szkicownik autora).
-                    p 2. Publikowanie niezależnych wpisów o statusie <strong>Publicznym</strong>, dodawanie komentarzy pod postami publicznymi oraz przyznawanie gwiazdek oceny zastrzeżone jest wyłącznie dla Profili Zweryfikowanych.
-                    p 3. Profil niezweryfikowany posiada prawo do publikacji polemik z postami publicznymi wyłącznie w sytuacji, gdy autor oryginalnego tekstu znajduje się na liście obserwowanych profilu niezweryfikowanego. Wpis taki uzyskuje automatycznie wymuszony status <em>restricted</em>.
-                    p 4. Publikując w Serwisie jakiekolwiek utwory, w szczególności materiały graficzne, zdjęcia lub ilustracje (dalej: <strong>„Materiały”</strong>), Użytkownik oświadcza i gwarantuje, że posiada do nich pełne prawa autorskie lub stosowne licencje, a ich publiczne rozpowszechnianie nie narusza praw osób trzecich.
-                    p 5. Z momentem publikacji Materiałów w Serwisie, Użytkownik udziela Serwisowi niewyłącznej, nieodpłatnej, przenoszalnej, sublicencjonowalnej i globalnej licencji na hostowanie, dystrybucję, publiczne wyświetlanie oraz utrzymywanie tych Materiałów w celach technicznych związanych z funkcjonowaniem platformy.
-                    p 6. W przypadku wystąpienia przez osoby trzecie z jakimikolwiek roszczeniami odszkodowawczymi lub prawnymi przeciwko Serwisowi z tytułu naruszenia ich praw autorskich przez Materiały przesłane przez Użytkownika, Użytkownik zobowiązuje się do pełnego zadośćuczynienia i zwolnienia Serwisu z odpowiedzialności (indemnifikacja), w tym do pokrycia wszelkich kosztów procesowych oraz zasądzonych kar.
+                    h3 § 4. Zasady Publikacji i Poziomy Widoczności
+                    ol
+                        li Platforma udostępnia trzy strefy (domeny) widoczności wpisów: publiczną (dostęp ma każdy, kto wejdzie na stronę), zastrzeżoną (dostęp tylko dla użytkowników obserwujących autora) oraz prywatną (szkicownik autora dostępny tylko jemu).
+                        li Publikowanie wpisów o statusie <strong>publicznym</strong>, dodawanie komentarzy pod postami publicznymi oraz przyznawanie gwiazdek (oceny treści publikowanej przez innych autorów) zastrzeżone jest wyłącznie dla Profili Zweryfikowanych.
+                        li Profil niezweryfikowany posiada prawo do publikacji polemik z postami innych autorów wyłącznie w sytuacji, gdy znajduje się on na liście obserwowanych przez autora oryginalnego tekstu.
+                        li Publikując w Serwisie jakiekolwiek utwory, w szczególności materiały graficzne, zdjęcia lub ilustracje (dalej: <strong>„Materiały”</strong>), Użytkownik oświadcza i gwarantuje, że posiada do nich pełne prawa autorskie lub stosowne licencje, a ich publiczne rozpowszechnianie nie narusza praw osób trzecich.
+                        li Z momentem publikacji Materiałów w Serwisie, Użytkownik udziela Serwisowi niewyłącznej, nieodpłatnej, przenoszalnej, sublicencjonowalnej i globalnej licencji na hostowanie, dystrybucję, publiczne wyświetlanie oraz utrzymywanie tych Materiałów w celach technicznych związanych z funkcjonowaniem platformy. Użytkownik ma prawo wycofać Materiały w każdej chwili, co implikuje trwałe usunięcie ich z Serwisu.
+                        li W przypadku wystąpienia przez osoby trzecie z jakimikolwiek roszczeniami odszkodowawczymi lub prawnymi przeciwko Serwisowi z tytułu naruszenia ich praw autorskich przez Materiały przesłane przez Użytkownika, Użytkownik zobowiązuje się do pełnego zadośćuczynienia i zwolnienia Serwisu z odpowiedzialności (indemnifikacja), w tym do pokrycia wszelkich kosztów procesowych oraz zasądzonych kar.
 
-                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") § 5. Automatyczny Audyt AI i Procedura Odwoławcza
-                    p 1. Każda próba upublicznienia treści poddawana jest automatycznemu, dwuetapowemu audytowi za pośrednictwem algorytmów sztucznej inteligencji pod kątem naruszeń polityki bezpieczeństwa oraz błędów faktograficznych (fake-news).
-                    p 2. W przypadku zablokowania wpisu przez filtry AI, Użytkownikowi przysługuje prawo do zgłoszenia asynchronicznego odwołania w celu manualnej weryfikacji tekstu przez zespół moderatorski.
+                    h3 § 5. Automatyczny Audyt AI i Procedura Odwoławcza
+                    ol
+                        li W przypadku publikowania treści w strefie publicznej treść ta poddawana jest automatycznemu audytowi za pośrednictwem algorytmów sztucznej inteligencji pod kątem naruszeń regulaminu i polityki bezpieczeństwa Serwisu, jak również potencjalnych błędów faktograficznych (tzw. fake-news).
+                        li W przypadku zablokowania wpisu przez filtry AI, Użytkownikowi przysługuje prawo do zgłoszenia odwołania w celu weryfikacji tekstu przez zespół moderatorski.
 
-                    h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 24px 0 8px 0; border-bottom: 1px solid #e4e6eb; padding-bottom: 4px;") § 6. Moderacja Społecznościowa i Reżim Obrony (Abuse)
-                    p 1. Każdy Użytkownik ma prawo zgłosić post publiczny naruszający zasady współżycia społecznego, przy czym dane sygnalisty są bezwzględnie anonimizowane przez system.
-                    p 2. Po rejestracji zgłoszenia nadużycia, autorowi zaskarżonego tekstu przysługuje prawo do obrony i publikacji stanowiska przez nieprzerwany okres <strong>3 dni (72 godzin)</strong>. Przed upływem tego czasu interwencja moderatora jest technicznie zablokowana.
-                    p 3. Po upływie okresu wyczekiwania, Administrator podejmuje decyzję o uznaniu zgłoszenia (trwałe zablokowanie widoczności publicznej wpisu) lub jego odrzuceniu.
-
-            div(style="text-align: center; margin-top: 20px; margin-bottom: 40px;")
-                a(href="/" style="text-decoration: none; color: #1877f2; font-weight: 600; font-size: 14px;") Powrót do strony głównej
+                    h3 § 6. Moderacja Społecznościowa i Reżim Obrony (Abuse)
+                    ol
+                        li Każdy Użytkownik Serwisu ma prawo zgłosić nadużycie wobec postu publicznego, naruszającego regulamin lub ogólnie przyjęte zasady współżycia społecznego, przy czym dane sygnalisty są bezwzględnie anonimizowane przez system.
+                        li Po rejestracji zgłoszenia nadużycia, autorowi zaskarżonego tekstu przysługuje prawo do obrony i publikacji stanowiska przez nieprzerwany okres <strong>3 dni (72 godzin)</strong>. Przed upływem tego czasu interwencja moderatora jest technicznie zablokowana.
+                        li Po upływie okresu wyczekiwania, Administrator podejmuje decyzję o uznaniu zgłoszenia (trwałe zablokowanie widoczności publicznej wpisu) lub jego odrzuceniu.
+                        
+                    h3 § 7. Zakazane praktyki i blokada profilu
+                    ol
+                        li Zabrania się zamieszczania w serwisie treści łamiących prawo, jak również noszących znamiona mowy nienawiści, dyskryminacji, wzywania do łamania prawa oraz pornografii.
+                        li Zabrania się umieszczania treści stanowiących reklamę produktów lub usług.
+                        li Zabrania się wykorzystywania cudzego tekstu lub grafiki bez wyraźnego oznaczenia w tekście jego autora, oraz wskazania jego źródła. 
+                        li Zabrania się podszywania się pod innego Użytkownika poprzez ustawienie tej samej nazwy profilu i takiego samego, lub bardzo podobnego, awatara (grafiki wyróżniającej). 
+                        li Moderatorzy Serwisu mogą zdecydować o czasowym zablokowaniu konta użytkownika w przypadku naruszania postanowień Regulaminu. Blokada polega na ograniczeniu Użytkownikowi interakcji z innymi Użytkownikami oraz ograniczeniu widoczności nowych treści do strefy prywatnej.

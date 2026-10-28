@@ -1,4 +1,6 @@
 const express = require("express");
+const path = require("path");
+const fsPromises = require("fs").promises;
 
 const {
   User,
@@ -19,12 +21,8 @@ module.exports = express
   .get("/search", getSearch)
   .get("/search/api", getSearchApi)
   .get("/topics", getTopics)
-  .get("/regulamin", (req, res) =>
-    res.render("terms", { title: "Regulamin platformy" }),
-  )
-  .get("/polityka-prywatnosci", (req, res) =>
-    res.render("privacy", { title: "Polityka prywatności" }),
-  )
+  .get("/regulamin", getTerms)
+  .get("/polityka-prywatnosci",getPrivacy)
 
   // Dostęp tylko dla zalogowanych
   .use(accessControl)
@@ -454,3 +452,39 @@ async function getTopics(req, res) {
     res.status(500).send("Wewnętrzny błąd serwera.");
   }
 }
+
+// Pomocnicza funkcja pobierająca sformatowaną datę modyfikacji pliku widoku
+async function getFileModificationDate(viewName) {
+  try {
+    // Ścieżka do pliku widoku (np. views/terms.pug)
+    const filePath = path.join(__dirname, "../views", `${viewName}.pug`);
+    const stats = await fsPromises.stat(filePath);
+    
+    // Formatowanie daty do polskiego standardu: dd miesiąc rrrr
+    return stats.mtime.toLocaleDateString("pl-PL", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  } catch (err) {
+    console.error(`Błąd odczytu daty pliku ${viewName}:`, err);
+    // Zapasowy fallback na wypadek awarii odczytu pliku
+    return new Date().toLocaleDateString("pl-PL");
+  }
+}
+
+async function getTerms(req, res){
+    const lastUpdate = await getFileModificationDate("terms");
+    res.render("terms", {
+      title: "Regulamin platformy",
+      lastUpdate // Przekazanie dynamicznej daty do Pug
+    });
+}
+
+async function getPrivacy(req, res){
+    const lastUpdate = await getFileModificationDate("privacy");
+    res.render("privacy", {
+      title: "Polityka prywatności",
+      lastUpdate // Przekazanie dynamicznej daty do Pug
+    });
+  }
