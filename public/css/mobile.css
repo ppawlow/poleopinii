@@ -286,3 +286,58 @@
     max-height: 75%;
   }
 }
+/* =========================================================================
+   OPTYMALIZACJA PRZYCISKÓW AKCJI PROFILU DLA SMARTFONÓW
+   ========================================================================= */
+/* =========================================================================
+   OPTYMALIZACJA PRZYCISKÓW AKCJI PROFILU (WŁASNY ORAZ CUDZY) DLA SMARTFONÓW
+   ========================================================================= */
+@media (max-width: 600px) {
+  /* Blok akcji własnych ORAZ blok akcji na cudzym profilu */
+  .profile-actions-mobile,
+  .profile-guest-actions-mobile {
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
+    margin-left: 0 !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Ukrywanie etykiet tekstowych w obu widokach */
+  .profile-actions-mobile .btn-text,
+  .profile-guest-actions-mobile .btn-text {
+    display: none !important;
+  }
+
+  /* Transformacja wszystkich przycisków w okrągłe bąbelki dotykowe */
+  .profile-actions-mobile .upload-action-btn,
+  .profile-guest-actions-mobile button,
+  .profile-guest-actions-mobile .profile-block-main-btn,
+  .profile-guest-actions-mobile .restricted-feature-trigger {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 50% !important;
+    font-size: 18px !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Zachowanie unikalnych kolorów ułatwiających identyfikację akcji dyskusyjnych */
+  .profile-guest-actions-mobile .profile-follow-btn {
+    background-color: #1877f2 !important;
+    color: white !important;
+  }
+  
+  .profile-guest-actions-mobile .profile-block-main-btn {
+    background-color: #bc2525 !important;
+    color: white !important;
+  }
+
+  .profile-guest-actions-mobile button[style*="background-color: #42b72a"] {
+    background-color: #42b72a !important;
+    color: white !important;
+  }
+}
