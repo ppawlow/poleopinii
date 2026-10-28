@@ -277,9 +277,9 @@ $(document).ready(function() {
   if ($('#usersTable').length) {
     $('#usersTable').DataTable({
       language: PolishLanguageConfig,
-      pageLength: 10, // Domyślna liczba wierszy na stronę
-      lengthMenu:,
-      order: [[0, 'asc']] // Domyślne sortowanie po pierwszej kolumnie (Alfabetycznie po nazwie)
+      pageLength: 10,
+      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Wszystkie"]], // <-- NAPRAWIONE
+      order: [[0, 'asc']] 
     });
   }
 
@@ -287,9 +287,9 @@ $(document).ready(function() {
   if ($('#logsTable').length) {
     $('#logsTable').DataTable({
       language: PolishLanguageConfig,
-      pageLength: 25, // Logi bywają długie, ustawiamy domyślnie 25 wierszy
-      lengthMenu:,
-      order: [[0, 'desc']] // Domyślne sortowanie po pierwszej kolumnie malejąco (Najnowsze logi na górze)
+      pageLength: 25,
+      lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Wszystkie"]], // <-- NAPRAWIONE
+      order: [[0, 'desc']] 
     });
   }
 });
