@@ -19,18 +19,48 @@ block append head
 block content
     .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
         main.feed
-            .create-post(style="padding: 24px;")
-                h2(style="margin-bottom: 12px; color: #bc2525; font-size: 22px; font-weight: 700;") ⚖️ Panel Zarządzania Systemem (Centrum Administracji)
-                p(style="font-size: 14px; color: #65676b; margin-bottom: 24px;") Poniżej znajduje się zestawienie zgłoszeń nadużyć oraz procesów weryfikacji tożsamości społeczności platformy.
+            .create-post(style="padding: 24px; margin-bottom: 8px;")
+                h2(style="margin-bottom: 4px; color: #bc2525; font-size: 22px; font-weight: 700;") ⚖️ Panel Zarządzania Systemem (Centrum Administracji)
+                p(style="font-size: 14px; color: #65676b; margin-bottom: 0;") Zarządzaj zgłoszeniami nadużyć, procesami uwierzytelniania, użytkownikami oraz logami bezpieczeństwa.
 
-                //- INKLUDOWANIE PANELU ZGŁOSZEŃ NADUŻYĆ (abuse.pug)
-                include partials/abuse.pug
-
-                //- INKLUDOWANIE PANELU WERYFIKACJI UŻYTKOWNIKÓW (verify-user.pug posiada już wbudowane komunikaty)
-                include partials/verify-user.pug
+            .accordion-container(style="display: flex; flex-direction: column; gap: 12px; width: 100%;")
                 
-                //- INTEGRACJA SEGMENTU REJESTRU I STATYSTYK UŻYTKOWNIKÓW
-                include partials/admin-users.pug
+                //- 1. PANEL ZGŁOSZEŃ NADUŻYĆ (Domyślnie otwarty - najwyższy priorytet)
+                .post-card.accordion-item(id="admin-panel-abuse" style="padding: 0; overflow: hidden;")
+                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;")
+                        h3(style="font-size: 16px; font-weight: 700; color: #bc2525; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
+                            i.fa-solid.fa-triangle-exclamation
+                            | Zgłoszenia nadużyć i moderacja treści
+                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; transform: rotate(180deg);")
+                    .accordion-content(style="display: block; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
+                        include partials/abuse.pug
 
-                //- INKLUDOWANIE PODWIDOKU LOGÓW OPERACYJNYCH I AUDYTU ZUŻYCIA AI (logs.pug)
-                include partials/admin-logs.pug
+                //- 2. PANEL OCZEKUJĄCYCH PRZELEWÓW
+                .post-card.accordion-item(id="admin-panel-verify" style="padding: 0; overflow: hidden;")
+                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;")
+                        h3(style="font-size: 16px; font-weight: 700; color: #1877f2; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
+                            i.fa-solid.fa-bank
+                            | Oczekujące przelewy uwierzytelniające
+                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
+                        include partials/verify-user.pug
+                
+                //- 3. REJESTR I STATYSTYKI UŻYTKOWNIKÓW
+                .post-card.accordion-item(id="admin-panel-users" style="padding: 0; overflow: hidden;")
+                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;" data-table-trigger="usersTable")
+                        h3(style="font-size: 16px; font-weight: 700; color: #2d3748; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
+                            i.fa-solid.fa-users
+                            | Rejestr i aktywność użytkowników
+                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
+                        include partials/admin-users.pug
+
+                //- 4. REJESTR ZDARZEŃ SYSTEMOWYCH i AUDYT API
+                .post-card.accordion-item(id="admin-panel-logs" style="padding: 0; overflow: hidden;")
+                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;" data-table-trigger="logsTable")
+                        h3(style="font-size: 16px; font-weight: 700; color: #4a5568; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
+                            i.fa-solid.fa-scroll
+                            | Logi operacyjne i audyt użycia AI
+                        i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
+                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
+                        include partials/admin-logs.pug
