@@ -12,9 +12,19 @@ if logs && logs.length > 0
                     tr(style=`border-bottom: 1px solid #e4e6eb; background: ${isAiLog ? '#f7faff' : '#ffffff'}; transition: background 0.15s;`)
                         td(style="padding: 12px 16px; color: #65676b; white-space: nowrap;") 
                             | #{new Date(log.createdAt).toLocaleString('pl-PL')}
-                        //- DODANO: styl font-family: monospace ułatwiający skanowanie wzrokiem adresów IP
-                        td(style=`padding: 12px 16px; font-weight: 600; font-family: monospace; color: ${isAiLog ? '#1877f2' : '#1c1e21'}; white-space: nowrap;`) 
-                            | #{log.userDisplayName}
+                        
+                        td(style=`padding: 12px 16px; font-weight: 600; font-family: monospace; color: ${isAiLog ? '#1877f2' : '#1c1e21'}; white-space: nowrap;`)
+                            if log.userId
+                                //- Pobieramy surową nazwę i końcówkę ID, dzieląc tekst wygenerowany w routes/admin.js
+                                - var parts = log.userDisplayName.split('@')
+                                - var nameAndId = parts[0]
+                                - var ipAddress = parts[1]
+                                
+                                a(href=getProfileUrl({ _id: log.userId._id }) style="color: #1877f2; text-decoration: none; transition: text-decoration 0.2s;") #{nameAndId}
+                                | @#{ipAddress}
+                            else
+                                | #{log.userDisplayName}
+                                
                         td(style=`padding: 12px 16px; line-height: 1.4; color: ${log.action.includes('[BŁĄD]') || log.action.includes('[ODRZUCONO]') ? '#bc2525' : '#050505'};`) 
                             | #{log.action}
 else
