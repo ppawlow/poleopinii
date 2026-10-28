@@ -1,6 +1,3 @@
-h2(style="margin-top: 40px; margin-bottom: 12px; color: #2d3748; font-size: 22px; font-weight: 700; border-top: 2px solid #e4e6eb; padding-top: 24px; font-family: sans-serif;") 👥 Rejestr i Statystyki Użytkowników
-p(style="font-size: 14px; color: #65676b; margin-bottom: 24px;") Zestawienie zarejestrowanych profili, poziomów ich aktywności oraz rejestru blokad nałożonych przez systemy automatycznego audytu AI.
-
 if systemUsers && systemUsers.length > 0
     div(style="overflow-x: auto; background: #ffffff; border: 1px solid #e4e6eb; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);")
         table#usersTable(style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; font-family: sans-serif;")
@@ -15,24 +12,20 @@ if systemUsers && systemUsers.length > 0
                     - var hasSafetyViolations = sUser.aiBlockedSafetyCount > 0
                     - var hasFactCheckViolations = sUser.aiBlockedFactCheckCount > 0
                     tr(style="border-bottom: 1px solid #e4e6eb; transition: background 0.15s;")
-                        //- Nazwa i e-mail pod spodem
                         td(style="padding: 12px;")
                             div(style="font-weight: 600; color: #1c1e21;") #{sUser.name}
                             div(style="font-size: 11px; color: #65676b; margin-top: 2px;") #{sUser.email}
                         
-                        //- Statystyki publikacji
                         td(style="padding: 12px; text-align: center; font-weight: 500;")
                             span(style="color: #146c43;" title="Publiczne") #{sUser.publicCount}
                             |  / 
-                            span(style="#1877f2;" title="Zastrzeżone") #{sUser.restrictedCount}
+                            span(style="color: #1877f2;" title="Zastrzeżone") #{sUser.restrictedCount}
                             |  / 
-                            span(style="#65676b;" title="Prywatne") #{sUser.privateCount}
+                            span(style="color: #65676b;" title="Prywatne") #{sUser.privateCount}
                         
-                        //- Łączna liczba gwiazdek (Doceń)
                         td(style="padding: 12px; text-align: center; font-weight: bold; color: #e5a93c;")
                             | ⭐ #{sUser.totalStars}
                         
-                        //- Liczniki wykrytych nadużyć i fake-newsów
                         td(style="padding: 12px; text-align: center;")
                             span(style=`display: inline-block; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 11px; ${hasSafetyViolations ? 'background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb;' : 'color: #bcc0c4;'}` title="Zablokowane treści zabronione/wulgaryzmy")
                                 | 🚫 #{sUser.aiBlockedSafetyCount}

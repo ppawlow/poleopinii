@@ -1,4 +1,3 @@
-//- SEKCJA DYNAMICZNYCH KOMUNIKATÓW (Przeniesiona z głównego szablonu i oczyszczona z req)
 if queryError === 'server'
     div(style="color: #bc2525; background: #fff3f3; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") 
 
@@ -12,10 +11,6 @@ if queryMsg === 'user_rejected'
     div(style="color: #bc2525; background: #fff3f3; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 14px; font-weight: 600;") 
         | ✕ Weryfikacja konta została odrzucona. Wysłano maila z uzasadnieniem.
 
-//- REJESTR OCZEKUJĄCYCH PRZELEWÓW
-h2(style="margin-top: 40px; margin-bottom: 12px; color: #1877f2; font-size: 22px; font-weight: 700; border-top: 2px solid #e4e6eb; padding-top: 24px;") 🏦 Oczekujące Przelewy Uwierzytelniające Tożsamość
-p(style="font-size: 14px; color: #65676b; margin-bottom: 24px;") Poniżej znajduje się wykaz użytkowników, którzy zadeklarowali nadanie przelewu i oczekują na manualne sprawdzenie wyciągu bankowego.
-
 if pendingUsers && pendingUsers.length > 0
     div(style="display: flex; flex-direction: column; gap: 20px;")
         each pUser in pendingUsers
@@ -26,7 +21,6 @@ if pendingUsers && pendingUsers.length > 0
                         span(style="font-size:12px; color:#65676b;") Oczekiwany Tytuł przelewu: <span style="font-family:monospace; font-weight:bold; background:#e4e6eb; padding:2px 6px; border-radius:4px;">#{pUser.verificationTransferCode}</span>
                     span(style="background:#e7f3ff; color:#1877f2; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:bold;") OCZEKUJE NA SPRAWDZENIE ⏳
 
-                //- FORMULARZ POZYTYWNEGO ZATWIERDZENIA
                 form.admin-approve-form(action=`/admin/verify-user/${pUser._id}/approve` method="POST" style="background:#f0f2f5; padding:12px; border-radius:6px; margin-bottom:12px; display:block;")
                     input(type="hidden" name="_csrf" value=csrfToken)
                     label(style="font-size:12px; font-weight:bold; color:#65676b; display:block; margin-bottom:4px;") Przepisz numer konta nadawcy z wyciągu bankowego (system automatycznie zweryfikuje sumę kontrolną):
@@ -34,7 +28,6 @@ if pendingUsers && pendingUsers.length > 0
                         input(type="text" name="bankAccount" placeholder="np. 26 cyfr rachunku nadawcy (spacje są dozwolone)" required style="flex:1; padding:8px; border:1px solid #dddfe2; border-radius:6px; outline:none; font-size:14px;")
                         button(type="submit" style="background:#146c43; color:white; border:none; padding:8px 16px; border-radius:6px; font-weight:bold; cursor:pointer; font-size:13px;") ✓ Zatwierdź Profil
 
-                //- FORMULARZ ODNOWIENIA/ODRZUCENIA
                 form(action=`/admin/verify-user/${pUser._id}/reject` method="POST" style="background:#fff3f3; padding:12px; border-radius:6px; display:block;")
                     input(type="hidden" name="_csrf" value=csrfToken)
                     label(style="font-size:12px; font-weight:bold; color:#bc2525; display:block; margin-bottom:4px;") Odrzucenie przelewu (Wpisz powód, który zostanie dołączony do maila użytkownika):

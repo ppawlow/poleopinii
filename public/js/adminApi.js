@@ -290,4 +290,15 @@ $(document).ready(function() {
       order: [[0, 'desc']] 
     });
   }
+    // Fix szerokości kolumn DataTables po rozwinięciu ukrytego akordeonu
+  $('.accordion-header[data-table-trigger]').on('click', function() {
+    const tableId = $(this).data('table-trigger');
+    
+    // Dajemy 5ms opóźnienia, aby kontener zdążył zmienić display na 'block'
+    setTimeout(() => {
+      if ($.fn.DataTable.isDataTable('#' + tableId)) {
+        $('#' + tableId).DataTable().columns.adjust().responsive.recalc();
+      }
+    }, 5);
+  });
 });
