@@ -893,3 +893,54 @@ padding-top: 4px;
   gap: 8px;
   height: 100%;
 }
+
+/* =========================================================================
+   POPRAWKA DLA PAGINACJI DATATABLES
+   ========================================================================= */
+.dt-paging, .dataTables_paginate {
+  margin-top: 16px !important;
+  padding: 12px !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 6px !important;
+  font-family: sans-serif !important;
+}
+
+/* Przyciski paginacji */
+.dt-paging-button, .paginate_button {
+  background: #f0f2f5 !important;
+  color: #1c1e21 !important;
+  border: 1px solid #dddfe2 !important;
+  border-radius: 6px !important;
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Efekt najechania myszką */
+.dt-paging-button:hover:not(.disabled), .paginate_button:hover:not(.disabled) {
+  background: #e4e6eb !important;
+  border-color: #ccd0d5 !important;
+  color: #050505 !important;
+}
+
+/* Aktywna/bieżąca strona */
+.dt-paging-button.current, .paginate_button.current {
+  background: #1877f2 !important;
+  color: white !important;
+  border-color: #1877f2 !important;
+  cursor: default !important;
+}
+
+/* Wyłączone przyciski (np. "Poprzednia" na pierwszej stronie) */
+.dt-paging-button.disabled, .paginate_button.disabled {
+  background: #fcfcfc !important;
+  color: #bcc0c4 !important;
+  border-color: #e4e6eb !important;
+  cursor: not-allowed !important;
+  opacity: 0.6 !important;
+}
+
