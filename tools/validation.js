@@ -521,19 +521,25 @@ tools.verifyValidationRules = [
 tools.adminApprovalValidationRules = [
   body("bankAccount")
     .trim()
-    // 1. Akceptujemy spacje - usuwamy je przed dalszą walidacją matematyczną i hashującą
+    // KRYTYCZNA POPRAWKA: Sanitizer MUSI być pierwszy! 
+    // Najpierw oczyszczamy ciąg ze spacji, a dopiero potem sprawdzamy warunek 26 cyfr.
     .customSanitizer((value) => (value || "").replace(/\s+/g, ""))
+    
+    // Teraz matches sprawdza już czysty ciąg bez spacji i przejdzie walidację pomyślnie
     .matches(/^\d{26}$/)
-    .withMessage("Numer konta musi składać się z dokładnie 26 cyfr (spacje są dozwolone).")
-    // 2. Walidacja cyfr kontrolnych standardu NRB/IBAN (Modulo 97)
+    .withMessage("Numer konta musi składać się z dokładnie 26 cyfr.")
+    
+    // Walidacja cyfr kontrolnych standardu NRB/IBAN (Modulo 97)
     .custom((accountNumber) => {
       if (!accountNumber || accountNumber.length !== 26) return false;
 
       const digitsControl = accountNumber.substring(2);
-      const countryCode = "2521";
+      const countryCode = "2521"; // Kod kraju "PL"
       const firstTwoDigits = accountNumber.substring(0, 2);
+
       const preparedString = digitsControl + countryCode + firstTwoDigits;
 
+      // Algorytm Modulo 97 z użyciem BigInt zapobiegającym utracie precyzji
       const isChecksumValid = BigInt(preparedString) % 97n === 1n;
       if (!isChecksumValid) {
         throw new Error(
