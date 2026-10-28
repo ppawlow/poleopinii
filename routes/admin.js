@@ -38,29 +38,30 @@ async function main(req, res) {
       verificationTransferStatus: "processing",
     }).lean();
 
+    // POPRAWKA: Pobieramy cały obiekt relacji userId, aby gołe _id było dostępne w partialu logs.pug
     const logs = await SystemLog.find({})
       .sort({ createdAt: -1 })
       .limit(50)
-      .populate("userId", "name") // Dynamiczne złączenie z kolekcją User
+      .populate("userId") // Dynamiczne złączenie bez restrykcji polowych
       .lean();
 
     // =========================================================================
-    // DYNAMICZNE MAPOWANIE: Aktualna Nazwa (Skrócone ID) @ Adres IP
+    // ZINTEGROWANE MAPOWANIE LOGÓW: Przekazywanie referencji obiektu i formatu Name@IP
     // =========================================================================
     const formattedLogs = logs.map((log) => {
       const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
       let displayUser = log.fallbackName || "Gość";
 
       if (log.userId) {
-        // Jeśli log posiada trwałe ID zalogowanego użytkownika
         const currentName = log.userId.name || "Użytkownik";
-        const shortId = String(log.userId._id).substring(18); // Końcówka ID dla weryfikacji
+        const shortId = String(log.userId._id).substring(18); // Końcówka ID do wyświetlenia w nawiasie
         displayUser = `${currentName} (${shortId})`;
       }
 
       return {
         createdAt: log.createdAt,
-        userDisplayName: `${displayUser}@${ip}`, // Wyrenderuje np. Jan Kowalski (370001)@1.2.3.4
+        userId: log.userId, // Przekazujemy pełny dokument (zawiera log.userId._id) do widoku Pug
+        userDisplayName: `${displayUser}@${ip}`, // Wygenerowany ciąg tekstowy
         action: log.action,
       };
     });
@@ -79,6 +80,7 @@ async function main(req, res) {
         $project: {
           name: 1,
           email: 1,
+          alias: 1,
           aiBlockedSafetyCount: { $ifNull: ["$aiBlockedSafetyCount", 0] },
           aiBlockedFactCheckCount: { $ifNull: ["$aiBlockedFactCheckCount", 0] },
           // Zliczanie postów według kategorii widoczności
