@@ -41,18 +41,26 @@ async function main(req, res) {
     const logs = await SystemLog.find({})
       .sort({ createdAt: -1 })
       .limit(50)
+      .populate("userId", "name") // Dynamiczne złączenie z kolekcją User
       .lean();
 
     // =========================================================================
-    // INTEGRACJA: Dynamiczne formatowanie i łączenie Podmiotu z adresem IP
+    // DYNAMICZNE MAPOWANIE: Aktualna Nazwa (Skrócone ID) @ Adres IP
     // =========================================================================
     const formattedLogs = logs.map((log) => {
-      const userIdentifier = log.email ? log.email.trim() : "Gość";
       const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
+      let displayUser = log.fallbackName || "Gość";
+
+      if (log.userId) {
+        // Jeśli log posiada trwałe ID zalogowanego użytkownika
+        const currentName = log.userId.name || "Użytkownik";
+        const shortId = String(log.userId._id).substring(18); // Końcówka ID dla weryfikacji
+        displayUser = `${currentName} (${shortId})`;
+      }
 
       return {
         createdAt: log.createdAt,
-        userDisplayName: `${userIdentifier}@${ip}`, // Format: user@1.2.3.4
+        userDisplayName: `${displayUser}@${ip}`, // Wyrenderuje np. Jan Kowalski (370001)@1.2.3.4
         action: log.action,
       };
     });
