@@ -143,6 +143,30 @@ document.addEventListener("submit", async function (e) {
       if (response.ok) form.closest(".comment-card, .post-card").remove();
     } catch (err) {}
   }
+  
+  // Przykład dla post-like-form (analogicznie warto zabezpieczyć komentarze)
+if (form.matches(".post-like-form")) {
+  e.preventDefault();
+  if (form.dataset.loading === "true") return; // Blokada przed double-click
+  form.dataset.loading = "true";
+
+  const button = form.querySelector("button");
+  if (button) button.style.opacity = "0.6";
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: { Accept: "application/json", "X-CSRF-Token": csrfToken },
+    });
+    // ... (Twoja obecna logika aktualizacji DOM) ...
+  } catch (err) {
+    console.error(err);
+  } finally {
+    form.dataset.loading = "false";
+    if (button) button.style.opacity = "";
+  }
+}
+
 });
 
 window.closeShareModal = function () {
@@ -202,7 +226,7 @@ window.sharePost = async function (postId, postTitle) {
     if (fbBtn) {
       fbBtn.onclick = function () {
         window.open(
-          `https://facebook.com{encodeURIComponent(shareUrl)}`,
+          `https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
           "_blank",
           popupFeatures,
         );
@@ -211,7 +235,7 @@ window.sharePost = async function (postId, postTitle) {
     if (xBtn) {
       xBtn.onclick = function () {
         window.open(
-          `https://twitter.com{encodeURIComponent(shareUrl)}&text=${encodeURIComponent(postTitle)}`,
+          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(postTitle)}`,
           "_blank",
           popupFeatures,
         );
@@ -220,7 +244,7 @@ window.sharePost = async function (postId, postTitle) {
     if (liBtn) {
       liBtn.onclick = function () {
         window.open(
-          `https://linkedin.com{encodeURIComponent(shareUrl)}`,
+          `https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
           "_blank",
           popupFeatures,
         );

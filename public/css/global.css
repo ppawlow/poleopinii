@@ -945,3 +945,26 @@ body {
   gap: 8px;
   height: 100%;
 }
+/*
+/* Poprawki 
+ */
+body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.comment-form textarea, .comment-edit-form-block textarea {
+  transition: height 0.15s ease-out;
+  min-height: 36px;
+  resize: none;
+}
+
+.news-card-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--color-border);
+  padding-top: 14px;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+}

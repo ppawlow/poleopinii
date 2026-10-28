@@ -15,7 +15,7 @@ if dailyTopics && dailyTopics.length > 0
                     p(style="font-size: 14px; color: #050505; line-height: 1.6; margin: 0 0 16px 0; font-family: sans-serif; text-align: justify;") #{topic.summary}
                     
                     //- Dolny pasek (Stopka): Ważność oraz Przycisk interakcji
-                    div(style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--color-border); padding-top: 14px; flex-wrap: wrap; gap: 10px; width: 100%;")
+                    .news-card-footer
                         span(title='Ranga informacji' style=`display: inline-flex; align-items: center; justify-content: center; background: ${isCritical ? '#fff3f3' : '#fffbf0'}; color: ${isCritical ? '#bc2525' : 'var(--color-accent)'}; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; border: 1px solid ${isCritical ? '#f5c6cb' : '#e5a93c'}; white-space: nowrap;`) 
                             | 🔥 #{topic.importance}/10
                             
