@@ -248,8 +248,6 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// public/js/adminApi.js -> Dodaj na końcu pliku
-
 $(document).ready(function() {
   const PolishLanguageConfig = {
     processing: "Trwa przetwarzanie...",
@@ -278,7 +276,7 @@ $(document).ready(function() {
     $('#usersTable').DataTable({
       language: PolishLanguageConfig,
       pageLength: 10,
-      lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "Wszystkie"]], // <-- NAPRAWIONE
+      lengthMenu: [ [10, 25, 50, -1], [10, 25, 50, "Wszystkie"] ],
       order: [[0, 'asc']] 
     });
   }
@@ -288,7 +286,7 @@ $(document).ready(function() {
     $('#logsTable').DataTable({
       language: PolishLanguageConfig,
       pageLength: 25,
-      lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Wszystkie"]], // <-- NAPRAWIONE
+      lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "Wszystkie"] ],
       order: [[0, 'desc']] 
     });
   }
