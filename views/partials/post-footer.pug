@@ -1,50 +1,42 @@
-//- views/partials/post-footer.pug
 .post-actions(style="display: flex; padding: 4px 0; border-bottom: 1px solid #e4e6eb; gap: 8px; flex-wrap: wrap;")
     if user
-        //- 1. PRZYCISK DOCEŃ (GWIAZDKA) - Ukryty, jeśli zalogowany użytkownik jest autorem wpisu
         if hasPermission(user, post.visibility, 'LIKE') && (!userBlocks || !userBlocks.includes(String(post.authorId))) && String(user.id) !== String(post.authorId)
             form.post-like-form(action=`/posts/${post._id}/like` method="POST" data-post-id=post._id style="margin: 0; display: inline-block;")
                 input(type="hidden" name="_csrf" value=csrfToken)
-                button.action-btn(type="submit" title="Zarządzaj oceną wpisu" style="background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; color: #050505; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; font-family: sans-serif; width: auto;")
+                button.action-btn(type="submit" title="Zarządzaj oceną wpisu")
                     if post.isLikedByMe
                         i.fa-solid.fa-star(style="color: #E5A93C;")
-                        span.like-text(style="color: #E5A93C; font-weight: bold;") Cofnij
+                        span.btn-text(style="color: #E5A93C; font-weight: bold;") Cofnij
                     else
                         i.fa-regular.fa-star
-                        span.like-text Doceń
-        //- Edukacyjny fallback - widoczny TYLKO dla innych użytkowników (niezweryfikowanych)
+                        span.btn-text Doceń
         else if String(user.id) !== String(post.authorId)
-            button.action-btn.restricted-feature-trigger(type="button" data-reason="like_public" title="Kliknij, aby dowiedzieć się więcej" style="background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; color: #65676b; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; font-family: sans-serif; width: auto;")
+            button.action-btn.restricted-feature-trigger(type="button" data-reason="like_public" title="Kliknij, aby dowiedzieć się więcej")
                 i.fa-regular.fa-star
-                span.like-text Doceń
+                span.btn-text Doceń
 
-        //- 2. PRZYCISK SKOMENTUJ - Zawsze dostępny dla każdego
-        button.action-btn.comment-trigger-btn(type="button" onclick=`toggleCommentsVisibility('${post._id}')` title="Napisz komentarz" style="background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; color: #050505; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; font-family: sans-serif; width: auto;")
+        button.action-btn.comment-trigger-btn(type="button" onclick=`toggleCommentsVisibility('${post._id}')` title="Napisz komentarz")
             i.fa-regular.fa-comment
-            span Skomentuj
+            span.btn-text Skomentuj
 
-        //- 3. PRZYCISK ODPOWIEDZ POSTEM (POLEMIZUJ) - Ukryty, jeśli zalogowany to autor wpisu
         if !post.isAbuseReport && String(user.id) !== String(post.authorId)
-            button.action-btn.reply-post-btn(type="button" onclick=`window.openReplyPostModal('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` style="background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; color: #050505; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; font-family: sans-serif; width: auto;")
+            button.action-btn.reply-post-btn(type="button" onclick=`window.openReplyPostModal('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Polemizuj")
                 i.fa-regular.fa-comments
-                span Polemizuj
+                span.btn-text Polemizuj
     else
-        //- Pasek dla gości (niezalogowanych) - Doceń jako wyłączone
-        button.action-btn(disabled style="background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; color: #65676b; display: inline-flex; align-items: center; gap: 6px; font-family: sans-serif; width: auto;")
-            i.fa-regular.fa-star
-            span Doceń
+        button.action-btn(disabled)
+          i.fa-regular.fa-star
+          span.btn-text Doceń
 
-    //- KRYTYCZNA POPRAWKA: Przycisk wyrównany na poziomie zerowym wcięć - widoczny dla Gości ORAZ Zalogowanych
     if post.visibility === 'public'
-        button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` style="background: #f0f2f5; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; color: #050505; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; font-family: sans-serif; width: auto;")
+        button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Udostępnij")
             i.fa-regular.fa-share-from-square
-            span Udostępnij
+            span.btn-text Udostępnij
 
-    //- 5. PRZYCISK ZGŁOŚ NADUŻYCIE - Dostępny dla Gości oraz zalogowanych (jeśli nie są autorami)
     if post.visibility === 'public' && (!user || String(user.id) !== String(post.authorId))
-        button.action-btn(type="button" onclick=`triggerAbuseReport('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` style="background: #fff3f3; color: #bc2525; border: none; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s; font-family: sans-serif; width: auto;")
+        button.action-btn.abuse-trigger-btn(type="button" onclick=`triggerAbuseReport('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Zgłoś nadużycie" style="background: #fff3f3; color: #bc2525;")
             i.fa-solid.fa-triangle-exclamation
-            span Zgłoś nadużycie
+            span.btn-text Zgłoś nadużycie
 
 //- Sekcja komentarzy
 div(id=`comments-wrapper-${post._id}` style="display: none; width: 100%; margin-top: 16px;")

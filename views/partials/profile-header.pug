@@ -41,30 +41,40 @@
                     i.fa-solid.fa-gear
                     span.btn-text  Ustawienia
 
-                    
         else if user
-            //- Dodano klasę .profile-guest-actions-mobile dla łatwego stylowania w CSS
             div.profile-guest-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
                 form.dynamic-follow-form(action=`/follow/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
                     input(type="hidden" name="_csrf" value=csrfToken)
-                    //- Dodano atrybut title oraz klasę .btn-text na tekst
-                    button.profile-follow-btn(type="submit" title="Obserwuj / Przestań obserwować" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")
-                        i.fa-solid.fa-user-plus
+                    button.profile-follow-btn(
+                        type="submit" 
+                        title="Obserwuj / Przestań obserwować" 
+                        class=(followingList.includes(String(profileUser._id)) ? 'is-following' : '')
+                    )
+                        if followingList.includes(String(profileUser._id))
+                            i.fa-solid.fa-user-check
+                        else
+                            i.fa-solid.fa-user-plus
                         span.btn-text #{followingList.includes(String(profileUser._id)) ? 'Obserwujesz' : 'Obserwuj'}
 
                 form.dynamic-block-form(action=`/block/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
                     input(type="hidden" name="_csrf" value=csrfToken)
-                    //- Zamieniono surowy styl inline na ujednoliconą strukturę z ikoną tarczy/blokady
-                    button.profile-block-main-btn(type="submit" title="Zablokuj / Odblokuj użytkownika" style="background-color: #bc2525; color: white; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 15px; border:none; cursor:pointer; margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")
-                        i.fa-solid.fa-user-slash
+                    button.profile-block-main-btn(
+                        type="submit" 
+                        title="Zablokuj / Odblokuj użytkownika"
+                        class=(userBlocks.includes(String(profileUser._id)) ? 'is-blocking' : '')
+                    )
+                        if userBlocks.includes(String(profileUser._id))
+                            i.fa-solid.fa-shield-halved
+                        else
+                            i.fa-solid.fa-hand
                         span.btn-text #{userBlocks.includes(String(profileUser._id)) ? 'Odblokuj' : 'Zablokuj'}
                         
                 if profileUser.allowPrivateEmails
                     if hasPermission(user, 'user', 'canSendMail', profileUser)
-                        button(type="button" title="Wyślij prywatną wiadomość" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')` style="background-color: #42b72a; color: white; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 15px; border:none; cursor:pointer; white-space: nowrap; margin: 0; display: inline-flex; align-items: center; gap: 6px;") 
+                        button.profile-mail-main-btn(type="button" title="Wyślij prywatną wiadomość" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')`) 
                             i.fa-solid.fa-envelope
                             span.btn-text Wyślij wiadomość
                     else if !user.isFullyVerified
-                        button.restricted-feature-trigger(type="button" title="Wymaga weryfikacji profilu" data-reason="private_mail_unverified" style="background-color: #e4e6eb; color: #65676b; padding: 8px 12px; border-radius: 6px; font-weight: 600; font-size: 15px; border:none; cursor: pointer; white-space: nowrap; margin: 0; display: inline-flex; align-items: center; gap: 6px;") 
+                        button.restricted-feature-trigger(type="button" title="Wymaga weryfikacji profilu" data-reason="private_mail_unverified") 
                             i.fa-solid.fa-envelope
                             span.btn-text Wyślij wiadomość

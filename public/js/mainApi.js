@@ -39,134 +39,251 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// GLOBALNE NASŁUCHIWANIE INTERAKCJI (Lajki, Komentarze, Obserwowanie, Usuwanie)
-document.addEventListener("submit", async function (e) {
-  const form = e.target;
-  if (!form) return;
-  const csrfToken = document
-    .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
+// =========================================================================
+// ASYNCHRONICZNE FUNKCJE SKŁADOWE (HANDLER INTERAKCJI BAZY)
+// =========================================================================
 
-  if (form.matches(".comment-form")) {
-    e.preventDefault();
-    const inputField = form.querySelector('textarea[name="content"]');
-    if (!inputField || inputField.value.trim().length === 0) return;
-    const formData = new URLSearchParams(new FormData(form)).toString();
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          Accept: "application/json",
-          "X-CSRF-Token": csrfToken,
-        },
-        body: formData,
-      });
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.html) {
-          const postId = form.action.split("/")[2];
-          const wrapper = document.getElementById(`comments-wrapper-${postId}`);
-          let successfullyInjected = false;
+/**
+ * Obsługa asynchronicznego dodawania komentarzy (klasa .comment-form)
+ */
+async function handleAsyncCommentSubmit(form, csrfToken) {
+  const inputField = form.querySelector('textarea[name="content"]');
+  if (!inputField || inputField.value.trim().length === 0) return;
 
-          if (wrapper) {
-            const innerBlock = wrapper.querySelector(".article-comments-block");
-            if (innerBlock) {
-              innerBlock.innerHTML = data.html;
-              successfullyInjected = true;
-            }
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) submitBtn.disabled = true;
+
+  const formData = new URLSearchParams(new FormData(form)).toString();
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success && data.html) {
+        const postId = form.action.split("/")[2];
+        const wrapper = document.getElementById(`comments-wrapper-${postId}`);
+        let successfullyInjected = false;
+
+        if (wrapper) {
+          const innerBlock = wrapper.querySelector(".article-comments-block");
+          if (innerBlock) {
+            innerBlock.innerHTML = data.html;
+            successfullyInjected = true;
           }
+        }
 
-          if (!successfullyInjected) {
-            form.insertAdjacentHTML("beforebegin", data.html);
-          }
+        if (!successfullyInjected) {
+          form.insertAdjacentHTML("beforebegin", data.html);
+        }
 
-          inputField.value = "";
-          inputField.style.height = "auto";
+        inputField.value = "";
+        inputField.style.height = "auto";
 
-          if (typeof window.refreshAccordionListeners === "function") {
-            window.refreshAccordionListeners();
+        if (typeof window.refreshAccordionListeners === "function") {
+          window.refreshAccordionListeners();
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Błąd podczas asynchronicznego dodawania komentarza:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (submitBtn) submitBtn.disabled = false;
+  }
+}
+
+/**
+ * Obsługa asynchronicznego oceniania postów (klasa .post-like-form)
+ */
+async function handleAsyncPostLikeSubmit(form, csrfToken) {
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const button = form.querySelector("button");
+  if (button) {
+    button.disabled = true;
+    button.style.opacity = "0.6";
+  }
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: { 
+        Accept: "application/json", 
+        "X-CSRF-Token": csrfToken 
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      const likeTextEl = form.querySelector(".like-text");
+      const iconEl = form.querySelector("i");
+
+      if (data.success) {
+        if (likeTextEl) likeTextEl.innerText = data.liked ? "Cofnij" : "Doceń";
+        if (iconEl) {
+          iconEl.className = data.liked ? "fa-solid fa-star" : "fa-regular fa-star";
+        }
+
+        const postCard = form.closest(".post-card, .editorial-article");
+        if (postCard) {
+          const likesCountEl = postCard.querySelector(".likes-count");
+          if (likesCountEl) {
+            likesCountEl.innerHTML = `<i class="fa-solid fa-star"></i>  ${data.likesCount} polubień`;
           }
         }
       }
-    } catch (err) {
-      console.error("Błąd podczas asynchronicznego dodawania komentarza:", err);
     }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas lajkowania wpisu:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (button) {
+      button.disabled = false;
+      button.style.opacity = "";
+      button.blur();
+    }
+  }
+}
+
+/**
+ * Obsługa asynchronicznego blokowania profilu (klasa .dynamic-block-form)
+ */
+async function handleAsyncBlockUserSubmit(form, csrfToken) {
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const button = form.querySelector(".profile-block-main-btn");
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        const btnTextSpan = button.querySelector(".btn-text");
+        const iconEl = button.querySelector("i");
+
+        if (btnTextSpan) {
+          btnTextSpan.innerText = data.isBlocked ? "Odblokuj" : "Zablokuj";
+        }
+        
+        if (iconEl) {
+          iconEl.className = data.isBlocked ? "fa-solid fa-shield-halved" : "fa-solid fa-hand";
+        }
+
+        if (data.isBlocked) {
+          button.classList.add("is-blocking");
+        } else {
+          button.classList.remove("is-blocking");
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas blokowania użytkownika:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (button) {
+      button.disabled = false;
+      button.blur();
+    }
+  }
+}
+
+/**
+ * Obsługa bezpiecznego usuwania zasobów (akcje zawierające endpoint /delete)
+ */
+async function handleAsyncDeleteSubmit(form, csrfToken) {
+  const confirmMsg = form.getAttribute("data-confirm") || "Czy na pewno chcesz usunąć ten zasób?";
+  
+  if (typeof window.Confirm === "function") {
+    if (!(await window.Confirm(confirmMsg))) return;
+  } else {
+    if (!confirm(confirmMsg)) return;
+  }
+
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: { "X-CSRF-Token": csrfToken },
+    });
+    
+    if (response.ok) {
+      const targetCard = form.closest(".comment-card, .post-card");
+      if (targetCard) {
+        targetCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+        targetCard.style.opacity = "0";
+        targetCard.style.transform = "scale(0.98)";
+        setTimeout(() => targetCard.remove(), 200);
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas usuwania zasobu:", err);
+  } finally {
+    form.dataset.loading = "false";
+  }
+}
+
+// =========================================================================
+// CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY
+// =========================================================================
+document.addEventListener("submit", function (e) {
+  const form = e.target;
+  if (!form || !form.action) return;
+
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
+
+  // Rozbicie logiczne żądań na dedykowane, asynchroniczne funkcje składowe
+  if (form.matches(".comment-form")) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleAsyncCommentSubmit(form, csrfToken);
     return;
   }
 
   if (form.matches(".post-like-form")) {
     e.preventDefault();
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        headers: { Accept: "application/json", "X-CSRF-Token": csrfToken },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const likeTextEl = form.querySelector(".like-text");
-        const iconEl = form.querySelector("i");
-
-        if (data.success && likeTextEl && iconEl) {
-          likeTextEl.innerText = data.liked ? "Cofnij" : "Doceń";
-          iconEl.className = data.liked
-            ? "fa-solid fa-star"
-            : "fa-regular fa-star";
-
-          const postCard = form.closest(".post-card, .editorial-article");
-          if (postCard) {
-            const likesCountEl = postCard.querySelector(".likes-count");
-            if (likesCountEl) {
-              likesCountEl.innerHTML = `<i class="fa-solid fa-star"></i>  ${data.likesCount} polubień`;
-            }
-          }
-        }
-      }
-    } catch (err) {
-      console.error(
-        "Błąd sieciowy podczas asynchronicznego lajkowania wpisu:",
-        err,
-      );
-    }
+    e.stopPropagation();
+    handleAsyncPostLikeSubmit(form, csrfToken);
+    return;
   }
 
-  if (form.action && form.action.includes("/delete")) {
+  if (form.matches(".dynamic-block-form")) {
     e.preventDefault();
-    const confirmMsg = form.getAttribute("data-confirm") || "Usunąć?";
-    if (!(await window.Confirm(confirmMsg))) return;
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        headers: { "X-CSRF-Token": csrfToken },
-      });
-      if (response.ok) form.closest(".comment-card, .post-card").remove();
-    } catch (err) {}
+    e.stopPropagation();
+    handleAsyncBlockUserSubmit(form, csrfToken);
+    return;
   }
-  
-  // Przykład dla post-like-form (analogicznie warto zabezpieczyć komentarze)
-if (form.matches(".post-like-form")) {
-  e.preventDefault();
-  if (form.dataset.loading === "true") return; // Blokada przed double-click
-  form.dataset.loading = "true";
 
-  const button = form.querySelector("button");
-  if (button) button.style.opacity = "0.6";
-
-  try {
-    const response = await fetch(form.action, {
-      method: "POST",
-      headers: { Accept: "application/json", "X-CSRF-Token": csrfToken },
-    });
-    // ... (Twoja obecna logika aktualizacji DOM) ...
-  } catch (err) {
-    console.error(err);
-  } finally {
-    form.dataset.loading = "false";
-    if (button) button.style.opacity = "";
+  if (form.action.includes("/delete")) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleAsyncDeleteSubmit(form, csrfToken);
+    return;
   }
-}
-
 });
 
 window.closeShareModal = function () {

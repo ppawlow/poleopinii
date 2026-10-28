@@ -367,3 +367,53 @@
     color: white !important;
   }
 }
+
+@media (max-width: 600px) {
+  /* Zapewnienie, że ukrywamy tekst w bąbelkach dotykowych */
+  .profile-actions-mobile .btn-text,
+  .profile-guest-actions-mobile .btn-text {
+    display: none !important;
+  }
+}
+
+@media (max-width: 600px) {
+  /* 1. Reset i centrowanie kontenera na mobile */
+  .profile-guest-actions-mobile {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    gap: 10px !important;
+    margin: 16px auto !important;
+    width: 100% !important;
+    justify-content: center !important;
+    margin-left: 0 !important;
+  }
+
+  /* 2. Bezwzględne ukrycie etykiet tekstowych */
+  .profile-guest-actions-mobile .btn-text {
+    display: none !important;
+  }
+
+  /* 3. Wymuszenie okrągłego kształtu klocków dotykowych (44px standard Google UX) */
+  .profile-guest-actions-mobile .profile-follow-btn,
+  .profile-guest-actions-mobile .profile-block-main-btn,
+  .profile-guest-actions-mobile .profile-mail-main-btn,
+  .profile-guest-actions-mobile .restricted-feature-trigger {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 4. Środkowanie samych ikon w okręgach */
+  .profile-guest-actions-mobile i {
+    font-size: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-block !important;
+  }
+}

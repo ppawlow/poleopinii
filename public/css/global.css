@@ -1001,3 +1001,138 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
     margin: 0 0 20px 0; /* Margines tylko na dole, oddzielający od tekstu */
   }
 }
+
+/* =========================================================================
+   REFAKTORYZACJA I WYGLĄD PRZYCISKÓW AKCJI GOŚCIA NA PROFILU
+   ========================================================================= */
+.profile-guest-actions-mobile {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-left: auto;
+}
+
+/* Wspólna klasa bazowa dla przycisków profilu gościa na desktopie */
+.profile-follow-btn,
+.profile-block-main-btn,
+.profile-mail-main-btn,
+.profile-guest-actions-mobile .restricted-feature-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+  height: 38px;
+  white-space: nowrap;
+}
+
+/* Kolorystyka i zachowanie przycisku OBSERWUJ */
+.profile-follow-btn {
+  background-color: #1877f2;
+  color: #ffffff;
+}
+.profile-follow-btn:hover {
+  background-color: #166fe5;
+}
+.profile-follow-btn.is-following {
+  background-color: #42b72a;
+}
+.profile-follow-btn.is-following:hover {
+  background-color: #36a420;
+}
+
+/* Kolorystyka i zachowanie przycisku ZABLOKUJ */
+.profile-block-main-btn {
+  background-color: #bc2525;
+  color: #ffffff;
+}
+.profile-block-main-btn:hover {
+  background-color: #a31f1f;
+}
+.profile-block-main-btn.is-blocking {
+  background-color: #65676b;
+}
+.profile-block-main-btn.is-blocking:hover {
+  background-color: #57585a;
+}
+
+/* Kolorystyka i zachowanie przycisku WYŚLIJ WIADOMOŚĆ */
+.profile-mail-main-btn {
+  background-color: #42b72a;
+  color: #ffffff;
+}
+.profile-mail-main-btn:hover {
+  background-color: #36a420;
+}
+
+/* Przycisk maila z blokadą dla niezweryfikowanych */
+.profile-guest-actions-mobile .restricted-feature-trigger {
+  background-color: #e4e6eb;
+  color: #65676b;
+}
+.profile-guest-actions-mobile .restricted-feature-trigger:hover {
+  background-color: #d8dadf;
+}
+
+/* Efekt aktywnego kliknięcia micro-UX */
+.profile-guest-actions-mobile button:active {
+  transform: scale(0.98);
+}
+
+/* Zmiana tła przycisku po asynchronicznej aktywacji obserwowania */
+.profile-follow-btn.is-following {
+  background-color: #e4e6eb !important;
+  color: #050505 !important;
+}
+
+/* Zmiana tła przycisku po asynchronicznej aktywacji blokady */
+.profile-block-main-btn.is-blocking {
+  background-color: #4a5568 !important;
+  color: #ffffff !important;
+}
+
+/* =========================================================================
+   ZOPTYMALIZOWANY WYGLĄD PRZYCISKÓW AKCJI PROFILU (KONTRAST UX)
+   ========================================================================= */
+
+/* Domyślny stan przycisku OBSERWUJ (Niebieski, ikona Solid) */
+.profile-follow-btn {
+  background-color: #1877f2 !important;
+  color: #ffffff !important;
+}
+/* Stan AKTYWNY - OBSERWUJESZ (Czysty, głęboki zielony, ikona pozostaje wyraźna i biała) */
+.profile-follow-btn.is-following {
+  background-color: #0f5132 !important; /* Bezpieczny, głęboki zielony */
+  color: #ffffff !important;
+}
+
+/* Domyślny stan przycisku ZABLOKUJ (Karminowy czerwony, ikona Solid) */
+.profile-block-main-btn {
+  background-color: #bc2525 !important;
+  color: #ffffff !important;
+}
+/* Stan AKTYWNY - ZABLOKOWANY (Stonowany, ciemny grafit, informujący o odcięciu relacji) */
+.profile-block-main-btn.is-blocking {
+  background-color: #212529 !important; /* Ciemny grafitowy/czarny */
+  color: #ffffff !important;
+}
+
+/* Przycisk wysyłki wiadomości (Zawsze zielony) */
+.profile-mail-main-btn {
+  background-color: #198754 !important;
+  color: #ffffff !important;
+}
+
+/* Wymuszenie ostrego, białego koloru ikon wewnątrz okręgów na mobile */
+@media (max-width: 600px) {
+  .profile-guest-actions-mobile i {
+    color: #ffffff !important; /* Wszystkie ikony są zawsze białe i idealnie widoczne! */
+    font-size: 16px !important;
+  }
+}

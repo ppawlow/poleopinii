@@ -302,8 +302,29 @@ document.addEventListener("DOMContentLoaded", () => {
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
-            // 1. Zmień stan wizualny przycisku głównego
-            button.innerText = data.isFollowing ? "Obserwujesz" : "Obserwuj";
+            const btnTextSpan = button.querySelector(".btn-text");
+            const iconEl = button.querySelector("i");
+
+            if (btnTextSpan) {
+              btnTextSpan.innerText = data.isFollowing ? "Obserwujesz" : "Obserwuj";
+            }
+            
+            // IMPLEMENTACJA ZMIANY PRZEZROCZYSTOŚCI IKONY (Solid <=> Regular)
+            if (iconEl) {
+              if (data.isFollowing) {
+                iconEl.className = "fa-regular fa-user";
+                iconEl.style.color = "#42b72a"; // Płynne podświetlenie na zielono
+              } else {
+                iconEl.className = "fa-solid fa-user";
+                iconEl.style.color = ""; // Powrót do domyślnej bieli
+              }
+            }
+
+            if (data.isFollowing) {
+              button.classList.add("is-following");
+            } else {
+              button.classList.remove("is-following");
+            }
 
             // 2. Pobierz referencje do elementów siatki społecznościowej
             const gridContainer = document.getElementById(
