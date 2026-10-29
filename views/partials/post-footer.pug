@@ -1,3 +1,13 @@
+//- Sekcja statystyk
+.post-stats(style="margin-top: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; color: #65676b; font-size: 13.5px; font-family: sans-serif;")
+    span
+        i.fa-solid.fa-star(style="color: #E5A93C; margin-right: 4px;") 
+        span.likes-count(id=`likes-text-${post._id}`)= `${post.likesCount || 0} polubień`
+        
+    span.comments-count(onclick=`toggleCommentsVisibility('${post._id}')` style="cursor: pointer; user-select: none; font-weight: 500; color: #1877f2;") 
+        i.fa-solid.fa-comment(style="color: #42b72a; margin-right: 4px;") 
+        span.comments-total-count(id=`comments-text-${post._id}`)= `${post.comments ? post.comments.length : 0} komentarzy`
+        
 .post-actions(style="display: flex; padding: 4px 0; border-bottom: 1px solid #e4e6eb; gap: 8px; flex-wrap: wrap;")
     if user
         if hasPermission(user, post.visibility, 'LIKE') && (!userBlocks || !userBlocks.includes(String(post.authorId))) && String(user.id) !== String(post.authorId)
@@ -5,16 +15,16 @@
                 input(type="hidden" name="_csrf" value=csrfToken)
                 button.action-btn(type="submit" title="Zarządzaj oceną wpisu")
                     if post.isLikedByMe
-                        i.fa-solid.fa-star(style="color: #E5A93C;")
-                        span.btn-text(style="color: #E5A93C; font-weight: bold;") Cofnij
+                        i.fa-solid.fa-star
+                        span.btn-text.like-text Cofnij
                     else
                         i.fa-regular.fa-star
-                        span.btn-text Doceń
+                        span.btn-text.like-text Doceń
         else if String(user.id) !== String(post.authorId)
             button.action-btn.restricted-feature-trigger(type="button" data-reason="like_public" title="Kliknij, aby dowiedzieć się więcej")
                 i.fa-regular.fa-star
                 span.btn-text Doceń
-
+                
         button.action-btn.comment-trigger-btn(type="button" onclick=`toggleCommentsVisibility('${post._id}')` title="Napisz komentarz")
             i.fa-regular.fa-comment
             span.btn-text Skomentuj
@@ -26,8 +36,7 @@
     else
         button.action-btn(disabled)
           i.fa-regular.fa-star
-          span.btn-text Doceń //- POPRAWIONO: Dodano span.btn-text
-
+          span.btn-text Doceń
     if post.visibility === 'public'
         button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Udostępnij")
             i.fa-regular.fa-share-from-square
@@ -36,7 +45,7 @@
     if post.visibility === 'public' && (!user || String(user.id) !== String(post.authorId))
         button.action-btn.abuse-trigger-btn(type="button" onclick=`triggerAbuseReport('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Zgłoś nadużycie" style="background: #fff3f3; color: #bc2525;")
             i.fa-solid.fa-triangle-exclamation
-            span.btn-text Zgłoś nadużycie //- POPRAWIONO: Dodano span.btn-text
+            span.btn-text Zgłoś nadużycie
 
 //- Sekcja komentarzy
 div(id=`comments-wrapper-${post._id}` style="display: none; width: 100%; margin-top: 16px;")
@@ -44,3 +53,15 @@ div(id=`comments-wrapper-${post._id}` style="display: none; width: 100%; margin-
         h3(id=`discussion-heading-${post._id}` style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1c1e21;") 
             | Dyskusja (#{post.comments ? post.comments.length : 0})
         include post-comments.pug
+
+script.
+    (() => {
+        const polubienia = (num) => liczebnik(num, ["polubienie", "polubienia", "polubień"]);
+        const komentarze = (num) => liczebnik(num, ["komentarz", "komentarze", "komentarzy"]);
+
+        const likesEl = document.getElementById("likes-text-#{post._id}");
+        const commentsEl = document.getElementById("comments-text-#{post._id}");
+
+        if (likesEl) likesEl.innerHTML = polubienia(parseInt("#{post.likesCount || 0}") || 0);
+        if (commentsEl) commentsEl.innerHTML = komentarze(parseInt("#{post.comments ? post.comments.length : 0}") || 0);
+    })();

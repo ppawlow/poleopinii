@@ -1,5 +1,15 @@
 if (window.Alert === undefined) window.Alert = window.alert;
 
+function liczebnik(liczba, forma){
+    if(liczba == 1) return liczba + " " + forma[0];
+    if(liczba > 4 && liczba < 22) return liczba + " " + forma[2];
+    wskaznik = liczba % 10;
+    if(wskaznik > 1 && wskaznik < 5)
+        return liczba + " " + forma[1];
+    else
+        return liczba + " " + forma[2];
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const searchForm = document.querySelector('form[action="/search"]');
   const searchInput = document.querySelector('input[name="q"]');
@@ -39,10 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
-// =========================================================================
-// ASYNCHRONICZNE FUNKCJE SKŁADOWE (HANDLER INTERAKCJI BAZY)
-// =========================================================================
-
 /**
  * Obsługa asynchronicznego dodawania komentarzy (klasa .comment-form)
  */
@@ -55,6 +61,19 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
 
   const submitBtn = form.querySelector('button[type="submit"]');
   if (submitBtn) submitBtn.disabled = true;
+
+  let postId = "";
+  try {
+    const urlObj = new URL(form.action, window.location.origin);
+    const pathParts = urlObj.pathname.split("/");
+    const postsIndex = pathParts.indexOf("posts");
+    if (postsIndex !== -1 && pathParts[postsIndex + 1]) {
+      postId = pathParts[postsIndex + 1];
+    }
+  } catch (urlErr) {
+    const actionParts = form.action.split("/");
+    postId = actionParts[actionParts.indexOf("posts") + 1] || actionParts;
+  }
 
   const formData = new URLSearchParams(new FormData(form)).toString();
 
@@ -72,24 +91,49 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
     if (response.ok) {
       const data = await response.json();
       if (data.success && data.html) {
-        const postId = form.action.split("/")[2];
-        const wrapper = document.getElementById(`comments-wrapper-${postId}`);
-        let successfullyInjected = false;
+        const postCard = form.closest(".post-card, .editorial-article");
+        
+        if (postCard) {
+          // Namierzamy kontener przeznaczony wyłącznie na listę komentarzy
+          const targetCommentsListContainer = document.getElementById(`comments-list-${postId}`);
 
-        if (wrapper) {
-          const innerBlock = wrapper.querySelector(".article-comments-block");
-          if (innerBlock) {
-            innerBlock.innerHTML = data.html;
-            successfullyInjected = true;
+          if (targetCommentsListContainer) {
+            // Tworzymy tymczasowy parser DOM, aby wyciągnąć nowo wyrenderowaną kartę komentarza
+            const tempParser = document.createElement("div");
+            tempParser.innerHTML = data.html;
+            
+            // Pobieramy wyłącznie węzeł nowo utworzonego komentarza (.comment-card)
+            const freshCommentCard = tempParser.querySelector(".comment-card");
+
+            if (freshCommentCard) {
+              // KRYTYCZNA POPRAWKA: Zamiast nadpisywać .innerHTML, DOKLEJAMY nowy komentarz na koniec listy!
+              targetCommentsListContainer.appendChild(freshCommentCard);
+            }
+          }
+          
+          // =========================================================================
+          // AUTOMATYCZNE PRZELICZANIE LICZNIKÓW PO DOKLEJENIU DO DRZEWA DOM
+          // =========================================================================
+          // Liczymy wszystkie komentarze fizycznie obecne w strukturze strony dla tego posta
+          const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
+
+          // 1. Aktualizacja dolnego paska statystyk stopki
+          const commentsCountEl = document.getElementById(`comments-text-${postId}`);
+          if (commentsCountEl) {
+            commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+          }
+
+          // 2. Aktualizacja nagłówka rozwijanej sekcji dyskusji
+          const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
+          if (discussionHeadingEl) {
+            discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
           }
         }
 
-        if (!successfullyInjected) {
-          form.insertAdjacentHTML("beforebegin", data.html);
-        }
-
+        // Resetowanie wartości pola i zachowanie fokusu dla kolejnego komentarza
         inputField.value = "";
         inputField.style.height = "auto";
+        inputField.focus();
 
         if (typeof window.refreshAccordionListeners === "function") {
           window.refreshAccordionListeners();
@@ -103,6 +147,7 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
     if (submitBtn) submitBtn.disabled = false;
   }
 }
+
 
 /**
  * Obsługa asynchronicznego oceniania postów (klasa .post-like-form)
@@ -139,9 +184,18 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
 
         const postCard = form.closest(".post-card, .editorial-article");
         if (postCard) {
-          const likesCountEl = postCard.querySelector(".likes-count");
-          if (likesCountEl) {
-            likesCountEl.innerHTML = `<i class="fa-solid fa-star"></i>  ${data.likesCount} polubień`;
+          // Dynamiczna aktualizacja licznika lajków na profilu lub osi czasu (ID dodane w post-footer.pug)
+          const postId = form.action.split("/")[2];
+          const dynamicLikesEl = document.getElementById(`likes-text-${postId}`);
+          
+          if (dynamicLikesEl) {
+            dynamicLikesEl.innerHTML = liczebnik(data.likesCount, ["polubienie", "polubienia", "polubień"]);
+          } else {
+            // Fallback dla widoku statycznego w starszych strukturach DOM
+            const likesCountEl = postCard.querySelector(".likes-count");
+            if (likesCountEl) {
+              likesCountEl.innerHTML = liczebnik(data.likesCount, ["polubienie", "polubienia", "polubień"]);
+            }
           }
         }
       }
@@ -277,11 +331,38 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
     
     if (response.ok) {
       const targetCard = form.closest(".comment-card, .post-card");
+      const postCard = form.closest(".post-card, .editorial-article");
+      
+      // Sprawdzamy czy usuwany zasób to komentarz
+      const isComment = targetCard && targetCard.classList.contains("comment-card");
+
       if (targetCard) {
         targetCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
         targetCard.style.opacity = "0";
         targetCard.style.transform = "scale(0.98)";
-        setTimeout(() => targetCard.remove(), 200);
+        setTimeout(() => {
+          targetCard.remove();
+
+          // Jeśli usunięto komentarz, natychmiast uaktualniamy liczniki w locie!
+          if (isComment && postCard) {
+            // Wyciągamy ID posta ze ścieżki akcji formularza usunięcia komentarza
+            const urlObj = new URL(form.action, window.location.origin);
+            const pathParts = urlObj.pathname.split("/");
+            const postId = pathParts[pathParts.indexOf("posts") + 1];
+
+            const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
+
+            const commentsCountEl = document.getElementById(`comments-text-${postId}`);
+            if (commentsCountEl) {
+              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+            }
+
+            const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
+            if (discussionHeadingEl) {
+              discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
+            }
+          }
+        }, 200);
       }
     }
   } catch (err) {
@@ -357,7 +438,7 @@ async function handleAsyncCommentEditSubmit(form, csrfToken) {
 
 
 // =========================================================================
-// CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY (ZAKTUALIZOWANY)
+// CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY
 // =========================================================================
 document.addEventListener("submit", function (e) {
   const form = e.target;
@@ -366,35 +447,39 @@ document.addEventListener("submit", function (e) {
   const csrfMeta = document.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
 
-  // NOWOŚĆ: Przechwytywanie asynchronicznej edycji komentarza
-  if (form.matches(".comment-edit-form")) {
+  // Edycja komentarza
+  if (form.classList.contains("comment-edit-form")) {
     e.preventDefault();
     e.stopPropagation();
     handleAsyncCommentEditSubmit(form, csrfToken);
     return;
   }
 
-  if (form.matches(".comment-form")) {
+  // Dodawanie komentarza (wyszukuje dopasowanie niezależnie od innych klas)
+  if (form.classList.contains("comment-form")) {
     e.preventDefault();
     e.stopPropagation();
     handleAsyncCommentSubmit(form, csrfToken);
     return;
   }
 
-  if (form.matches(".post-like-form")) {
+  // Polubienie posta
+  if (form.classList.contains("post-like-form")) {
     e.preventDefault();
     e.stopPropagation();
     handleAsyncPostLikeSubmit(form, csrfToken);
     return;
   }
 
-  if (form.matches(".dynamic-block-form")) {
+  // Blokowanie użytkownika
+  if (form.classList.contains("dynamic-block-form")) {
     e.preventDefault();
     e.stopPropagation();
     handleAsyncBlockUserSubmit(form, csrfToken);
     return;
   }
 
+  // Usuwanie zasobów
   if (form.action.includes("/delete")) {
     e.preventDefault();
     e.stopPropagation();

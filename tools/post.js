@@ -184,20 +184,19 @@ async function getScopedPosts(req, options = {}) {
             "$parentPostDetails.author",
           ],
         },
-        isLikedByMe: {
-          $cond: {
-            if: {
-              $and: [
-                { $ne: [{ $type: "$currentUserId" }, "missing"] },
-                { $ne: [currentUserId, null] },
-                { $isArray: "$likedBy" },
-              ],
-            },
-            then: { $in: [{ $toString: currentUserId }, "$likedBy"] },
-            else: false,
-          },
-        },
-        likesCount: { $size: { $ifNull: ["$likedBy", []] } },
+isLikedByMe: {
+  $cond: {
+    if: {
+      $and: [
+        { $ne: [currentUserId, null] },
+        { $isArray: "$likedBy" },
+        { $in: [{ $toString: currentUserId }, "$likedBy"] }
+      ]
+    },
+    then: true,
+    else: false
+  }
+},        likesCount: { $size: { $ifNull: ["$likedBy", []] } },
         authorDetails: {
           $cond: {
             if: {

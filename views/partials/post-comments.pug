@@ -1,19 +1,16 @@
 //- views/partials/post-comments.pug
-.comments-section
+//- Kontener przeznaczony wyłącznie na listę komentarzy (Ten blok będzie odświeżany asynchronicznie)
+.comments-list-container(id=`comments-list-${post._id}`)
     if post.comments && post.comments.length > 0
         each comment in post.comments
             .comment-card(id=`comment-${comment._id}` style="display: flex; gap: 8px; margin-bottom: 12px; align-items: flex-start; position:relative; width: 100%;")
-                
                 if comment.authorId
                     a(href=getProfileUrl({ _id: comment.authorId, alias: comment.authorAlias || null }) style="display: block; text-decoration: none; flex-shrink: 0;")
                         img.comment-avatar(src=(comment.authorAvatar || DEFAULT_ASSETS.avatar))
                 else
                     img.comment-avatar(src=(comment.authorAvatar || DEFAULT_ASSETS.avatar) style="flex-shrink: 0;")
 
-                //- KRYTYCZNA POPRAWKA: width: 100% i min-width: 0 zapobiegają obcinaniu i rozpychaniu tekstu we flexboxie
                 .comment-wrapper(style="flex: 1; min-width: 0; display: flex; flex-direction: column;")
-                    
-                    //- Kontener samej treści komentarza
                     .comment-content(id=`comment-content-container-${comment._id}` style="display: block; width: 100%;")
                         h5(style="display: inline-flex; align-items: center; gap: 4px; margin: 0; font-size: 13px; font-weight: 600; width: 100%;") 
                             if comment.authorId
@@ -29,17 +26,12 @@
                                     i.fa-solid.fa-circle-xmark
                         p(id=`comment-text-${comment._id}` style="margin-top: 4px; margin-bottom: 0; white-space: pre-wrap;")= comment.content
                     
-                    //- Formularz edycji (Zintegrowany z nowym elementem textarea)
                     .comment-edit-form-block(id=`comment-edit-block-${comment._id}` style="display: none; margin: 4px 0; width: 100%;")
                         form.comment-edit-form(action=`/posts/${post._id}/comments/${comment._id}/edit` method="POST" style="display: flex; align-items: flex-end; gap: 6px; width: 100%;")
                             input(type="hidden" name="_csrf" value=csrfToken)
-                            
-                            //- ZMIANA: input zastąpiony przez textarea z automatycznym dopasowaniem i zablokowanym ręcznym resize
                             textarea(name="content" rows="1" style="flex: 1; padding: 8px 12px; border: 1px solid #1877f2; border-radius: 14px; outline: none; font-size: 14px; resize: none; overflow-y: hidden; font-family: inherit; background-color: #ffffff;")= comment.content
-                            
                             button(type="submit" style="background: #1877f2; color: white; border: none; padding: 8px 16px; border-radius: 14px; font-weight: bold; cursor: pointer; font-size: 13px; height: 34px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;") Zapisz
 
-                    //- Pasek narzędzi i akcji pod komentarzem (Zabezpieczone flex-wrap i pełna widoczność)
                     .comment-actions-links(style="font-size: 12px; color: #65676b; margin-top: 4px; display: flex; gap: 12px; padding-left: 8px; align-items: center; flex-wrap: wrap; width: 100%;")
                         if user
                             if hasPermission(user, post.visibility, 'COMMENT') && (!userBlocks || !userBlocks.includes(String(post.authorId)))
@@ -67,25 +59,13 @@
                             span(style="color: #1877f2; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;")
                                 i.fa-solid.fa-thumbs-up
                                 |  #{comment.likedBy.length}
-    if user
-        if hasPermission(user, post.visibility, 'COMMENT') && (!userBlocks || !userBlocks.includes(String(post.authorId)))
-            form.comment-form.comment-submit-on-enter(action=`/posts/${post._id}/comment` method="POST" style="display: flex; align-items: flex-end; gap: 8px; width: 100%; margin-top: 12px;")
-                input(type="hidden" name="_csrf" value=csrfToken)
-                img.comment-avatar(src=(user.avatarUrl || DEFAULT_ASSETS.avatar) style="margin-bottom: 4px; flex-shrink: 0;")
-                
-                //- Pole tekstowe (textarea) zajmuje teraz bezpiecznie całą dostępną szerokość flexboxa
-                textarea(id=`comment-input-field-${post._id}` name="content" placeholder="Napisz komentarz..." rows="1" required autocomplete="off" style="resize: none; overflow-y: hidden; flex: 1; min-height: 36px; box-sizing: border-box;")
-                
-                //- KRYTYCZNA POPRAWKA: Przycisk jest teraz niezależnym, klikalnym sąsiadem pola (warstwy się nie nakładają)
-                button(type="submit" title="Wyślij komentarz" style="background: none; border: none; color: #1877f2; cursor: pointer; padding: 8px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.2s, transform 0.1s;")
-                    i.fa-solid.fa-paper-plane(style="font-size: 18px;")
-        //else
-            .comment-form(style="cursor: pointer; width: 100%; margin-top: 12px;")
-                img.comment-avatar(src=(user.avatarUrl || DEFAULT_ASSETS.avatar) style="flex-shrink: 0;")
-                textarea.restricted-feature-trigger(
-                    placeholder="Napisz komentarz... (Wymagana weryfikacja)" 
-                    readonly 
-                    rows="1"
-                    data-reason="comment_public"
-                    style="cursor: pointer; background-color: #f0f2f5; color: #8a8d91; resize: none; width: 100%; min-height: 36px;"
-                )
+
+//- Statyczny i nienaruszalny formularz wpisywania nowego komentarza (Zawsze widoczny pod listą)
+if user
+    if hasPermission(user, post.visibility, 'COMMENT') && (!userBlocks || !userBlocks.includes(String(post.authorId)))
+        form.comment-form.comment-submit-on-enter(action=`/posts/${post._id}/comment` method="POST" style="display: flex; align-items: flex-end; gap: 8px; width: 100%; margin-top: 12px;")
+            input(type="hidden" name="_csrf" value=csrfToken)
+            img.comment-avatar(src=(user.avatarUrl || DEFAULT_ASSETS.avatar) style="margin-bottom: 4px; flex-shrink: 0;")
+            textarea(id=`comment-input-field-${post._id}` name="content" placeholder="Napisz komentarz..." rows="1" required autocomplete="off" style="resize: none; overflow-y: hidden; flex: 1; min-height: 36px; box-sizing: border-box;")
+            button(type="submit" title="Wyślij komentarz" style="background: none; border: none; color: #1877f2; cursor: pointer; padding: 8px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: color 0.2s, transform 0.1s;")
+                i.fa-solid.fa-paper-plane(style="font-size: 18px;")

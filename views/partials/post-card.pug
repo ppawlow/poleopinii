@@ -62,11 +62,4 @@
         
         include post-edit.pug
 
-        .post-stats(style="margin-top: 20px;")
-            span.likes-count
-                i.fa-solid.fa-star
-
-                |  #{post.likesCount || 0} polubień
-            span.comments-count(onclick=`toggleCommentsVisibility('${post._id}')` style="cursor: pointer; user-select: none;") #{post.comments ? post.comments.length : 0} komentarzy
-
         include post-footer.pug

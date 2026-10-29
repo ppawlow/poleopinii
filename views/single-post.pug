@@ -90,23 +90,12 @@ block content
                                 a(href=`/posts/${other._id}` style="color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.2s;") #{other.title || 'Wpis bez tytułu'}
                                 span(style="color: #65676b; font-size: 12px;") — #{other.createdAt ? new Date(other.createdAt).toLocaleDateString('pl-PL') : ''}
                     
-            //- Dolny pasek interakcji
+            //- Dolny pasek interakcji z dołączoną stopką post-footer
             footer.article-footer(style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e4e6eb; display: block; margin-bottom: 24px;")
-                .article-stats(style="font-size: 14px; color: #65676b; font-family: sans-serif; margin-bottom: 16px; display: flex; justify-content: space-between;")
-                    //- POPRAWKA: Dodajemy klasę .likes-count, aby asynchroniczny skrypt JavaScript z mainApi.js mógł bez przeszkód zlokalizować ten element w strukturze DOM!
-                    span.likes-count(style="margin-right: 16px;") 
-                        i.fa-solid.fa-star(style="color: #E5A93C; margin-right: 4px;") 
-
-                        |  #{post.likesCount || 0} polubień
-                    span.comments-count(onclick=`toggleCommentsVisibility('${post._id}')` style="cursor: pointer; user-select: none; font-weight: 500; color: #1877f2;") 
-                        i.fa-solid.fa-comment(style="color: #42b72a; margin-right: 4px;") 
-                        | #{post.comments ? post.comments.length : 0} komentarzy
-            
-                //- IMPLEMENTACJA ZASADY DRY: Włączenie wydzielonego szablonu przycisków i komentarzy stopki
                 include partials/post-footer.pug
         
             //Edutor polemiki
-            .article-reply-editor-container(style="margin-top: 32px; border-top: 1px dashed #e4e6eb; padding-top: 24px;")
+            .article-reply-editor-container(style="margin-top: 32px; border-top: 1px dashed #e4e6eb; padding-top: 24px; display:none;")
                 include partials/create-post.pug
                 
         //- Uniwersalne okno powiększenia zdjęcia (Lightbox Image Modal)
