@@ -135,9 +135,8 @@ module.exports = {
 
   PORT: 3000,
   SALT_ROUNDS: 12,
-  get RECAPTCHA_SECRET_KEY() {return process.env.RECAPTCHA_SECRET_KEY},
-  get RECAPTCHA_SITE_KEY() {process.env.RECAPTCHA_SITE_KEY},
+  RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
+  RECAPTCHA_SITE_KEY:process.env.RECAPTCHA_PUBLIC_KEY,
   useRecaptcha: false,
-  
-  get isDevelopment() {return process.env.NODE_ENV === "development"},
+  isDevelopment: process.env.NODE_ENV === "development",
 };

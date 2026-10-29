@@ -209,8 +209,9 @@ app.use(async (req, res, next) => {
     hasPermission,
     RECAPTCHA_SITE_KEY,
     isDevelopment,
+    useRecaptcha,
   };
-
+  console.log(res.locals);
   res.locals.getProfileUrl = function (userDetails) {
     if (!userDetails) return "/";
 
