@@ -18,6 +18,7 @@ const logSchema = new mongoose.Schema({
 });
 
 const SystemLog = mongoose.model("SystemLog", logSchema);
+
 async function createLog(req, actionText, explicitIdentifier = null) {
   try {
     const ip = req.ip || "127.0.0.1";
@@ -34,6 +35,8 @@ async function createLog(req, actionText, explicitIdentifier = null) {
     if (explicitIdentifier) {
       fallback = explicitIdentifier;
     }
+
+    console.log(`[AUDYT] [IP: ${ip}] Akcja: ${actionText}`);
 
     await SystemLog.create({
       userId: activeUserId,
