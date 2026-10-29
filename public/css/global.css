@@ -1136,3 +1136,30 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
     font-size: 16px !important;
   }
 }
+
+/* 1. Nadanie stopce kontekstu pozycjonowania (Kotwica) */
+.site-footer {
+  position: relative; /* Gwarantuje, że elementy pozycjonowane absolutnie wewnątrz stopki nie uciekną */
+  overflow: visible;  /* Pozwala odznace delikatnie wystawać, jeśli stopka jest za niska */
+}
+
+/* 2. Zmuszenie plakietki reCAPTCHA do trzymania się dolnej krawędzi stopki */
+body .grecaptcha-badge {
+  position: absolute !important; /* Przypina odznakę do końca przewijanej strony, a nie okna ekranu */
+  bottom: 12px !important;       /* Margines od dolnej krawędzi stopki */
+  right: 16px !important;        /* Margines od prawej krawędzi stopki */
+  top: auto !important;          /* Resetowanie ewentualnych stylów nadrzędnych Google */
+  z-index: 10 !important;        /* Bezpieczna warstwa, aby nie przebijała modali systemowych */
+  
+  /* Opcjonalnie: Delikatne zmniejszenie i przezroczystość, by wtopiła się w tło stopki */
+  transform: scale(0.9);
+  transform-origin: bottom right;
+  opacity: 0.6;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Przywrócenie pełnej widoczności po najechaniu myszką */
+body .grecaptcha-badge:hover {
+  opacity: 1;
+  transform: scale(0.93);
+}
