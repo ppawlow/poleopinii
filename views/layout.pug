@@ -30,7 +30,8 @@ html(lang="pl")
         link(rel="stylesheet" href="/quill/quill.snow.css")
         script(src="/quill/quill.js")
         if RECAPTCHA_SITE_KEY && useRecaptcha
-            script(src="https://www.google.com/recaptcha/api.js?render=" + RECAPTCHA_SITE_KEY)
+            //script(src="https://www.google.com/recaptcha/api.js?render=" + RECAPTCHA_SITE_KEY)
+            script(src="https://www.google.com/recaptcha/enterprise.js?render=" +    RECAPTCHA_SITE_KEY)        
             script.
                 window.env = { 
                     RECAPTCHA_SITE_KEY: "!{RECAPTCHA_SITE_KEY}",

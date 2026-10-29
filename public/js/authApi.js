@@ -4,54 +4,51 @@ document.addEventListener("DOMContentLoaded", () => {
   const isCaptchaEnabled = window.env && window.env.useRecaptcha === true;
   const siteKey = window.env && window.env.RECAPTCHA_SITE_KEY;
 
-  // Funkcja pomocnicza generująca token dla wybranej akcji
+  // Funkcja pomocnicza generująca token dla reCAPTCHA Enterprise
   function getCaptchaToken(actionName) {
     return new Promise((resolve) => {
-      if (!isCaptchaEnabled || typeof grecaptcha === "undefined" || !siteKey) {
+      if (!isCaptchaEnabled || typeof grecaptcha === "undefined" || !grecaptcha.enterprise || !siteKey) {
         return resolve("BYPASS_TOKEN_CAPTCHA_DISABLED");
       }
-      grecaptcha.ready(() => {
-        grecaptcha.execute(siteKey, { action: actionName })
+      grecaptcha.enterprise.ready(() => {
+        grecaptcha.enterprise.execute(siteKey, { action: actionName })
           .then((token) => resolve(token))
           .catch((err) => {
-            console.error("Błąd reCAPTCHA:", err);
+            console.error("Błąd reCAPTCHA Enterprise:", err);
             resolve(null);
           });
       });
     });
   }
 
-  // =========================================================================
-  // 1. FORMULARZ LOGOWANIA (Zabezpieczony przed wyścigiem wątków)
-  // =========================================================================
+  // 1. FORMULARZ LOGOWANIA
   const loginForm = document.getElementById("loginForm");
   if (loginForm) {
     loginForm.addEventListener("submit", async function (e) {
-      // Jeśli token został już wygenerowany i wstrzyknięty, puszczamy formularz normalnie
       if (document.getElementById("loginRecaptchaToken").value) {
-        return; 
+        return; // Token już jest, pozwól na wysyłkę POST
       }
       
-      e.preventDefault(); // Zatrzymujemy wysyłkę
+      e.preventDefault(); 
       const submitBtn = loginForm.querySelector('button[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
 
       try {
         const token = await getCaptchaToken("login_auth");
-        document.getElementById("loginRecaptchaToken").value = token;
+        if (token) {
+          document.getElementById("loginRecaptchaToken").value = token;
+          HTMLFormElement.prototype.submit.call(loginForm); // Bezpieczne ominięcie pętli eventu
+        } else {
+          if (submitBtn) submitBtn.disabled = false;
+        }
       } catch (err) {
-        console.error("Błąd generowania tokenu logowania:", err);
+        console.error("Błąd logowania Captcha:", err);
+        if (submitBtn) submitBtn.disabled = false;
       }
-
-      // Po przypisaniu tokenu ręcznie wywołujemy wysyłkę na elemencie prototypu,
-      // co zapobiega pętli nieskończonej w addEventListener
-      HTMLFormElement.prototype.submit.call(loginForm);
     });
   }
 
-  // =========================================================================
-  // 2. FORMULARZ ZAPOMNIANEGO HASŁA (Zabezpieczony przed wyścigiem wątków)
-  // =========================================================================
+  // 2. FORMULARZ ZAPOMNIANEGO HASŁA
   const forgotPasswordForm = document.getElementById("forgotPasswordForm");
   if (forgotPasswordForm) {
     forgotPasswordForm.addEventListener("submit", async function (e) {
@@ -65,23 +62,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const token = await getCaptchaToken("forgot_password_auth");
-        document.getElementById("forgotRecaptchaToken").value = token;
+        if (token) {
+          document.getElementById("forgotRecaptchaToken").value = token;
+          HTMLFormElement.prototype.submit.call(forgotPasswordForm);
+        } else {
+          if (submitBtn) submitBtn.disabled = false;
+        }
       } catch (err) {
-        console.error("Błąd generowania tokenu resetu:", err);
+        if (submitBtn) submitBtn.disabled = false;
       }
-
-      HTMLFormElement.prototype.submit.call(forgotPasswordForm);
     });
   }
   
-  // =========================================================================
-  // 3. PROCES REJESTRACJI KONTA (Asynchroniczny Fetch API)
-  // =========================================================================
+  // 3. ASYNCHRONICZNA REJESTRACJA KONTA (FETCH API)
   const registerForm = document.getElementById("registerForm");
   if (registerForm) {
     registerForm.addEventListener("submit", async function (e) {
       e.preventDefault();
-      e.stopImmediatePropagation();
       
       const csrfToken = registerForm.getAttribute("data-csrf");
       const submitBtn = registerForm.querySelector('button[type="submit"]');
@@ -91,18 +88,14 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const formData = new FormData(registerForm);
-      const termsCheck = document.getElementById("termsCheck");
-      const privacyCheck = document.getElementById("privacyCheck");
-      if (termsCheck) formData.set("terms", termsCheck.checked ? "on" : "off");
-      if (privacyCheck) formData.set("privacy", privacyCheck.checked ? "on" : "off");
-
-      // Dynamicznie generujemy i wstrzykujemy token do paczki Fetch
+      
+      // Pobranie tokenu tuż przed strzałem Fetch
       const token = await getCaptchaToken("register_auth");
       formData.set("recaptchaToken", token);
 
       const serializedData = new URLSearchParams(formData).toString();
       try {
-        if (submitBtn) submitBtn.innerText = "Generowanie linku...";
+        if (submitBtn) submitBtn.innerText = "Rejestrowanie...";
         const response = await fetch("/auth/register", {
           method: "POST",
           headers: {
@@ -112,28 +105,19 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: serializedData,
         });
+        
         if (response.ok) {
           const data = await response.json();
-          if (data.success && data.msg === "registered_check_email") {
+          if (data.success) {
             registerForm.reset();
             await window.Alert(
-              `✉️ <b>Weryfikacja tożsamości została zainicjowana!</b><br><br>Na adres <b>${data.email}</b> wysłaliśmy bezpieczny odnośnik aktywacyjny.<br>Otwórz swoją pocztę i kliknij w link.`,
+              `✉️ <b>Konto zainicjowane!</b><br><br>Na adres <b>${data.email}</b> wysłaliśmy link aktywacyjny.`,
               "📧 Sprawdź skrzynkę e-mail"
             );
           }
         } else {
           const errText = await response.text();
-          let userFriendlyError = "Wystąpił błąd podczas rejestracji. Spróbuj ponownie.";
-
-          if (errText.includes("zajęty") || errText.includes("exists")) {
-            userFriendlyError = "⚠️ Podany adres e-mail jest już zajęty.";
-          } else if (errText.includes("reCAPTCHA") || response.status === 403) {
-            userFriendlyError = `⚠️ Odrzucono żądanie: ${errText}`;
-          } else if (errText.includes("Błąd walidacji:")) {
-            userFriendlyError = `⚠️ ${errText.replace("Błąd walidacji: ", "")}`;
-          }
-
-          await window.Alert(userFriendlyError, "❌ Rejestracja odrzucona");
+          await window.Alert(`⚠️ Rejestracja odrzucona: ${errText}`, "Błąd");
         }
       } catch (err) {
         console.error(err);
@@ -141,40 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerText = "Zarejestruj się";
-        }
-      }
-    });
-  }
-
-  // --- Obsługa ponownej wysyłki aktywacji mailowej (Ustawienia) ---
-  const resendEmailForm = document.getElementById("resendEmailVerificationForm");
-  if (resendEmailForm) {
-    resendEmailForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      const submitBtn = resendEmailForm.querySelector('button[type="submit"]');
-      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
-      if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generowanie...';
-      }
-      try {
-        const response = await fetch(resendEmailForm.action, {
-          method: "POST",
-          headers: {
-            "X-CSRF-Token": csrfToken,
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-        });
-        if (response.ok) {
-          await window.Alert("Nowy link weryfikacyjny został wysłany.", "Weryfikacja e-mail");
-        }
-      } catch (err) {
-        console.error("Błąd:", err);
-      } finally {
-        if (submitBtn) {
-          submitBtn.disabled = false;
-          submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Wyślij ponownie';
         }
       }
     });

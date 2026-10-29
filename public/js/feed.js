@@ -642,22 +642,22 @@ window.submitAbuseModalForm = async function (event) {
       });
   };
 
-  // Obsługa reCAPTCHA Enterprise w zależności od flagi z config.js
+  // Obsługa reCAPTCHA Enterprise dla zgłoszeń publicznych
   if (isPublicReport && !isCaptchaEnabled) {
     formData.set("recaptchaToken", "BYPASS_TOKEN_CAPTCHA_DISABLED");
     fireReportPayload(formData);
   } else if (
     isPublicReport &&
-    typeof grecaptcha !== "undefined" &&
+    typeof grecaptcha !== "undefined" && 
+    grecaptcha.enterprise &&
     window.env &&
     window.env.RECAPTCHA_SITE_KEY
   ) {
-    // KRYTYCZNA POPRAWKA: Korzystamy ze standardowego obiektu grecaptcha.ready i grecaptcha.execute
-    grecaptcha.ready(function () {
-      grecaptcha
+    grecaptcha.enterprise.ready(function () {
+      grecaptcha.enterprise
         .execute(window.env.RECAPTCHA_SITE_KEY, { action: "submit_abuse" })
         .then(function (token) {
-          formData.set("recaptchaToken", token); // Ten token będzie w 100% poprawny dla /siteverify!
+          formData.set("recaptchaToken", token);
           fireReportPayload(formData);
         });
     });
@@ -665,6 +665,7 @@ window.submitAbuseModalForm = async function (event) {
     formData.set("recaptchaToken", "SIGNED_USER_AUTHTOKEN");
     fireReportPayload(formData);
   }
+
 };
 
 // public/js/feed.js

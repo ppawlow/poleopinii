@@ -587,7 +587,7 @@ tools.adminScannerLimiter = rateLimit({
 // tools/validation.js
 
 /**
- * Zcentralizowana funkcja weryfikacji tokenu reCAPTCHA v3/Enterprise
+ * Zcentralizowana funkcja weryfikacji tokenu reCAPTCHA v3 Enterprise
  * @param {string} token - Wygenerowany na froncie token
  * @param {string} remoteIp - Adres IP klienta
  * @returns {Promise<boolean>} - true jeśli zweryfikowano pomyślnie, false jeśli bot/błąd
@@ -595,7 +595,7 @@ tools.adminScannerLimiter = rateLimit({
 tools.verifyRecaptcha = async function (token, remoteIp) {
   const { useRecaptcha, RECAPTCHA_SECRET_KEY } = require("../config");
   
-  // Jeśli funkcja jest wyłączona systemowo lub jesteśmy w trybie deweloperskim z tokenem bypassu
+  // Jeśli funkcja jest wyłączona systemowo
   if (!useRecaptcha || token === "BYPASS_TOKEN_CAPTCHA_DISABLED") {
     return true;
   }
@@ -603,6 +603,7 @@ tools.verifyRecaptcha = async function (token, remoteIp) {
   if (!token) return false;
 
   try {
+    // Punkt końcowy dla Enterprise i v3 jest tożsamy w klasycznym iq-verifikatorze klucza sekretnego
     const verificationUrl = "https://www.google.com/recaptcha/api/siteverify";
     const params = new URLSearchParams({
       secret: RECAPTCHA_SECRET_KEY,
@@ -618,17 +619,18 @@ tools.verifyRecaptcha = async function (token, remoteIp) {
 
     const data = await response.json();
     
-    // Próg akceptacji 0.5 (Wszystko poniżej jest traktowane jako ruch botów)
+    // Rating poniżej 0.5 oznacza ruch automatyczny (boty)
     if (data.success && (data.score === undefined || data.score >= 0.5)) {
       return true;
     }
 
     // Rejestracja incydentu naruszenia do audit-logu aplikacji
     const { SystemLog } = require("./db");
-    console.log(`[reCAPTCHA BLOKADA BRUTEFORCE] Odrzucono podejrzany ruch z IP: ${remoteIp}. Score: ${data.score || 0}`);
+    console.log(`[reCAPTCHA ENTERPRISE BLOKADA] Odrzucono podejrzany ruch z IP: ${remoteIp}. Score: ${data.score || 0}`);
+    
     await SystemLog.create({
       fallbackName: "System-Ochrony",
-      action: `[reCAPTCHA BLOKADA FORMULARZA] Zablokowano automatyczną próbę uderzenia. Wynik punktowy: ${data.score || 0}`,
+      action: `[reCAPTCHA BLOKADA] Zablokowano automatyczną próbę uderzenia. Wynik punktowy: ${data.score || 0}`,
       ipAddress: remoteIp || "127.0.0.1",
     });
 
