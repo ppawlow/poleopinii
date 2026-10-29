@@ -425,3 +425,27 @@
     max-width: 100% !important;
   }
 }
+
+@media (max-width: 900px) {
+  /* FIX DLA WIDOKU SINGLE-POST: Spłaszczenie marginesów i kompaktowy padding na mobile */
+  .main-container:has(.editorial-article) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+  }
+
+  .editorial-article {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 16px !important; /* Taki sam padding jak w .post-card na mobile */
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .article-header {
+    padding-bottom: 16px !important;
+    margin-bottom: 20px !important;
+  }
+}
