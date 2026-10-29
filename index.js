@@ -80,6 +80,8 @@ app.use(
           "https://*.googleapis.com",
           "https://gstatic.com",
           "https://*.gstatic.com",
+          "https://datatables.net",
+          "https://*.datatables.net",
         ],
         "script-src-attr": ["'unsafe-inline'"],
         "connect-src": [
