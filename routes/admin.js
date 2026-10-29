@@ -230,27 +230,8 @@ async function postUnlockModeratorFlag(req, res) {
     post.isModeratorLocked = false;
     await post.save();
 
-    // 2. Informujemy autora mailowo o zdjęciu restrykcji
-    if (post.authorEmail) {
-      try {
-        const mailTemplates = require("../tools/mailTemplates");
-        const { sendMail } = require("../tools/mailer");
-        const unlockMailContent =
-          mailTemplates.getAuthorUnlockNotificationEmail(
-            post.author,
-            post.title || "Wpis bez tytułu",
-            SERVICE_NAME,
-          );
-
-        await sendMail(
-          post.authorEmail,
-          "🔓 Odblokowanie profilu: Możesz ponownie upublicznić post",
-          unlockMailContent,
-        );
-      } catch (e) {
-        console.error(e);
-      }
-    }
+    // 2. KRYTYCZNA POPRAWKA: Informujemy autora mailowo, korzystając z czystej metody modułu mailer (Zasada DRY)
+    await mailer.sendPostUnlockedNotificationEmail(post);
 
     await createLog(
       req,
@@ -258,7 +239,7 @@ async function postUnlockModeratorFlag(req, res) {
     );
     return res.sendStatus(200);
   } catch (err) {
-    console.error(err);
+    console.error("Błąd podczas zdejmowania blokady posta:", err);
     return res.status(500).send("Błąd podczas zdejmowania blokady.");
   }
 }
