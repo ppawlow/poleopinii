@@ -948,11 +948,21 @@ body {
 /*
 /* Poprawki 
  */
-body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer {
-  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+body,
+.post-card,
+.create-post,
+.info-box,
+header.fb-navbar,
+footer.site-footer {
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
-.comment-form textarea, .comment-edit-form-block textarea {
+.comment-form textarea,
+.comment-edit-form-block textarea {
   transition: height 0.15s ease-out;
   min-height: 36px;
   resize: none;
@@ -995,8 +1005,8 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
 /* KRYTYCZNA POPRAWKA DLA SREDRNICH I MAŁYCH EKRANÓW (RESPONSOWNOŚĆ) */
 @media (max-width: 768px) {
   .article-featured-image {
-    float: none;       /* Wyłącza opływanie na telefonach */
-    max-width: 100%;   /* Obrazek zajmuje pełną dostępną szerokość */
+    float: none; /* Wyłącza opływanie na telefonach */
+    max-width: 100%; /* Obrazek zajmuje pełną dostępną szerokość */
     width: 100%;
     margin: 0 0 20px 0; /* Margines tylko na dole, oddzielający od tekstu */
   }
@@ -1027,7 +1037,9 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
   font-size: 14px;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition:
+    background-color 0.2s,
+    transform 0.1s;
   height: 38px;
   white-space: nowrap;
 }
@@ -1140,7 +1152,7 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
 /* 1. Nadanie stopce kontekstu pozycjonowania (Kotwica) */
 .site-footer {
   position: relative; /* Gwarantuje, że elementy pozycjonowane absolutnie wewnątrz stopki nie uciekną */
-  overflow: visible;  /* Pozwala odznace delikatnie wystawać, jeśli stopka jest za niska */
+  overflow: visible; /* Pozwala odznace delikatnie wystawać, jeśli stopka jest za niska */
 }
 
 /* Całkowite i bezpieczne ukrycie odznaki reCAPTCHA (zgodne z wytycznymi Google) */

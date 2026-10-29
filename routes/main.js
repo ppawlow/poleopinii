@@ -22,7 +22,7 @@ module.exports = express
   .get("/search/api", getSearchApi)
   .get("/topics", getTopics)
   .get("/regulamin", getTerms)
-  .get("/polityka-prywatnosci",getPrivacy)
+  .get("/polityka-prywatnosci", getPrivacy)
 
   // Dostęp tylko dla zalogowanych
   .use(accessControl)
@@ -163,10 +163,10 @@ async function postBlock(req, res) {
     const isBlocked = dbUser.isBlocking(targetUser._id);
     if (!isBlocked) {
       dbUser.blocks.push(targetUser._id);
-      
+
       // 1. BEZWZGLĘDNE CZYSZCZENIE: Ja przestaję obserwować zablokowanego użytkownika
       dbUser.following.pull(targetUser._id);
-      
+
       // 2. OBUSTRONNE CZYSZCZENIE: Zablokowany użytkownik również automatycznie przestaje obserwować mnie
       targetUser.following.pull(dbUser._id);
       await targetUser.save(); // Zapisujemy zmiany w dokumencie zablokowanego użytkownika
@@ -463,7 +463,7 @@ async function getFileModificationDate(viewName) {
     // Ścieżka do pliku widoku (np. views/terms.pug)
     const filePath = path.join(__dirname, "../views", `${viewName}.pug`);
     const stats = await fsPromises.stat(filePath);
-    
+
     // Formatowanie daty do polskiego standardu: dd miesiąc rrrr
     return stats.mtime.toLocaleDateString("pl-PL", {
       year: "numeric",
@@ -477,18 +477,18 @@ async function getFileModificationDate(viewName) {
   }
 }
 
-async function getTerms(req, res){
-    const lastUpdate = await getFileModificationDate("terms");
-    res.render("terms", {
-      title: "Regulamin platformy",
-      lastUpdate // Przekazanie dynamicznej daty do Pug
-    });
+async function getTerms(req, res) {
+  const lastUpdate = await getFileModificationDate("terms");
+  res.render("terms", {
+    title: "Regulamin platformy",
+    lastUpdate, // Przekazanie dynamicznej daty do Pug
+  });
 }
 
-async function getPrivacy(req, res){
-    const lastUpdate = await getFileModificationDate("privacy");
-    res.render("privacy", {
-      title: "Polityka prywatności",
-      lastUpdate // Przekazanie dynamicznej daty do Pug
-    });
-  }
+async function getPrivacy(req, res) {
+  const lastUpdate = await getFileModificationDate("privacy");
+  res.render("privacy", {
+    title: "Polityka prywatności",
+    lastUpdate, // Przekazanie dynamicznej daty do Pug
+  });
+}

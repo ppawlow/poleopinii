@@ -648,7 +648,7 @@ window.submitAbuseModalForm = async function (event) {
     fireReportPayload(formData);
   } else if (
     isPublicReport &&
-    typeof grecaptcha !== "undefined" && 
+    typeof grecaptcha !== "undefined" &&
     grecaptcha.enterprise &&
     window.env &&
     window.env.RECAPTCHA_SITE_KEY
@@ -665,7 +665,6 @@ window.submitAbuseModalForm = async function (event) {
     formData.set("recaptchaToken", "SIGNED_USER_AUTHTOKEN");
     fireReportPayload(formData);
   }
-
 };
 
 // public/js/feed.js

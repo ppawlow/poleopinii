@@ -4,7 +4,7 @@ if (!process.env.SESSION_SECRET) {
   console.error(
     "BŁĄD KRYTYCZNY: Brak zdefiniowanej zmiennej SESSION_SECRET w pliku .env!",
   );
-  process.exit(1); 
+  process.exit(1);
 }
 
 const express = require("express");
@@ -12,10 +12,7 @@ const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const csurf = require("csurf");
 const helmet = require("helmet");
-const { 
-  globalLimiter, 
-  adminScannerLimiter,
-} = require("./tools/validation");
+const { globalLimiter, adminScannerLimiter } = require("./tools/validation");
 const { startNotification } = require("./tools/mailer");
 const sanitize = require("express-mongo-sanitize").sanitize;
 const path = require("path");
@@ -44,12 +41,7 @@ const {
 } = require("./config");
 
 //Narzędzia
-const {
-  User,
-  Alias,
-  createLog,
-  createVerifiedUser,
-} = require("./tools/db");
+const { User, Alias, createLog, createVerifiedUser } = require("./tools/db");
 
 const app = express();
 
@@ -58,7 +50,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        
+
         "script-src": [
           "'self'",
           "'unsafe-inline'",
@@ -68,7 +60,7 @@ app.use(
           "https://*.datatables.net",
           "https://*.googleapis.com",
         ],
-        
+
         "script-src-elem": [
           "'self'",
           "'unsafe-inline'",
@@ -83,9 +75,9 @@ app.use(
           "https://datatables.net",
           "https://*.datatables.net",
         ],
-        
+
         "script-src-attr": ["'unsafe-inline'"],
-        
+
         "connect-src": [
           "'self'",
           "http://localhost:*",
@@ -95,7 +87,7 @@ app.use(
           "https://fontawesome.com",
           "https://*.fontawesome.com",
         ],
-        
+
         "style-src": [
           "'self'",
           "'unsafe-inline'",
@@ -109,36 +101,38 @@ app.use(
           "https://datatables.net",
           "https://*.datatables.net",
         ],
-        
+
         "font-src": [
           "'self'",
           "data:",
           "https://fontawesome.com",
           "https://*.fontawesome.com",
           "https://gstatic.com",
-          "https://*.gstatic.com"
+          "https://*.gstatic.com",
         ],
 
         "img-src": [
-          "'self'", 
-          "data:", 
-          "https:", 
-          "https://*.gstatic.com", 
-          "https://www.google.com"
+          "'self'",
+          "data:",
+          "https:",
+          "https://*.gstatic.com",
+          "https://www.google.com",
         ],
-        
+
         "frame-src": [
           "'self'",
           "https://google.com",
           "https://*.google.com",
-          "https://*.gstatic.com"
-        ]
-      }
+          "https://*.gstatic.com",
+        ],
+      },
     },
     crossOriginOpenerPolicy: isDevelopment ? false : { policy: "same-origin" },
-    crossOriginResourcePolicy: isDevelopment ? false : { policy: "same-origin" },
-    hsts: false
-  })
+    crossOriginResourcePolicy: isDevelopment
+      ? false
+      : { policy: "same-origin" },
+    hsts: false,
+  }),
 );
 
 app.set("trust proxy", 1);
@@ -157,7 +151,7 @@ app.use("/admin", adminScannerLimiter);
 // 1. OCHRONA PRZED NOSQL INJECTION (SANITYZACJA)
 // ==========================================
 app.use((req, res, next) => {
-(req.params)
+  req.params;
   if (req.body) sanitize(req.body, { allowDots: true });
   if (req.params) sanitize(req.params, { allowDots: true });
   next();
@@ -225,7 +219,7 @@ app.use(async (req, res, next) => {
 });
 
 // ==========================================
-// 5. Bezpieczne pobranie danych użytkownika, 
+// 5. Bezpieczne pobranie danych użytkownika,
 //    jesli jest zalogowany
 // ==========================================
 app.use(userData);

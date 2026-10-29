@@ -313,23 +313,23 @@ $(document).ready(function () {
       }
     }, 5);
   });
-    // Obsługa asynchronicznego selektora daty logów systemowych
-  $('#log-date-picker').on('change', async function() {
+  // Obsługa asynchronicznego selektora daty logów systemowych
+  $("#log-date-picker").on("change", async function () {
     const selectedDate = $(this).val();
     if (!selectedDate) return;
 
-    const tableBody = $('#logs-table-body');
-    const badge = $('#admin-panel-logs .accordion-header span');
+    const tableBody = $("#logs-table-body");
+    const badge = $("#admin-panel-logs .accordion-header span");
 
     try {
       const response = await fetch(`/admin/logs/api?date=${selectedDate}`);
       if (response.ok) {
         const data = await response.json();
-        
+
         if (data.success) {
           // 1. Niszczymy starą instancję DataTables na czas podmiany drzewa DOM
-          if ($.fn.DataTable.isDataTable('#logsTable')) {
-            $('#logsTable').DataTable().destroy();
+          if ($.fn.DataTable.isDataTable("#logsTable")) {
+            $("#logsTable").DataTable().destroy();
           }
 
           // 2. Wstrzykujemy nowe wiersze HTML wyrenderowane przez serwer
@@ -341,11 +341,14 @@ $(document).ready(function () {
           }
 
           // 4. Ponownie inicjalizujemy DataTables z polską konfiguracją językową
-          $('#logsTable').DataTable({
+          $("#logsTable").DataTable({
             language: PolishLanguageConfig, // Korzysta z zadeklarowanej wyżej zmiennej globalnej
             pageLength: 25,
-            lengthMenu: [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "Wszystkie"] ],
-            order: [[0, 'desc']]
+            lengthMenu: [
+              [10, 25, 50, 100, -1],
+              [10, 25, 50, 100, "Wszystkie"],
+            ],
+            order: [[0, "desc"]],
           });
         }
       }

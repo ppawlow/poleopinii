@@ -101,7 +101,7 @@ async function postLogin(req, res) {
     await createLog(
       req,
       `Nieudana próba logowania dla adresu: ${email}`,
-      "System-Uwierzytelniania"
+      "System-Uwierzytelniania",
     );
     return res.redirect("/auth/login?error=1");
   } catch (err) {
@@ -118,13 +118,24 @@ async function postRegister(req, res) {
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf("json") > -1)) {
-      return res.status(400).send(errors.array().map((e) => e.msg).join(" "));
+    if (
+      req.xhr ||
+      (req.headers.accept && req.headers.accept.indexOf("json") > -1)
+    ) {
+      return res.status(400).send(
+        errors
+          .array()
+          .map((e) => e.msg)
+          .join(" "),
+      );
     }
     return res.status(400).render("register", {
       title: "Utwórz nowe konto",
       error: "validation",
-      customErrorMessage: errors.array().map((e) => e.msg).join(" "),
+      customErrorMessage: errors
+        .array()
+        .map((e) => e.msg)
+        .join(" "),
       formData: { name, email, terms: !!terms, privacy: !!privacy },
     });
   }
@@ -134,7 +145,11 @@ async function postRegister(req, res) {
   const ip = req.ip || "127.0.0.1";
   const isHuman = await verifyRecaptcha(recaptchaToken, ip);
   if (!isHuman) {
-    return res.status(403).send("Weryfikacja anty-botowa nieudana. Ruch zakwalifikowany jako automatyczny spam.");
+    return res
+      .status(403)
+      .send(
+        "Weryfikacja anty-botowa nieudana. Ruch zakwalifikowany jako automatyczny spam.",
+      );
   }
 
   try {
@@ -145,9 +160,17 @@ async function postRegister(req, res) {
       return res.status(400).json({ error: "exists" });
     }
 
-    await createLog(req, `Zainicjowano rejestrację konta: ${result.email}`, result.email);
+    await createLog(
+      req,
+      `Zainicjowano rejestrację konta: ${result.email}`,
+      result.email,
+    );
     await mailer.sendVerificationEmail(result, req);
-    await createLog(req, `[SYSTEM MAIL] Wysłano link aktywacyjny do: ${result.email}`, result.email);
+    await createLog(
+      req,
+      `[SYSTEM MAIL] Wysłano link aktywacyjny do: ${result.email}`,
+      result.email,
+    );
 
     return res.json({
       success: true,

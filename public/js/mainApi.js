@@ -1,13 +1,11 @@
 if (window.Alert === undefined) window.Alert = window.alert;
 
-function liczebnik(liczba, forma){
-    if(liczba == 1) return liczba + " " + forma[0];
-    if(liczba > 4 && liczba < 22) return liczba + " " + forma[2];
-    wskaznik = liczba % 10;
-    if(wskaznik > 1 && wskaznik < 5)
-        return liczba + " " + forma[1];
-    else
-        return liczba + " " + forma[2];
+function liczebnik(liczba, forma) {
+  if (liczba == 1) return liczba + " " + forma[0];
+  if (liczba > 4 && liczba < 22) return liczba + " " + forma[2];
+  wskaznik = liczba % 10;
+  if (wskaznik > 1 && wskaznik < 5) return liczba + " " + forma[1];
+  else return liczba + " " + forma[2];
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -92,16 +90,18 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
       const data = await response.json();
       if (data.success && data.html) {
         const postCard = form.closest(".post-card, .editorial-article");
-        
+
         if (postCard) {
           // Namierzamy kontener przeznaczony wyłącznie na listę komentarzy
-          const targetCommentsListContainer = document.getElementById(`comments-list-${postId}`);
+          const targetCommentsListContainer = document.getElementById(
+            `comments-list-${postId}`,
+          );
 
           if (targetCommentsListContainer) {
             // Tworzymy tymczasowy parser DOM, aby wyciągnąć nowo wyrenderowaną kartę komentarza
             const tempParser = document.createElement("div");
             tempParser.innerHTML = data.html;
-            
+
             // Pobieramy wyłącznie węzeł nowo utworzonego komentarza (.comment-card)
             const freshCommentCard = tempParser.querySelector(".comment-card");
 
@@ -110,21 +110,30 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
               targetCommentsListContainer.appendChild(freshCommentCard);
             }
           }
-          
+
           // =========================================================================
           // AUTOMATYCZNE PRZELICZANIE LICZNIKÓW PO DOKLEJENIU DO DRZEWA DOM
           // =========================================================================
           // Liczymy wszystkie komentarze fizycznie obecne w strukturze strony dla tego posta
-          const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
+          const freshCommentsCount =
+            postCard.querySelectorAll(".comment-card").length;
 
           // 1. Aktualizacja dolnego paska statystyk stopki
-          const commentsCountEl = document.getElementById(`comments-text-${postId}`);
+          const commentsCountEl = document.getElementById(
+            `comments-text-${postId}`,
+          );
           if (commentsCountEl) {
-            commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+            commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
+              "komentarz",
+              "komentarze",
+              "komentarzy",
+            ]);
           }
 
           // 2. Aktualizacja nagłówka rozwijanej sekcji dyskusji
-          const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
+          const discussionHeadingEl = document.getElementById(
+            `discussion-heading-${postId}`,
+          );
           if (discussionHeadingEl) {
             discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
           }
@@ -148,7 +157,6 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
   }
 }
 
-
 /**
  * Obsługa asynchronicznego oceniania postów (klasa .post-like-form)
  */
@@ -165,9 +173,9 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
   try {
     const response = await fetch(form.action, {
       method: "POST",
-      headers: { 
-        Accept: "application/json", 
-        "X-CSRF-Token": csrfToken 
+      headers: {
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
       },
     });
 
@@ -179,22 +187,34 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
       if (data.success) {
         if (likeTextEl) likeTextEl.innerText = data.liked ? "Cofnij" : "Doceń";
         if (iconEl) {
-          iconEl.className = data.liked ? "fa-solid fa-star" : "fa-regular fa-star";
+          iconEl.className = data.liked
+            ? "fa-solid fa-star"
+            : "fa-regular fa-star";
         }
 
         const postCard = form.closest(".post-card, .editorial-article");
         if (postCard) {
           // Dynamiczna aktualizacja licznika lajków na profilu lub osi czasu (ID dodane w post-footer.pug)
           const postId = form.action.split("/")[2];
-          const dynamicLikesEl = document.getElementById(`likes-text-${postId}`);
-          
+          const dynamicLikesEl = document.getElementById(
+            `likes-text-${postId}`,
+          );
+
           if (dynamicLikesEl) {
-            dynamicLikesEl.innerHTML = liczebnik(data.likesCount, ["polubienie", "polubienia", "polubień"]);
+            dynamicLikesEl.innerHTML = liczebnik(data.likesCount, [
+              "polubienie",
+              "polubienia",
+              "polubień",
+            ]);
           } else {
             // Fallback dla widoku statycznego w starszych strukturach DOM
             const likesCountEl = postCard.querySelector(".likes-count");
             if (likesCountEl) {
-              likesCountEl.innerHTML = liczebnik(data.likesCount, ["polubienie", "polubienia", "polubień"]);
+              likesCountEl.innerHTML = liczebnik(data.likesCount, [
+                "polubienie",
+                "polubienia",
+                "polubień",
+              ]);
             }
           }
         }
@@ -211,8 +231,6 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
     }
   }
 }
-
-// public/js/mainApi.js -> zaktualizuj całą funkcję handleAsyncBlockUserSubmit
 
 /**
  * Obsługa asynchronicznego blokowania profilu (klasa .dynamic-block-form)
@@ -238,23 +256,31 @@ async function handleAsyncBlockUserSubmit(form, csrfToken) {
       if (data.success) {
         const btnTextSpan = button.querySelector(".btn-text");
         const iconEl = button.querySelector("i");
+        const mailBtn = document.querySelector(".profile-mail-main-btn");
 
         if (btnTextSpan) {
           btnTextSpan.innerText = data.isBlocked ? "Odblokuj" : "Zablokuj";
         }
-        
+
+        // AKTUALIZACJA IKONY ORAZ ATRYBUTU TITLE DLA BLOKADY
         if (iconEl) {
-          iconEl.className = data.isBlocked ? "fa-solid fa-shield-halved" : "fa-solid fa-hand";
+          if (data.isBlocked) {
+            iconEl.className = "fa-solid fa-user";
+            button.setAttribute("title", "Odblokuj profil");
+          } else {
+            iconEl.className = "fa-solid fa-user-slash";
+            button.setAttribute("title", "Blokuj profil");
+          }
         }
 
         if (data.isBlocked) {
           button.classList.add("is-blocking");
 
-          // =========================================================================
-          // KRYTYCZNA POPRAWKA UX: CZYSZCZENIE STRUMIENIA OBSERWOWANIA PRZY BLOKADZIE
-          // =========================================================================
-          
-          // 1. Znajdź przycisk obserwowania na stronie i zresetuj go do stanu początkowego
+          if (mailBtn) {
+            mailBtn.style.display = "none";
+          }
+
+          // Reset przycisku obserwowania oraz jego title przy aktywacji blokady
           const followBtn = document.querySelector(".profile-follow-btn");
           if (followBtn) {
             followBtn.classList.remove("is-following");
@@ -262,38 +288,44 @@ async function handleAsyncBlockUserSubmit(form, csrfToken) {
             const followIcon = followBtn.querySelector("i");
             if (followText) followText.innerText = "Obserwuj";
             if (followIcon) {
-              followIcon.className = "fa-solid fa-user-plus";
-              followIcon.style.color = ""; // Czyszczenie zielonego podświetlenia
+              followIcon.className = "fa-solid fa-eye";
             }
+            followBtn.setAttribute("title", "Obserwuj profil");
           }
-
-          // 2. Usuń mój kfelek (avatar) z siatki obserwujących i zmniejsz licznik
           if (window.appUser) {
-            const gridContainer = document.getElementById("followers-grid-container");
+            const gridContainer = document.getElementById(
+              "followers-grid-container",
+            );
             const countBadge = document.getElementById("followers-count-badge");
 
             if (gridContainer && countBadge) {
-              const myTile = gridContainer.querySelector(`a[data-user-id="${window.appUser.id}"]`);
+              const myTile = gridContainer.querySelector(
+                `a[data-user-id="${window.appUser.id}"]`,
+              );
               if (myTile) {
-                myTile.remove(); // Usuwamy awatar z widoku
-
-                // Odejmij 1 od licznika osób
-                let currentCount = parseInt(countBadge.getAttribute("data-count")) || 0;
+                myTile.remove();
+                let currentCount =
+                  parseInt(countBadge.getAttribute("data-count")) || 0;
                 currentCount = Math.max(0, currentCount - 1);
                 countBadge.setAttribute("data-count", currentCount);
                 countBadge.innerText = `${currentCount} osób`;
 
-                // Jeśli brak obserwujących, wstrzyknij tekst alternatywny
-                if (currentCount === 0 && !document.getElementById("no-followers-fallback-text")) {
+                if (
+                  currentCount === 0 &&
+                  !document.getElementById("no-followers-fallback-text")
+                ) {
                   gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
                 }
               }
             }
           }
-          // =========================================================================
-
         } else {
           button.classList.remove("is-blocking");
+
+          // Dynamiczne przywrócenie przycisku poczty na frontendzie po odblokowaniu
+          if (mailBtn) {
+            mailBtn.style.display = "inline-flex";
+          }
         }
       }
     }
@@ -312,8 +344,10 @@ async function handleAsyncBlockUserSubmit(form, csrfToken) {
  * Obsługa bezpiecznego usuwania zasobów (akcje zawierające endpoint /delete)
  */
 async function handleAsyncDeleteSubmit(form, csrfToken) {
-  const confirmMsg = form.getAttribute("data-confirm") || "Czy na pewno chcesz usunąć ten zasób?";
-  
+  const confirmMsg =
+    form.getAttribute("data-confirm") ||
+    "Czy na pewno chcesz usunąć ten zasób?";
+
   if (typeof window.Confirm === "function") {
     if (!(await window.Confirm(confirmMsg))) return;
   } else {
@@ -328,13 +362,14 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
       method: "POST",
       headers: { "X-CSRF-Token": csrfToken },
     });
-    
+
     if (response.ok) {
       const targetCard = form.closest(".comment-card, .post-card");
       const postCard = form.closest(".post-card, .editorial-article");
-      
+
       // Sprawdzamy czy usuwany zasób to komentarz
-      const isComment = targetCard && targetCard.classList.contains("comment-card");
+      const isComment =
+        targetCard && targetCard.classList.contains("comment-card");
 
       if (targetCard) {
         targetCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
@@ -350,14 +385,23 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
             const pathParts = urlObj.pathname.split("/");
             const postId = pathParts[pathParts.indexOf("posts") + 1];
 
-            const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
+            const freshCommentsCount =
+              postCard.querySelectorAll(".comment-card").length;
 
-            const commentsCountEl = document.getElementById(`comments-text-${postId}`);
+            const commentsCountEl = document.getElementById(
+              `comments-text-${postId}`,
+            );
             if (commentsCountEl) {
-              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
+                "komentarz",
+                "komentarze",
+                "komentarzy",
+              ]);
             }
 
-            const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
+            const discussionHeadingEl = document.getElementById(
+              `discussion-heading-${postId}`,
+            );
             if (discussionHeadingEl) {
               discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
             }
@@ -407,13 +451,13 @@ async function handleAsyncCommentEditSubmit(form, csrfToken) {
         // Wyciągamy ID komentarza z sekcji ID nadrzędnego bloku edycji
         const editBlock = form.closest(".comment-edit-form-block");
         const commentId = editBlock.id.replace("comment-edit-block-", "");
-        
+
         const textBlock = document.getElementById(`comment-text-${commentId}`);
-        
+
         if (textBlock) {
           // 1. Aktualizujemy treść w locie nowym oczyszczonym tekstem z serwera
           textBlock.innerText = data.content;
-          
+
           // 2. Przywracamy tryb widoku (chowamy edytor, pokazujemy zaktualizowany tekst)
           editBlock.style.display = "none";
           textBlock.style.display = "block";
@@ -435,7 +479,6 @@ async function handleAsyncCommentEditSubmit(form, csrfToken) {
     }
   }
 }
-
 
 // =========================================================================
 // CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY

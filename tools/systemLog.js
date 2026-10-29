@@ -2,18 +2,18 @@
 const mongoose = require("mongoose");
 
 const logSchema = new mongoose.Schema({
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    default: null 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
   },
   fallbackName: { type: String, default: "Gość" },
   action: { type: String, required: true },
   ipAddress: { type: String, required: true },
-  createdAt: { 
-    type: Date, 
+  createdAt: {
+    type: Date,
     default: Date.now,
-    expires: 30 * 24 * 60 * 60 // Automatyczne usuwanie po 30 dniach
+    expires: 30 * 24 * 60 * 60, // Automatyczne usuwanie po 30 dniach
   },
 });
 

@@ -153,9 +153,9 @@ function handleUrlHashAnchor() {
 
 // Bezpieczne przeniesienie odznaki do wnętrza stopki po jej wyrenderowaniu przez Google
 const moveBadgeToFooter = () => {
-  const badge = document.querySelector('.grecaptcha-badge');
-  const footer = document.querySelector('.site-footer');
-  
+  const badge = document.querySelector(".grecaptcha-badge");
+  const footer = document.querySelector(".site-footer");
+
   if (badge && footer) {
     footer.appendChild(badge);
   } else {
@@ -167,7 +167,7 @@ const moveBadgeToFooter = () => {
 document.addEventListener("DOMContentLoaded", () => {
   initAccordionListeners();
   handleUrlHashAnchor();
-   setTimeout(moveBadgeToFooter, 500);
+  setTimeout(moveBadgeToFooter, 500);
 });
 
 window.refreshAccordionListeners = function () {

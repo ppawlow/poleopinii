@@ -1,6 +1,271 @@
 if (window.Alert === undefined) window.Alert = window.alert;
 
+// =========================================================================
+// ZINTEGROWANY MODUŁ RELACJI SPOŁECZNOŚCIOWYCH (FOLLOW ORAZ BLOCK)
+// =========================================================================
+
+/**
+ * Uniwersalny pomocnik aktualizujący atrybuty wizualne, tekstowe i dostępnościowe (RWD/Mobile)
+ */
+function updateButtonState(button, isActive, config) {
+  if (!button) return;
+
+  const textEl = button.querySelector(".btn-text");
+  const iconEl = button.querySelector("i");
+  const currentState = isActive ? config.active : config.inactive;
+
+  // 1. Aktualizacja tekstów (widoczna na desktopie)
+  if (textEl) {
+    textEl.innerText = currentState.text;
+  }
+
+  // 2. Aktualizacja ikon FontAwesome (widoczna na desktopie i mobile)
+  if (iconEl) {
+    iconEl.className = currentState.icon;
+  }
+
+  // 3. Krytyczna aktualizacja dla mobile i czytników ekranowych: title i aria-label
+  button.setAttribute("title", currentState.title);
+  button.setAttribute("aria-label", currentState.title);
+
+  // 4. Aktualizacja klas CSS kontrastujących kolory w arkuszach stylów
+  if (isActive) {
+    button.classList.add(config.className);
+  } else {
+    button.classList.remove(config.className);
+  }
+}
+
+/**
+ * Zintegrowana obsługa asynchronicznego obserwowania profilu (Follow)
+ */
+async function handleAsyncFollowUserSubmit(form, csrfToken) {
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const button = form.querySelector(".profile-follow-btn");
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        const followConfig = {
+          className: "is-following",
+          active: {
+            text: "Obserwujesz",
+            icon: "fa-solid fa-eye-slash",
+            title: "Przestań obserwować",
+          },
+          inactive: {
+            text: "Obserwuj",
+            icon: "fa-solid fa-eye",
+            title: "Obserwuj profil",
+          },
+        };
+
+        updateButtonState(button, data.isFollowing, followConfig);
+
+        // Aktualizacja dynamicznej siatki awatarów na sidebarze relacji
+        const gridContainer = document.getElementById(
+          "followers-grid-container",
+        );
+        const countBadge = document.getElementById("followers-count-badge");
+        const fallbackText = document.getElementById(
+          "no-followers-fallback-text",
+        );
+
+        if (gridContainer && countBadge) {
+          let currentCount =
+            parseInt(countBadge.getAttribute("data-count")) || 0;
+
+          if (data.isFollowing) {
+            currentCount += 1;
+            if (fallbackText) fallbackText.remove();
+            const myProfileHtml = `
+              <a href="/profile/${window.appUser.id}" data-user-id="${window.appUser.id}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%;">
+                <img src="${window.appUser.avatarUrl}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f0f2f5; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);">
+                <span style="display: block; font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; max-height: 2.4em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; padding: 0 2px; width: 100%; word-break: break-word;">${window.appUser.displayName}</span>
+              </a>
+            `;
+            gridContainer.insertAdjacentHTML("beforeend", myProfileHtml);
+          } else {
+            currentCount = Math.max(0, currentCount - 1);
+            const myTile = gridContainer.querySelector(
+              `a[data-user-id="${window.appUser.id}"]`,
+            );
+            if (myTile) myTile.remove();
+
+            if (
+              currentCount === 0 &&
+              !document.getElementById("no-followers-fallback-text")
+            ) {
+              gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
+            }
+          }
+
+          countBadge.setAttribute("data-count", currentCount);
+          countBadge.innerText = `${currentCount} osób`;
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas operacji follow:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (button) {
+      button.disabled = false;
+      button.blur();
+    }
+  }
+}
+
+/**
+ * Zintegrowana obsługa asynchronicznego blokowania profilu (Block)
+ */
+async function handleAsyncBlockUserSubmit(form, csrfToken) {
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const button = form.querySelector(".profile-block-main-btn");
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        // PEWNY SELEKTOR KLASY: Pobieramy przycisk poczty bezpośrednio po jego klasie zadeklarowanej w Pug
+        const mailBtn = document.querySelector(".profile-mail-main-btn");
+                        
+        // Stabilny selektor dla przycisków polubienia (gwiazdek) pod postami
+        const likeBtns = document.querySelectorAll(".post-like-form, .action-btn, .restricted-feature-trigger");
+
+        const blockConfig = {
+          className: "is-blocking",
+          active: { text: "Odblokuj", icon: "fa-solid fa-user", title: "Odblokuj profil" },
+          inactive: { text: "Zablokuj", icon: "fa-solid fa-user-slash", title: "Blokuj profil" }
+        };
+
+        updateButtonState(button, data.isBlocked, blockConfig);
+
+        if (data.isBlocked) {
+          // 1. Ukrywamy przycisk koperty e-mail z priorytetem w kaskadzie mobile/desktop
+          if (mailBtn) {
+            mailBtn.style.setProperty("display", "none", "important");
+          }
+
+          // 2. Ukrywamy wszystkie przyciski polubień (gwiazdek) pod postami autora na profilu
+          if (likeBtns && likeBtns.length > 0) {
+            likeBtns.forEach(btn => {
+              if (btn.querySelector(".fa-star") || btn.classList.contains("post-like-form")) {
+                btn.style.setProperty("display", "none", "important");
+              }
+            });
+          }
+
+          // 3. Kaskadowy auto-reset przycisku obserwowania do stanu podstawowego (fa-eye)
+          const followBtn = document.querySelector(".profile-follow-btn");
+          if (followBtn) {
+            const followConfig = {
+              className: "is-following",
+              active: { text: "Obserwujesz", icon: "fa-solid fa-eye-slash", title: "Przestań obserwować" },
+              inactive: { text: "Obserwuj", icon: "fa-solid fa-eye", title: "Obserwuj profil" }
+            };
+            updateButtonState(followBtn, false, followConfig);
+          }
+
+          // 4. Czyszczenie kafelka z siatki obserwujących
+          if (window.appUser) {
+            const gridContainer = document.getElementById("followers-grid-container");
+            const countBadge = document.getElementById("followers-count-badge");
+
+            if (gridContainer && countBadge) {
+              const myTile = gridContainer.querySelector(`a[data-user-id="${window.appUser.id}"]`);
+              if (myTile) {
+                myTile.remove();
+                let currentCount = parseInt(countBadge.getAttribute("data-count")) || 0;
+                currentCount = Math.max(0, currentCount - 1);
+                countBadge.setAttribute("data-count", currentCount);
+                countBadge.innerText = `${currentCount} osób`;
+
+                if (currentCount === 0 && !document.getElementById("no-followers-fallback-text")) {
+                  gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
+                }
+              }
+            }
+          }
+        } else {
+          // Przy odblokowaniu przywracamy przycisk poczty
+          if (mailBtn) {
+            mailBtn.style.setProperty("display", "inline-flex", "important");
+          }
+
+          // Przy odblokowaniu przywracamy przyciski polubień
+          if (likeBtns && likeBtns.length > 0) {
+            likeBtns.forEach(btn => {
+              if (btn.querySelector(".fa-star") || btn.classList.contains("post-like-form")) {
+                const defaultDisplay = btn.tagName.toLowerCase() === 'form' ? 'inline-block' : 'inline-flex';
+                btn.style.setProperty("display", defaultDisplay, "important");
+              }
+            });
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas blokowania użytkownika:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (button) {
+      button.disabled = false;
+      button.blur();
+    }
+  }
+}
+
 document.addEventListener("DOMContentLoaded", () => {
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+
+  // =========================================================================
+  // CENTRALNY DISPATCHER REJESTRACJI FORMULARZY PROFILU (DELEGACJA ZDARZEŃ)
+  // =========================================================================
+  document.addEventListener("submit", function (e) {
+    const form = e.target;
+    if (!form || !form.action) return;
+
+    if (form.classList.contains("dynamic-follow-form")) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAsyncFollowUserSubmit(form, csrfToken);
+      return;
+    }
+
+    if (form.classList.contains("dynamic-block-form")) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleAsyncBlockUserSubmit(form, csrfToken);
+      return;
+    }
+  });
+
   // =========================================================================
   // 1. SZYBKA AKTUALIZACJA BIO NA PROFILU (FETCH API)
   // =========================================================================
@@ -12,9 +277,6 @@ document.addEventListener("DOMContentLoaded", () => {
       e.preventDefault();
       e.stopImmediatePropagation();
 
-      const csrfToken = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
       const formData = new URLSearchParams(
         new FormData(bioEditForm),
       ).toString();
@@ -42,14 +304,12 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-
   // =========================================================================
   // 2. ZUNIFIKOWANY FORMULARZ USTAWIEŃ KONTA Z AUTORYZACJĄ HASŁA (FETCH API)
   // =========================================================================
   const settingsForm = document.getElementById("settingsForm");
   const emailField = document.getElementById("settingsEmailField");
   const modal = document.getElementById("password-auth-modal");
-
   if (settingsForm && emailField && modal) {
     const modalInput = document.getElementById("modalPasswordField");
     const cancelBtn = document.getElementById("modalCancelBtn");
@@ -58,21 +318,15 @@ document.addEventListener("DOMContentLoaded", () => {
       "hiddenCurrentPassword",
     );
     let originalEmail = emailField.value.trim().toLowerCase();
-
     async function executeSettingsSubmitAsync() {
-      const csrfToken = document
-        .querySelector('meta[name="csrf-token"]')
-        .getAttribute("content");
       const formData = new FormData(settingsForm);
       const privateEmailCheck = document.getElementById(
         "allowPrivateEmailsCheck",
       );
-
       if (privateEmailCheck) {
         formData.set("allowPrivateEmails", privateEmailCheck.checked);
       }
       const serializedData = new URLSearchParams(formData).toString();
-
       try {
         const response = await fetch(settingsForm.action, {
           method: "POST",
@@ -83,22 +337,19 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: serializedData,
         });
-
         const responseText = await response.text();
         let data = {};
         try {
           data = JSON.parse(responseText);
         } catch (e) {}
-
         if (response.ok) {
           if (data.success) {
             originalEmail = emailField.value.trim().toLowerCase();
             hiddenPasswordInput.value = "";
             const modalMessage =
               data.msg === "email_pending"
-                ? "Zapisano dane profilu!<br><br>✉️ Na Twój nowo wprowadzony adres e-mail wysłaliśmy bezpieczny link aktywacyjny."
-                : "🎉 Ustawienia Twojego konta zostały pomyślnie zaktualizowane";
-
+                ? "Zapisano dane profilu! Na Twój nowo wprowadzony adres e-mail wysłaliśmy bezpieczny link aktywacyjny."
+                : "Ustawienia Twojego konta zostały pomyślnie zaktualizowane";
             await window.Alert(modalMessage, "⚙️ Aktualizacja profilu");
             window.location.href =
               "/profile/settings?msg=" +
@@ -124,7 +375,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 errorMsg = `⚠️ ${data.error}`;
             }
           }
-
           await window.Alert(errorMsg, "Błąd aktualizacji konta");
         }
       } catch (err) {
@@ -135,7 +385,6 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       }
     }
-
     settingsForm.addEventListener("submit", function (e) {
       e.preventDefault();
       if (
@@ -149,7 +398,6 @@ document.addEventListener("DOMContentLoaded", () => {
         executeSettingsSubmitAsync();
       }
     });
-
     if (confirmBtn) {
       confirmBtn.addEventListener("click", () => {
         if (modalInput.value.trim().length === 0) return;
@@ -158,7 +406,6 @@ document.addEventListener("DOMContentLoaded", () => {
         executeSettingsSubmitAsync();
       });
     }
-
     if (cancelBtn) {
       cancelBtn.addEventListener("click", () => {
         modal.style.display = "none";
@@ -166,225 +413,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
-
-// =========================================================================
-// 3. ASYNCHRONICZNE PRZESYŁANIE ZDJĘĆ PROFILOWYCH (AVATAR / COVER)
-// =========================================================================
-async function uploadProfilePhoto(input) {
-  if (!input.files || !input.files[0]) return;
-  const form = input.closest("form");
-  const formData = new FormData(form);
-  const csrfToken = document
-    .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
-
-  try {
-    const response = await fetch(form.action, {
-      method: "POST",
-      headers: { "X-CSRF-Token": csrfToken },
-      body: formData,
-    });
-    if (response.ok) window.location.reload(true);
-  } catch (err) {
-    console.error("Błąd wgrywania zdjęcia:", err);
-  }
-}
-window.uploadProfilePhoto = uploadProfilePhoto;
-
-// =========================================================================
-// 4. OBSŁUGA PRYWATNYCH WIADOMOŚCI KOMUNIKACJI PEER-TO-PEER (MAILER)
-// =========================================================================
-window.openContactMailModal = function (targetUserId, targetName) {
-  const modal = document.getElementById("contact-mail-modal");
-  const targetIdInput = document.getElementById("contactTargetId");
-  const targetNameSpan = document.getElementById("contactModalTargetName");
-
-  if (modal && targetIdInput && targetNameSpan) {
-    targetIdInput.value = targetUserId;
-    targetNameSpan.innerText = targetName;
-
-    const subjectInput = modal.querySelector('input[name="subject"]');
-    const messageTextarea = modal.querySelector('textarea[name="message"]');
-    if (subjectInput) subjectInput.value = "";
-    if (messageTextarea) messageTextarea.value = "";
-
-    modal.style.display = "flex";
-  }
-};
-
-window.submitContactEmail = async function (event) {
-  event.preventDefault();
-
-  const form = event.target;
-  const modal = document.getElementById("contact-mail-modal");
-  const submitBtn = form.querySelector('button[type="submit"]');
-
-  if (!form || !modal) return;
-
-  if (submitBtn) {
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Wysyłanie...";
-  }
-
-  const csrfToken = document
-    .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
-  const formData = new URLSearchParams(new FormData(form)).toString();
-
-  try {
-    const response = await fetch(form.action, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-CSRF-Token": csrfToken,
-      },
-      body: formData,
-    });
-
-    if (response.ok) {
-      modal.style.display = "none";
-      await window.Alert(
-        "🎉 Twoja prywatna wiadomość e-mail została pomyślnie dostarczona na skrzynkę odbiorcy.",
-        "Wiadomość wysłana",
-      );
-    } else {
-      const errorText = await response.text();
-      const errorMsg =
-        errorText || "Odmowa dostępu lub błąd serwera pocztowego.";
-      await window.Alert(
-        `⚠️ Nie udało się wysłać wiadomości:<br><br><b>${errorMsg}</b>`,
-        "Błąd wysyłki",
-      );
-    }
-  } catch (err) {
-    console.error("Błąd sieciowy wysyłania e-maila P2P:", err);
-    await window.Alert(
-      "Wystąpił krytyczny błąd połączenia z serwerem pocztowym.",
-      "Błąd sieci",
-    );
-  } finally {
-    if (submitBtn) {
-      submitBtn.disabled = false;
-      submitBtn.innerText = "Wyślij e-mail";
-    }
-  }
-};
-
-// public/js/profileApi.js
-
-document.addEventListener("DOMContentLoaded", () => {
-  const csrfToken = document
-    .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
-
-  // =========================================================================
-  // PEŁNA ASYNCHRONICZNA AKTUALIZACJA OBSERWOWANIA (FOLLOW) BEZ RELOADU
-  // =========================================================================
-  const followForm = document.querySelector(".dynamic-follow-form");
-  if (followForm) {
-    followForm.addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const button = followForm.querySelector(".profile-follow-btn");
-      if (!button || !window.appUser) return;
-
-      button.disabled = true;
-
-      try {
-        const response = await fetch(followForm.action, {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "X-CSRF-Token": csrfToken,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            const btnTextSpan = button.querySelector(".btn-text");
-            const iconEl = button.querySelector("i");
-
-            if (btnTextSpan) {
-              btnTextSpan.innerText = data.isFollowing ? "Obserwujesz" : "Obserwuj";
-            }
-            
-            // IMPLEMENTACJA ZMIANY PRZEZROCZYSTOŚCI IKONY (Solid <=> Regular)
-            if (iconEl) {
-              if (data.isFollowing) {
-                iconEl.className = "fa-regular fa-user";
-                iconEl.style.color = "#42b72a"; // Płynne podświetlenie na zielono
-              } else {
-                iconEl.className = "fa-solid fa-user";
-                iconEl.style.color = ""; // Powrót do domyślnej bieli
-              }
-            }
-
-            if (data.isFollowing) {
-              button.classList.add("is-following");
-            } else {
-              button.classList.remove("is-following");
-            }
-
-            // 2. Pobierz referencje do elementów siatki społecznościowej
-            const gridContainer = document.getElementById(
-              "followers-grid-container",
-            );
-            const countBadge = document.getElementById("followers-count-badge");
-            const fallbackText = document.getElementById(
-              "no-followers-fallback-text",
-            );
-
-            if (gridContainer && countBadge) {
-              let currentCount =
-                parseInt(countBadge.getAttribute("data-count")) || 0;
-
-              if (data.isFollowing) {
-                // --- SCENARIUSZ A: DODANIE MNIE DO OBSERWUJĄCYCH ---
-                currentCount += 1;
-
-                if (fallbackText) fallbackText.remove();
-
-                // Wykorzystujemy informacje lokalne z res.locals wstrzyknięte do okna window!
-                const myProfileHtml = `
-                  <a href="/profile/${window.appUser.id}" data-user-id="${window.appUser.id}" style="text-decoration: none; color: inherit; display: flex; flex-direction: column; align-items: center; text-align: center; height: 100%;">
-                    <img src="${window.appUser.avatarUrl}" style="width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: #f0f2f5; box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);">
-                    <span style="display: block; font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; max-height: 2.4em; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; padding: 0 2px; width: 100%; word-break: break-word;">${window.appUser.displayName}</span>
-                  </a>
-                `;
-                gridContainer.insertAdjacentHTML("beforeend", myProfileHtml);
-              } else {
-                // --- SCENARIUSZ B: COFNIĘCIE OBSERWOWANIA ---
-                currentCount = Math.max(0, currentCount - 1);
-
-                const myTile = gridContainer.querySelector(
-                  `a[data-user-id="${window.appUser.id}"]`,
-                );
-                if (myTile) myTile.remove();
-
-                if (
-                  currentCount === 0 &&
-                  !document.getElementById("no-followers-fallback-text")
-                ) {
-                  gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
-                }
-              }
-
-              // Aktualizacja licznika tekstowego oraz atrybutu danych
-              countBadge.setAttribute("data-count", currentCount);
-              countBadge.innerText = `${currentCount} osób`;
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Błąd dynamicznego follow:", err);
-      } finally {
-        button.disabled = false;
-      }
-    });
-  }
-});
-
 // =========================================================================
 // 5. OBSŁUGA PROCEDURY RODO (PRAWO DO BYCIA ZAPOMNIANYM)
 // =========================================================================
@@ -392,7 +420,6 @@ window.triggerDeleteAccountModal = function () {
   const modal = document.getElementById("rodo-delete-modal");
   const input = document.getElementById("rodoConfirmEmailField");
   const error = document.getElementById("rodoModalError");
-
   if (modal && input) {
     input.value = "";
     if (error) error.style.display = "none";
@@ -402,25 +429,17 @@ window.triggerDeleteAccountModal = function () {
 };
 window.executeAccountErasure = async function (event) {
   event.preventDefault();
-
   const form = event.target;
   const inputField = document.getElementById("rodoConfirmEmailField");
   const errorBlock = document.getElementById("rodoModalError");
   const expectedEmail = form.getAttribute("data-email").trim().toLowerCase();
-
   if (!inputField || inputField.value.trim().toLowerCase() !== expectedEmail) {
     if (errorBlock) errorBlock.style.display = "block";
     return;
   }
-
   if (errorBlock) errorBlock.style.display = "none";
-
-  const csrfToken = document
-    .querySelector('meta[name="csrf-token"]')
-    .getAttribute("content");
   const serializedBody = new URLSearchParams();
   serializedBody.set("confirmEmail", inputField.value.trim());
-
   try {
     const response = await fetch("/profile/settings/request-delete", {
       method: "POST",
@@ -430,11 +449,10 @@ window.executeAccountErasure = async function (event) {
       },
       body: serializedBody.toString(),
     });
-
     if (response.ok) {
       document.getElementById("rodo-delete-modal").style.display = "none";
       await window.Alert(
-        "✉️ <strong>Link bezpieczeństwa został wysłany!</strong><br><br>Na Twój adres e-mail przesłaliśmy instrukcję weryfikacyjną. Otwórz swoją skrzętkę pocztową i kliknij w bezpieczny odnośnik, aby trwale sfinalizować usunięcie konta.",
+        "Link bezpieczeństwa został wysłany! Na Twój adres e-mail przesłaliśmy instrukcję weryfikacyjną. Otwórz swoją skrzęte pocztową i kliknij w bezpieczny odnośnik, aby trwale sfinalizować usunięcie konta.",
         "Autoryzacja RODO",
       );
     } else {

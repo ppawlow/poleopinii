@@ -579,8 +579,10 @@ tools.adminScannerLimiter = rateLimit({
   legacyHeaders: false,
   skip: (req) => {
     // Pomijamy blokadę, jeśli użytkownik jest zalogowanym administratorem
-    return req.session?.user?.id && ADMINS.includes(req.session.user.id.toString());
-  }
+    return (
+      req.session?.user?.id && ADMINS.includes(req.session.user.id.toString())
+    );
+  },
 });
 
 // tools/validation.js
@@ -593,7 +595,7 @@ tools.adminScannerLimiter = rateLimit({
  */
 tools.verifyRecaptcha = async function (token, remoteIp) {
   const { useRecaptcha, RECAPTCHA_SECRET_KEY } = require("../config");
-  
+
   // Jeśli funkcja jest wyłączona systemowo
   if (!useRecaptcha || token === "BYPASS_TOKEN_CAPTCHA_DISABLED") {
     return true;
@@ -617,7 +619,7 @@ tools.verifyRecaptcha = async function (token, remoteIp) {
     });
 
     const data = await response.json();
-    
+
     // Rating poniżej 0.5 oznacza ruch automatyczny (boty)
     if (data.success && (data.score === undefined || data.score >= 0.5)) {
       return true;
@@ -625,8 +627,10 @@ tools.verifyRecaptcha = async function (token, remoteIp) {
 
     // Rejestracja incydentu naruszenia do audit-logu aplikacji
     const { SystemLog } = require("./db");
-    console.log(`[reCAPTCHA ENTERPRISE BLOKADA] Odrzucono podejrzany ruch z IP: ${remoteIp}. Score: ${data.score || 0}`);
-    
+    console.log(
+      `[reCAPTCHA ENTERPRISE BLOKADA] Odrzucono podejrzany ruch z IP: ${remoteIp}. Score: ${data.score || 0}`,
+    );
+
     await SystemLog.create({
       fallbackName: "System-Ochrony",
       action: `[reCAPTCHA BLOKADA] Zablokowano automatyczną próbę uderzenia. Wynik punktowy: ${data.score || 0}`,

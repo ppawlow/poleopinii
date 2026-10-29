@@ -75,16 +75,17 @@ async function postCommentEdit(req, res) {
 
     comment.content = cleanContent;
     await post.save();
-    
-    // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
-    return res.json({ 
-      success: true, 
-      content: comment.content 
-    });
 
+    // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
+    return res.json({
+      success: true,
+      content: comment.content,
+    });
   } catch (err) {
     console.error("Błąd edycji komentarza:", err);
-    return res.status(500).send("Wystąpił wewnętrzny błąd serwera podczas zapisu zmian.");
+    return res
+      .status(500)
+      .send("Wystąpił wewnętrzny błąd serwera podczas zapisu zmian.");
   }
 }
 

@@ -22,7 +22,7 @@ async function sendMail(recpt, subject, content, replyTo = null) {
       to: recpt,
       subject: `[${SERVICE_NAME}] ` + subject,
       html: content,
-      text: content.replace(/<\/?[^>]+>/g, ""),    
+      text: content.replace(/<\/?[^>]+>/g, ""),
     };
 
     if (replyTo) {

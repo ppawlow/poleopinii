@@ -7,11 +7,17 @@ document.addEventListener("DOMContentLoaded", () => {
   // Funkcja pomocnicza generująca token dla reCAPTCHA Enterprise
   function getCaptchaToken(actionName) {
     return new Promise((resolve) => {
-      if (!isCaptchaEnabled || typeof grecaptcha === "undefined" || !grecaptcha.enterprise || !siteKey) {
+      if (
+        !isCaptchaEnabled ||
+        typeof grecaptcha === "undefined" ||
+        !grecaptcha.enterprise ||
+        !siteKey
+      ) {
         return resolve("BYPASS_TOKEN_CAPTCHA_DISABLED");
       }
       grecaptcha.enterprise.ready(() => {
-        grecaptcha.enterprise.execute(siteKey, { action: actionName })
+        grecaptcha.enterprise
+          .execute(siteKey, { action: actionName })
           .then((token) => resolve(token))
           .catch((err) => {
             console.error("Błąd reCAPTCHA Enterprise:", err);
@@ -28,8 +34,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (document.getElementById("loginRecaptchaToken").value) {
         return; // Token już jest, pozwól na wysyłkę POST
       }
-      
-      e.preventDefault(); 
+
+      e.preventDefault();
       const submitBtn = loginForm.querySelector('button[type="submit"]');
       if (submitBtn) submitBtn.disabled = true;
 
@@ -55,9 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
       if (document.getElementById("forgotRecaptchaToken").value) {
         return;
       }
-      
+
       e.preventDefault();
-      const submitBtn = forgotPasswordForm.querySelector('button[type="submit"]');
+      const submitBtn = forgotPasswordForm.querySelector(
+        'button[type="submit"]',
+      );
       if (submitBtn) submitBtn.disabled = true;
 
       try {
@@ -73,13 +81,13 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
+
   // 3. ASYNCHRONICZNA REJESTRACJA KONTA (FETCH API)
   const registerForm = document.getElementById("registerForm");
   if (registerForm) {
     registerForm.addEventListener("submit", async function (e) {
       e.preventDefault();
-      
+
       const csrfToken = registerForm.getAttribute("data-csrf");
       const submitBtn = registerForm.querySelector('button[type="submit"]');
       if (submitBtn) {
@@ -88,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       const formData = new FormData(registerForm);
-      
+
       // Pobranie tokenu tuż przed strzałem Fetch
       const token = await getCaptchaToken("register_auth");
       formData.set("recaptchaToken", token);
@@ -105,14 +113,14 @@ document.addEventListener("DOMContentLoaded", () => {
           },
           body: serializedData,
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           if (data.success) {
             registerForm.reset();
             await window.Alert(
               `✉️ <b>Konto zainicjowane!</b><br><br>Na adres <b>${data.email}</b> wysłaliśmy link aktywacyjny.`,
-              "📧 Sprawdź skrzynkę e-mail"
+              "📧 Sprawdź skrzynkę e-mail",
             );
           }
         } else {
