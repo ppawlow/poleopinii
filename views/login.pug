@@ -19,6 +19,7 @@ block content
 
             form#loginForm(action="/auth/login" method="POST")
                 input(type="hidden" name="_csrf" value=csrfToken)
+                input#loginRecaptchaToken(type="hidden" name="recaptchaToken")
                 input(type="email" name="email" placeholder="Adres e-mail" required)
                 // input(type="password" name="password" placeholder="Hasło" required)
                 label(style="font-size: 13px; color: #65676b; display: block; margin-bottom: 6px;") Hasło dostępu:
