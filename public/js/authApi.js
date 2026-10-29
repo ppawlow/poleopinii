@@ -22,37 +22,58 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // =========================================================================
-  // 1. FORMULARZ LOGOWANIA (Synchroniczny)
+  // 1. FORMULARZ LOGOWANIA (Zabezpieczony przed wyścigiem wątków)
   // =========================================================================
   const loginForm = document.getElementById("loginForm");
   if (loginForm) {
     loginForm.addEventListener("submit", async function (e) {
-      e.preventDefault(); // Wstrzymujemy wysyłkę na czas wygenerowania tokenu
-      const tokenInput = document.getElementById("loginRecaptchaToken");
+      // Jeśli token został już wygenerowany i wstrzyknięty, puszczamy formularz normalnie
+      if (document.getElementById("loginRecaptchaToken").value) {
+        return; 
+      }
       
-      const token = await getCaptchaToken("login_auth");
-      if (tokenInput) tokenInput.value = token;
-      
-      loginForm.submit(); // Świadomie wysyłamy formularz dalej
+      e.preventDefault(); // Zatrzymujemy wysyłkę
+      const submitBtn = loginForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const token = await getCaptchaToken("login_auth");
+        document.getElementById("loginRecaptchaToken").value = token;
+      } catch (err) {
+        console.error("Błąd generowania tokenu logowania:", err);
+      }
+
+      // Po przypisaniu tokenu ręcznie wywołujemy wysyłkę na elemencie prototypu,
+      // co zapobiega pętli nieskończonej w addEventListener
+      HTMLFormElement.prototype.submit.call(loginForm);
     });
   }
 
   // =========================================================================
-  // 2. FORMULARZ ZAPOMNIANEGO HASŁA (Synchroniczny z przekierowaniem)
+  // 2. FORMULARZ ZAPOMNIANEGO HASŁA (Zabezpieczony przed wyścigiem wątków)
   // =========================================================================
   const forgotPasswordForm = document.getElementById("forgotPasswordForm");
   if (forgotPasswordForm) {
     forgotPasswordForm.addEventListener("submit", async function (e) {
+      if (document.getElementById("forgotRecaptchaToken").value) {
+        return;
+      }
+      
       e.preventDefault();
-      const tokenInput = document.getElementById("forgotRecaptchaToken");
-      
-      const token = await getCaptchaToken("forgot_password_auth");
-      if (tokenInput) tokenInput.value = token;
-      
-      forgotPasswordForm.submit();
+      const submitBtn = forgotPasswordForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const token = await getCaptchaToken("forgot_password_auth");
+        document.getElementById("forgotRecaptchaToken").value = token;
+      } catch (err) {
+        console.error("Błąd generowania tokenu resetu:", err);
+      }
+
+      HTMLFormElement.prototype.submit.call(forgotPasswordForm);
     });
   }
-
+  
   // =========================================================================
   // 3. PROCES REJESTRACJI KONTA (Asynchroniczny Fetch API)
   // =========================================================================
