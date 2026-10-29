@@ -65,6 +65,7 @@ app.use(
           "https://fontawesome.com",
           "https://*.fontawesome.com",
           "https://datatables.net",
+          "https://*.googleapis.com",
         ],
         // Bezpieczne skrypty reCAPTCHA Google (poprawione wieloznaczniki)
         "script-src-elem": [
@@ -74,7 +75,8 @@ app.use(
           "https://*.fontawesome.com",
           "https://google.com",
           "https://*.google.com",
-          "https://google.com",
+          "https://googleapis.com",
+          "https://*.googleapis.com",
           "https://gstatic.com",
           "https://*.gstatic.com"
         ],
