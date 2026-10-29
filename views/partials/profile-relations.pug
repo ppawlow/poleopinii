@@ -1,13 +1,12 @@
-//- views/partials/profile-relations.pug
-
-// Blok: Obserwowani (Akordeon)
+//- Blok: Obserwowani (Akordeon)
 .info-box.accordion-item(style="background: #fff; padding: 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden;")
     .accordion-header(style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; user-select: none;")
         div(style="display: flex; align-items: center; gap: 8px;")
             i.fa-solid.fa-user-check(style="color: #1877f2; font-size: 16px;")
             h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin: 0;") Obserwowani
         div(style="display: flex; align-items: center; gap: 12px;")
-            span(style="font-size: 14px; color: #65676b; font-weight: 600;") #{followingProfiles ? followingProfiles.length : 0}
+            //- Dodany unikalny ID dla licznika obserwowanych
+            span#following-count-badge(style="font-size: 14px; color: #65676b; font-weight: 600;" data-count=(followingProfiles ? followingProfiles.length : 0)) #{followingProfiles ? followingProfiles.length : 0}
             i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; font-size: 14px;")
     
     .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
@@ -20,7 +19,7 @@
         else
             p(style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0;") Ten użytkownik nikogo jeszcze nie obserwuje.
 
-// Blok: Obserwujący (Akordeon)
+//- Blok: Obserwujący (Akordeon)
 .info-box.accordion-item(style="background: #fff; padding: 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden;")
     .accordion-header(style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; user-select: none;")
         div(style="display: flex; align-items: center; gap: 8px;")
@@ -40,7 +39,7 @@
             else
                 p#no-followers-fallback-text(style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;") Tego użytkownika nikt jeszcze nie obserwuje.
 
-// Blok: Zablokowani (Akordeon - widoczny tylko dla właściciela profilu)
+//- Blok: Zablokowani (Akordeon - widoczny tylko dla właściciela profilu)
 if user && String(user.id) === String(profileUser._id)
     .info-box.accordion-item(style="background: #fff; padding: 0; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); margin-bottom: 16px; overflow: hidden; border-top: 3px solid #bc2525;")
         .accordion-header(style="cursor: pointer; padding: 16px; display: flex; justify-content: space-between; align-items: center; user-select: none;")
@@ -48,7 +47,8 @@ if user && String(user.id) === String(profileUser._id)
                 i.fa-solid.fa-user-slash(style="color: #bc2525; font-size: 15px;")
                 h3(style="font-size: 16px; font-weight: 700; color: #bc2525; margin: 0;") Zablokowani
             div(style="display: flex; align-items: center; gap: 12px;")
-                span(style="font-size: 14px; color: #65676b; font-weight: 600;") #{blockedProfiles ? blockedProfiles.length : 0}
+                //- Dodany unikalny ID dla licznika zablokowanych
+                span#blocked-count-badge(style="font-size: 14px; color: #65676b; font-weight: 600;" data-count=(blockedProfiles ? blockedProfiles.length : 0)) #{blockedProfiles ? blockedProfiles.length : 0}
                 i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; font-size: 14px;")
         
         .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
@@ -66,3 +66,22 @@ if user && String(user.id) === String(profileUser._id)
                                     span.slider
             else
                 p(style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0;") Nie zablokowałeś jeszcze nikogo.
+
+//- Skrypt inline inicjalizujący odmiany startowe z serwera na obiekcie window
+script.
+    (() => {
+        // Ponieważ funkcja liczebnik() jest ładowana z pliku mainApi.js, wywołujemy inicjalizację po pełnym załadowaniu DOM
+        window.addEventListener("DOMContentLoaded", () => {
+            if (typeof liczebnik === "function") {
+                const osobyForma = (num) => liczebnik(num, ["osoba", "osoby", "osób"]);
+
+                const followingBadge = document.getElementById("following-count-badge");
+                const followersBadge = document.getElementById("followers-count-badge");
+                const blockedBadge = document.getElementById("blocked-count-badge");
+
+                if (followingBadge) followingBadge.innerText = osobyForma(parseInt(followingBadge.getAttribute("data-count")) || 0);
+                if (followersBadge) followersBadge.innerText = osobyForma(parseInt(followersBadge.getAttribute("data-count")) || 0);
+                if (blockedBadge) blockedBadge.innerText = osobyForma(parseInt(blockedBadge.getAttribute("data-count")) || 0);
+            }
+        });
+    })();

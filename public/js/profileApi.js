@@ -113,7 +113,11 @@ async function handleAsyncFollowUserSubmit(form, csrfToken) {
           }
 
           countBadge.setAttribute("data-count", currentCount);
-          countBadge.innerText = `${currentCount} osób`;
+          if (typeof liczebnik === "function") {
+            countBadge.innerText = liczebnik(currentCount, ["osoba", "osoby", "osób"]);
+          } else {
+            countBadge.innerText = `${currentCount}`;
+          }
         }
       }
     }
@@ -202,8 +206,11 @@ async function handleAsyncBlockUserSubmit(form, csrfToken) {
                 let currentCount = parseInt(countBadge.getAttribute("data-count")) || 0;
                 currentCount = Math.max(0, currentCount - 1);
                 countBadge.setAttribute("data-count", currentCount);
-                countBadge.innerText = `${currentCount} osób`;
-
+                if (typeof liczebnik === "function") {
+                  countBadge.innerText = liczebnik(currentCount, ["osoba", "osoby", "osób"]);
+                } else {
+                  countBadge.innerText = `${currentCount}`;
+                }
                 if (currentCount === 0 && !document.getElementById("no-followers-fallback-text")) {
                   gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
                 }
