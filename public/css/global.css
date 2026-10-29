@@ -1143,8 +1143,9 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
   overflow: visible;  /* Pozwala odznace delikatnie wystawać, jeśli stopka jest za niska */
 }
 
-  body .grecaptcha-badge {
-    visibility: hidden !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-  }
+/* Całkowite i bezpieczne ukrycie odznaki reCAPTCHA (zgodne z wytycznymi Google) */
+.grecaptcha-badge {
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}

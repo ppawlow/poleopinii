@@ -417,3 +417,11 @@
     display: inline-block !important;
   }
 }
+@media (max-width: 768px) {
+  footer .footer-container div:last-child {
+    text-align: center !important;
+    margin-top: 4px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+}
