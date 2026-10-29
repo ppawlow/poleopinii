@@ -102,14 +102,24 @@ html(lang="pl")
             block content
 
         footer.site-footer
-            .footer-container(style="max-width: 1000px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;")
-                div(style="font-size: 13px; color: var(--color-text-muted, #65676b); font-weight: 500;")
+            .footer-container(style="max-width: 1000px; margin: 0 auto; padding: 0 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;")
+                div(style="font-size: 13px; color: var(--color-text-muted, #65676b); font-weight: 500; min-width: 280px;")
                     | © 2026 #{SERVICE_NAME}. Wszelkie prawa zastrzeżone. Wydawca: 
-                    a(href="https://kooporg.pl") Kooperatywa Pracy Organicznej.
+                    a(href="https://kooporg.pl" target="_blank" style="color: inherit; text-decoration: none;") Kooperatywa Pracy Organicznej.
                 
-                div(style="display: flex; gap: 20px; align-items: center;")
+                div(style="display: flex; gap: 20px; align-items: center; justify-content: center;")
                     a(href="/regulamin" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.15s;") ⚖️ Regulamin
                     a(href="/polityka-prywatnosci" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.15s;") 🛡️ Polityka prywatności       
+
+                //- Oficjalna nota prawna Google zastępująca pływającą odznakę
+                div(style="font-size: 11px; color: #8a8d91; text-align: right; max-width: 320px; line-height: 1.4; font-family: sans-serif; margin-left: auto; margin-right: auto; min-width: 250px;")
+                    | Witryna jest chroniona mechanizmem reCAPTCHA Enterprise. 
+                    | Obowiązuje 
+                    a(href="https://google.com" target="_blank" style="color: #1877f2; text-decoration: none; font-weight: 600;") Polityka prywatności
+                    |  oraz 
+                    a(href="https://google.com" target="_blank" style="color: #1877f2; text-decoration: none; font-weight: 600;") Warunki świadczenia usług
+                    |  Google.
+
         //- Banner informacyjny o plikach cookies (Zgodny z RODO/ePrivacy)
         #cookie-law-banner(style="display: none; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 600px; background: #ffffff; border: 1px solid var(--color-border, #e4e6eb); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); padding: 16px; z-index: 10005; font-family: sans-serif; box-sizing: border-box;")
             div(style="display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;")
