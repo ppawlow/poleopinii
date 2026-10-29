@@ -65,6 +65,7 @@ app.use(
           "https://fontawesome.com",
           "https://*.fontawesome.com",
           "https://datatables.net",
+          "https://*.datatables.net",
           "https://*.googleapis.com",
         ],
         // Bezpieczne skrypty reCAPTCHA Google (poprawione wieloznaczniki)
@@ -78,7 +79,7 @@ app.use(
           "https://googleapis.com",
           "https://*.googleapis.com",
           "https://gstatic.com",
-          "https://*.gstatic.com"
+          "https://*.gstatic.com",
         ],
         "script-src-attr": ["'unsafe-inline'"],
         "connect-src": [
@@ -88,7 +89,7 @@ app.use(
           "ws://localhost:*",
           "ws://127.0.0.1:*",
           "https://fontawesome.com",
-          "https://*.fontawesome.com"
+          "https://*.fontawesome.com",
         ],
         // Autoryzacja arkuszy stylów (Google Fonts oraz Cloudflare CDN)
         "style-src": [
@@ -101,7 +102,8 @@ app.use(
           "https://*.googleapis.com",
           "https://cloudflare.com",
           "https://*.cloudflare.com",
-          "https://datatables.net"
+          "https://datatables.net",
+          "https://*.datatables.net",
         ],
         // Pobieranie plików binarnych czcionek (.woff2) z serwerów gstatic Google
         "font-src": [
