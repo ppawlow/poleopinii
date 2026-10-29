@@ -26,7 +26,7 @@
     else
         button.action-btn(disabled)
           i.fa-regular.fa-star
-          span.btn-text Doceń
+          span.btn-text Doceń //- POPRAWIONO: Dodano span.btn-text
 
     if post.visibility === 'public'
         button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Udostępnij")
@@ -36,7 +36,7 @@
     if post.visibility === 'public' && (!user || String(user.id) !== String(post.authorId))
         button.action-btn.abuse-trigger-btn(type="button" onclick=`triggerAbuseReport('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Zgłoś nadużycie" style="background: #fff3f3; color: #bc2525;")
             i.fa-solid.fa-triangle-exclamation
-            span.btn-text Zgłoś nadużycie
+            span.btn-text Zgłoś nadużycie //- POPRAWIONO: Dodano span.btn-text
 
 //- Sekcja komentarzy
 div(id=`comments-wrapper-${post._id}` style="display: none; width: 100%; margin-top: 16px;")

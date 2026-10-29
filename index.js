@@ -4,16 +4,19 @@ if (!process.env.SESSION_SECRET) {
   console.error(
     "BŁĄD KRYTYCZNY: Brak zdefiniowanej zmiennej SESSION_SECRET w pliku .env!",
   );
-  process.exit(1); // Zatrzymujemy aplikację przed uruchomieniem w stanie podatnym na ataki
+  process.exit(1); 
 }
+
 const express = require("express");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const csurf = require("csurf");
 const helmet = require("helmet");
-const { globalLimiter, adminScannerLimiter } = require("./tools/validation");
+const { 
+  globalLimiter, 
+  adminScannerLimiter,
+} = require("./tools/validation");
 const { startNotification } = require("./tools/mailer");
-
 const sanitize = require("express-mongo-sanitize").sanitize;
 const path = require("path");
 const MongoStore = require("connect-mongo").default;
@@ -22,7 +25,6 @@ const {
   isAdminId,
   getSubtreeFromRouter,
   userData,
-  // initializeReservedAliases,
   isLoggedIn,
 } = require("./tools/security");
 
@@ -46,7 +48,6 @@ const {
   User,
   Alias,
   createLog,
-  //getScopedPosts,
   createVerifiedUser,
 } = require("./tools/db");
 
@@ -156,7 +157,7 @@ app.use("/admin", adminScannerLimiter);
 // 1. OCHRONA PRZED NOSQL INJECTION (SANITYZACJA)
 // ==========================================
 app.use((req, res, next) => {
-  //Bezpiecznie oczyszczamy ciało żądania (req.body) oraz parametry ścieżki (req.params)
+(req.params)
   if (req.body) sanitize(req.body, { allowDots: true });
   if (req.params) sanitize(req.params, { allowDots: true });
   next();
@@ -196,7 +197,7 @@ app.use(
 // ==========================================
 app.use(csurf({ cookie: true }));
 
-// Globalne przekazywanie sesji ORAZ tokenu CSRF do widoków Pug
+// Globalne przekazywanie danych do widoków Pug
 app.use(async (req, res, next) => {
   res.locals = {
     csrfToken: req.csrfToken(),
@@ -211,25 +212,22 @@ app.use(async (req, res, next) => {
     isDevelopment,
     useRecaptcha,
   };
-  console.log(res.locals);
   res.locals.getProfileUrl = function (userDetails) {
     if (!userDetails) return "/";
-
-    // Jeśli przekazano bezpośrednio string (ID) lub obiekt Mongoose
     if (typeof userDetails === "string") return `/profile/${userDetails}`;
-
     const userAlias = userDetails.alias || userDetails.authorDetails?.alias;
     const userId = userDetails._id || userDetails.id || userDetails.authorId;
-
     if (userAlias) return `/profile/${userAlias}`;
     if (userId) return `/profile/${userId.toString()}`;
-
     return "/";
   };
-
   next();
 });
 
+// ==========================================
+// 5. Bezpieczne pobranie danych użytkownika, 
+//    jesli jest zalogowany
+// ==========================================
 app.use(userData);
 
 // ==========================================
@@ -271,7 +269,6 @@ function setupEndpoints(app) {
 }
 
 setupEndpoints(app);
-console.log(RESERVED_ALIASES);
 
 // ==========================================
 // 8. OBSŁUGA BŁĘDÓW MULTERA
@@ -304,7 +301,6 @@ app.use((err, req, res, next) => {
 app.listen(PORT || process.env.PORT, async () => {
   if (DEFAULT_USER) {
     const defaultUser = await createVerifiedUser(DEFAULT_USER);
-    console.log("Default user:", defaultUser);
   }
   console.log(`Aplikacja działa na porcie ${PORT || process.env.PORT}`);
   startNotification();

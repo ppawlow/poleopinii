@@ -15,7 +15,6 @@ const {
 
 const { POST_VISIBILITY, DEFAULT_ASSETS, SERVICE_NAME } = require("../config");
 
-// DODANO: Import zcentralizowanego silnika uprawnień i pomocników blokad
 const {
   accessControl,
   hasPermission,
@@ -24,7 +23,6 @@ const {
   getProfile,
 } = require("../tools/security");
 
-// Import walidatorów
 const {
   handleApiValidationErrors,
   validateFileSignatures,
@@ -175,8 +173,6 @@ async function getId(req, res) {
   }
 }
 
-// routes/posts.js -> funkcja postCreate
-
 async function postCreate(req, res) {
   let { title, content, visibility, parentPostId } = req.body;
 
@@ -230,9 +226,9 @@ async function postCreate(req, res) {
       }
     }
 
-    // =========================================================================
+    // ==================================================
     // OBSŁUGA STRUMIENIOWANIA SSE DLA POSTÓW PUBLICZNYCH
-    // =========================================================================
+    // ==================================================
     if (visibility === "public") {
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");

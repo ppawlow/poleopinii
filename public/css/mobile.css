@@ -449,3 +449,42 @@
     margin-bottom: 20px !important;
   }
 }
+
+@media (max-width: 600px) {
+  /* ... istniejące style dla profilu ... */
+
+  /* OPTYMALIZACJA MOBILNA PRZYCISKÓW POD POSTAMI */
+  .post-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important; /* Blokada zawijania przycisków do nowej linii */
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 8px 0 !important;
+  }
+
+  /* Całkowite ukrycie napisów w stopce posta */
+  .post-actions .action-btn .btn-text {
+    display: none !important;
+  }
+
+  /* Przekształcenie przycisków w okrągłe bąbelki dotykowe (identycznie jak na profilu) */
+  .post-actions .action-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  /* Wyśrodkowanie ikon i delikatne powiększenie dla lepszego UX na mobile */
+  .post-actions .action-btn i {
+    font-size: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
