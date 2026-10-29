@@ -1143,23 +1143,25 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
   overflow: visible;  /* Pozwala odznace delikatnie wystawać, jeśli stopka jest za niska */
 }
 
-/* 2. Zmuszenie plakietki reCAPTCHA do trzymania się dolnej krawędzi stopki */
 body .grecaptcha-badge {
-  position: absolute !important; /* Przypina odznakę do końca przewijanej strony, a nie okna ekranu */
-  bottom: 12px !important;       /* Margines od dolnej krawędzi stopki */
-  right: 16px !important;        /* Margines od prawej krawędzi stopki */
-  top: auto !important;          /* Resetowanie ewentualnych stylów nadrzędnych Google */
-  z-index: 10 !important;        /* Bezpieczna warstwa, aby nie przebijała modali systemowych */
+  position: absolute !important;
+  bottom: 0px !important;       /* Wyrównanie idealnie do dolnej krawędzi paska */
+  right: 16px !important;      /* Odstęp od prawej krawędzi paska */
+  top: auto !important;
+  left: auto !important;
+  box-shadow: none !important; /* Usunięcie cienia, aby pasowała do płaskiej stopki */
   
-  /* Opcjonalnie: Delikatne zmniejszenie i przezroczystość, by wtopiła się w tło stopki */
-  transform: scale(0.9);
-  transform-origin: bottom right;
-  opacity: 0.6;
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  /* Skalowanie: zmniejszamy odznakę do 60% jej oryginalnego rozmiaru */
+  transform: scale(0.6) !important; 
+  transform-origin: bottom right !important; /* Punkt zakotwiczenia skalowania */
+  
+  /* Subtelne wtopienie w tło stopki */
+  opacity: 0.55 !important;
+  transition: opacity 0.2s ease, transform 0.2s ease !important;
 }
 
-/* Przywrócenie pełnej widoczności po najechaniu myszką */
+/* Delikatne podświetlenie po najechaniu kursorem myszy */
 body .grecaptcha-badge:hover {
-  opacity: 1;
-  transform: scale(0.93);
+  opacity: 0.95 !important;
+  transform: scale(0.63) !important; /* Minimalne powiększenie przy hoverze */
 }
