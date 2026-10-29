@@ -603,7 +603,7 @@ tools.verifyRecaptcha = async function (token, remoteIp) {
   if (!token) return false;
 
   try {
-    const verificationUrl = "https://google.com";
+    const verificationUrl = "https://www.google.com/recaptcha/api/siteverify";
     const params = new URLSearchParams({
       secret: RECAPTCHA_SECRET_KEY,
       response: token,
