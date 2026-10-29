@@ -17,7 +17,7 @@ block content
             if msg === 'verified'
                 .custom-modal-body(style="color: #42b72a; background: #f0fdf4; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; font-weight: 600;") 🎉 Konto aktywowane pomyślnie!
 
-            form(action="/auth/login" method="POST")
+            form#loginForm((action="/auth/login" method="POST")
                 input(type="hidden" name="_csrf" value=csrfToken)
                 input(type="email" name="email" placeholder="Adres e-mail" required)
                 // input(type="password" name="password" placeholder="Hasło" required)

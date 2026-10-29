@@ -583,3 +583,58 @@ tools.adminScannerLimiter = rateLimit({
     return req.session?.user?.id && ADMINS.includes(req.session.user.id.toString());
   }
 });
+
+// tools/validation.js
+
+/**
+ * Zcentralizowana funkcja weryfikacji tokenu reCAPTCHA v3/Enterprise
+ * @param {string} token - Wygenerowany na froncie token
+ * @param {string} remoteIp - Adres IP klienta
+ * @returns {Promise<boolean>} - true jeśli zweryfikowano pomyślnie, false jeśli bot/błąd
+ */
+tools.verifyRecaptcha = async function (token, remoteIp) {
+  const { useRecaptcha, RECAPTCHA_SECRET_KEY } = require("../config");
+  
+  // Jeśli funkcja jest wyłączona systemowo lub jesteśmy w trybie deweloperskim z tokenem bypassu
+  if (!useRecaptcha || token === "BYPASS_TOKEN_CAPTCHA_DISABLED") {
+    return true;
+  }
+
+  if (!token) return false;
+
+  try {
+    const verificationUrl = "https://google.com";
+    const params = new URLSearchParams({
+      secret: RECAPTCHA_SECRET_KEY,
+      response: token,
+      remoteip: remoteIp || "127.0.0.1",
+    });
+
+    const response = await fetch(verificationUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+
+    const data = await response.json();
+    
+    // Próg akceptacji 0.5 (Wszystko poniżej jest traktowane jako ruch botów)
+    if (data.success && (data.score === undefined || data.score >= 0.5)) {
+      return true;
+    }
+
+    // Rejestracja incydentu naruszenia do audit-logu aplikacji
+    const { SystemLog } = require("./db");
+    console.log(`[reCAPTCHA BLOKADA BRUTEFORCE] Odrzucono podejrzany ruch z IP: ${remoteIp}. Score: ${data.score || 0}`);
+    await SystemLog.create({
+      fallbackName: "System-Ochrony",
+      action: `[reCAPTCHA BLOKADA FORMULARZA] Zablokowano automatyczną próbę uderzenia. Wynik punktowy: ${data.score || 0}`,
+      ipAddress: remoteIp || "127.0.0.1",
+    });
+
+    return false;
+  } catch (err) {
+    console.error("Krytyczny błąd połączenia z API reCAPTCHA Google:", err);
+    return false;
+  }
+};

@@ -67,6 +67,14 @@ async function postLogin(req, res) {
     return res.redirect("/auth/login?error=1");
   }
 
+  // WERYFIKACJA reCAPTCHA
+  const { verifyRecaptcha } = require("../tools/validation");
+  const ip = req.ip || "127.0.0.1";
+  const isHuman = await verifyRecaptcha(req.body.recaptchaToken, ip);
+  if (!isHuman) {
+    return res.redirect("/auth/login?error=1"); // Traktujemy bota jako błąd logowania
+  }
+
   const { email, password } = req.body;
   try {
     const targetNormalizedEmail = canonicalizeEmail(email);
@@ -85,7 +93,7 @@ async function postLogin(req, res) {
           if (err) return res.redirect("/auth/login?error=server");
           req.session.user = { id: foundUser._id };
           await createLog(req, "Zalogowano pomyślnie", foundUser.email);
-          req.session.save(() => res.redirect("/"));
+          return req.session.save(() => res.redirect("/"));
         });
       }
     }
@@ -93,12 +101,12 @@ async function postLogin(req, res) {
     await createLog(
       req,
       `Nieudana próba logowania dla adresu: ${email}`,
-      "System-Uwierzytelniania",
+      "System-Uwierzytelniania"
     );
-    res.redirect("/auth/login?error=1");
+    return res.redirect("/auth/login?error=1");
   } catch (err) {
     console.error("Krytyczny błąd podczas logowania użytkownika:", err);
-    res.redirect("/auth/login?error=server");
+    return res.redirect("/auth/login?error=server");
   }
 }
 
@@ -106,32 +114,27 @@ async function postLogin(req, res) {
 // routes/auth.js - Uproszczenie postRegister przez db.addUser()
 
 async function postRegister(req, res) {
-  const { name, email, terms, privacy } = req.body;
+  const { name, email, terms, privacy, recaptchaToken } = req.body;
 
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    // Jeśli to żądanie asynchroniczne Fetch (api.js), zwracamy status 400 i treść błędu
-    if (
-      req.xhr ||
-      (req.headers.accept && req.headers.accept.indexOf("json") > -1)
-    ) {
-      return res.status(400).send(
-        errors
-          .array()
-          .map((e) => e.msg)
-          .join(" "),
-      );
+    if (req.xhr || (req.headers.accept && req.headers.accept.indexOf("json") > -1)) {
+      return res.status(400).send(errors.array().map((e) => e.msg).join(" "));
     }
-
     return res.status(400).render("register", {
       title: "Utwórz nowe konto",
       error: "validation",
-      customErrorMessage: errors
-        .array()
-        .map((e) => e.msg)
-        .join(" "),
+      customErrorMessage: errors.array().map((e) => e.msg).join(" "),
       formData: { name, email, terms: !!terms, privacy: !!privacy },
     });
+  }
+
+  // WERYFIKACJA reCAPTCHA
+  const { verifyRecaptcha } = require("../tools/validation");
+  const ip = req.ip || "127.0.0.1";
+  const isHuman = await verifyRecaptcha(recaptchaToken, ip);
+  if (!isHuman) {
+    return res.status(403).send("Weryfikacja anty-botowa nieudana. Ruch zakwalifikowany jako automatyczny spam.");
   }
 
   try {
@@ -142,17 +145,9 @@ async function postRegister(req, res) {
       return res.status(400).json({ error: "exists" });
     }
 
-    await createLog(
-      req,
-      `Zainicjowano rejestrację konta: ${result.email}`,
-      result.email,
-    );
+    await createLog(req, `Zainicjowano rejestrację konta: ${result.email}`, result.email);
     await mailer.sendVerificationEmail(result, req);
-    await createLog(
-      req,
-      `[SYSTEM MAIL] Wysłano link aktywacyjny do: ${result.email}`,
-      result.email,
-    );
+    await createLog(req, `[SYSTEM MAIL] Wysłano link aktywacyjny do: ${result.email}`, result.email);
 
     return res.json({
       success: true,
@@ -167,31 +162,36 @@ async function postRegister(req, res) {
 
 // PROCEDURA ZAPOMNIANEGO HASŁA (POST) - routes/auth.js
 async function postForgotPassword(req, res) {
-  const { email } = req.body;
+  const { email, recaptchaToken } = req.body;
+
+  // WERYFIKACJA reCAPTCHA
+  const { verifyRecaptcha } = require("../tools/validation");
+  const ip = req.ip || "127.0.0.1";
+  const isHuman = await verifyRecaptcha(recaptchaToken, ip);
+  if (!isHuman) {
+    return res.redirect("/auth/forgot-password?msg=sent"); // Ciche odrzucenie bota (udajemy sukces)
+  }
+
   try {
     if (!email || typeof email !== "string") {
       return res.redirect("/auth/forgot-password?msg=sent");
     }
 
     const targetNormalizedEmail = canonicalizeEmail(email);
-    const user = await User.findOne({
-      normalizedEmail: targetNormalizedEmail,
-    });
+    const user = await User.findOne({ normalizedEmail: targetNormalizedEmail });
 
     if (user) {
-      user.token = 1; // Uruchamia setter: generuje securityToken i securityTokenExpires na 1h
-      await user.save(); // KRYTYCZNA POPRAWKA: Zapisujemy wygenerowany token w bazie MongoDB!
-
-      await mailer.sendPasswordResetEmail(user, req); // Wysyłamy maila dopiero po upewnieniu się, że token jest w bazie
+      user.token = 1;
+      await user.save();
+      await mailer.sendPasswordResetEmail(user, req);
     }
 
-    res.redirect("/auth/forgot-password?msg=sent");
+    return res.redirect("/auth/forgot-password?msg=sent");
   } catch (err) {
     console.error("Błąd podczas generowania linku resetu:", err);
-    res.redirect("/auth/forgot-password?error=server");
+    return res.redirect("/auth/forgot-password?error=server");
   }
 }
-
 // ZUNIFIKOWANY FORMULARZ USTAWIANIA HASŁA (GET)
 async function getSetPassword(req, res) {
   try {
