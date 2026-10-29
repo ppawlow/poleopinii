@@ -151,9 +151,23 @@ function handleUrlHashAnchor() {
   setTimeout(chaseAnchor, 250);
 }
 
+// Bezpieczne przeniesienie odznaki do wnętrza stopki po jej wyrenderowaniu przez Google
+const moveBadgeToFooter = () => {
+  const badge = document.querySelector('.grecaptcha-badge');
+  const footer = document.querySelector('.site-footer');
+  
+  if (badge && footer) {
+    footer.appendChild(badge);
+  } else {
+    // Jeśli skrypt Google jeszcze się ładuje, ponów próbę za chwilę
+    setTimeout(moveBadgeToFooter, 300);
+  }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   initAccordionListeners();
   handleUrlHashAnchor();
+   setTimeout(moveBadgeToFooter, 500);
 });
 
 window.refreshAccordionListeners = function () {
@@ -293,71 +307,6 @@ window.Confirm = function (message, title = "Potwierdź") {
   });
 };
 
-// ==========================================
-// 4. OBSŁUGA OKNA MODALNEGO USTAWIEŃ (WERYFIKACJA HASŁA)
-// ==========================================
-/*
-document.addEventListener("DOMContentLoaded", () => {
-  const settingsForm = document.getElementById("settingsForm");
-  const emailField = document.getElementById("settingsEmailField");
-  const modal = document.getElementById("password-auth-modal");
-
-  if (settingsForm && emailField && modal) {
-    const modalInput = document.getElementById("modalPasswordField");
-    const cancelBtn = document.getElementById("modalCancelBtn");
-    const confirmBtn = document.getElementById("modalConfirmBtn");
-    const hiddenPasswordInput = document.getElementById(
-      "hiddenCurrentPassword",
-    );
-    const originalEmail = emailField.value.trim().toLowerCase();
-/*
-    settingsForm.addEventListener("submit", function (e) {
-      const isEmailChanged =
-        emailField.value.trim().toLowerCase() !== originalEmail;
-
-      if (isEmailChanged && hiddenPasswordInput.value.trim().length === 0) {
-        e.preventDefault();
-        e.stopImmediatePropagation();
-
-        modal.style.display = "flex";
-        modalInput.value = "";
-        modalInput.focus();
-      }
-    });
-
-    function closeModal() {
-      modal.style.display = "none";
-      hiddenPasswordInput.value = "";
-      modalInput.value = "";
-    }
-
-    function handleConfirm() {
-      if (modalInput.value.trim().length === 0) {
-        const errorMsg = document.getElementById("modalErrorMsg");
-        if (errorMsg) errorMsg.style.display = "block";
-        return;
-      }
-      hiddenPasswordInput.value = modalInput.value;
-      modal.style.display = "none";
-      settingsForm.submit();
-    }
-
-    if (confirmBtn) confirmBtn.addEventListener("click", handleConfirm);
-    if (cancelBtn) cancelBtn.addEventListener("click", closeModal);
-    if (modalInput) {
-      modalInput.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") handleConfirm();
-        if (e.key === "Escape") closeModal();
-      });
-    }
-
-    if (window.location.search.includes("error=password_required")) {
-      modal.style.display = "flex";
-      modalInput.focus();
-    }
-  }
-});
-*/
 document.addEventListener("click", function (e) {
   // Jeśli użytkownik kliknął w link wewnątrz naszego customowego okna alertu
   if (
