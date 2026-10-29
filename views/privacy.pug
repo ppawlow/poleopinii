@@ -29,7 +29,11 @@ block content
                     p Użytkownik w zakładce ustawień konta może dobrowolnie aktywować przesyłanie prywatnych wiadomości e-mail. System nie udostępnia bezpośrednio adresu e-mail użytkownika, jednak nadanie wiadomości za pośrednictwem formularza platformy skutkuje jawnym wstrzyknięciem adresu e-mail nadawcy do nagłówka <code>Reply-To</code> wiadomości, co pozwala odbiorcy na bezpośrednią odpowiedź zwrotną.
 
                     h3 VI Środki ochrony technicznej
-                    p Dostęp do danych wrażliwych zabezpieczony jest wielowarstwowo: hasła są hashowane algorytmem <strong>bcrypt</strong> (12 rund soli), sesje są autoryzowane w bazie z automatycznym czasem wygasania (14 dni), a zapytania HTTP są monitorowane przez limitery częstotliwości żądań (Rate-limiting).
+                    ol
+                        li Dostęp do danych wrażliwych zabezpieczony jest wielowarstwowo: hasła są hashowane algorytmem <strong>bcrypt</strong> (12 rund soli), sesje są autoryzowane w bazie z automatycznym czasem wygasania (14 dni), a zapytania HTTP są monitorowane przez limitery częstotliwości żądań (Rate-limiting).
+                        li W celu zabezpieczenia formularzy przed automatycznym spamem, atakami typu brute-force oraz sztucznym generowaniem ruchu przez boty (ochrona przed atakami Sybil), w Serwisie zaimplementowano mechanizm <strong>reCAPTCHA Enterprise</strong> dostarczany przez Google LLC.
+                        li Narzędzie to działa w oparciu o analizę sposobu korzystania z Serwisu przez Użytkownika lub Gościa. Skrypt automatycznie bada parametry sprzętowe, ruchy myszą, historię kliknięć, czas spędzony na stronie oraz adres IP urządzenia, w celu przypisania sesji algorytmicznej oceny wiarygodności (tzw. score).
+                        li Dane telemetryczne zebrane w ten sposób są przesyłane bezpośrednio do serwerów Google LLC (w tym do struktur poza Europejskim Obszarem Gospodarczym – USA) w celu ich walidacji. Administrator platformy nie ma wglądu w surowe dane behawioralne zbierane przez Google, a jedynie otrzymuje wynik punktowy autoryzujący wysłanie formularza.
 
                     h3 VII Czas retencji danych
                     p Dane użytkowników platformy są przechowywane w bazie danych przez okreslony okres:
