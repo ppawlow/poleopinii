@@ -382,7 +382,7 @@ tools.registerValidationRules = [
     .trim()
     .isLength({ min: 3, max: 70 })
     .withMessage("Imię i Nazwisko / Pseudonim musi mieć od 3 do 70 znaków.")
-    .matches(/^[A-Za-zZaąęćęłłnnóósśźźżź\s-]+$/)
+    .matches(/^[\p{L}\s-]+$/u)
     .withMessage("Pole może zawierać tylko litery, spacje i myślniki.")
     .escape(),
 
@@ -439,7 +439,7 @@ tools.settingsValidationRules = [
     .trim()
     .isLength({ min: 3, max: 70 })
     .withMessage("Imię i Nazwisko musi mieć od 3 do 70 znaków.")
-    .matches(/^[A-Za-zZaąęćęłłnnóósśźźżź\s-]+$/)
+    .matches(/^[\p{L}\s-]+$/u)
     .withMessage(
       "Imię i Nazwisko może zawierać tylko litery, spacje i myślniki.",
     )
