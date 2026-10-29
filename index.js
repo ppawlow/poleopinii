@@ -51,14 +51,13 @@ const {
 } = require("./tools/db");
 
 const app = express();
-// index.js -> Kompletna konfiguracja Helmet i dyrektyw Content Security Policy (CSP)
 
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-        // Główna autoryzacja skryptów systemowych
+        
         "script-src": [
           "'self'",
           "'unsafe-inline'",
@@ -68,7 +67,7 @@ app.use(
           "https://*.datatables.net",
           "https://*.googleapis.com",
         ],
-        // Bezpieczne skrypty reCAPTCHA Google (poprawione wieloznaczniki)
+        
         "script-src-elem": [
           "'self'",
           "'unsafe-inline'",
@@ -83,7 +82,9 @@ app.use(
           "https://datatables.net",
           "https://*.datatables.net",
         ],
+        
         "script-src-attr": ["'unsafe-inline'"],
+        
         "connect-src": [
           "'self'",
           "http://localhost:*",
@@ -93,7 +94,7 @@ app.use(
           "https://fontawesome.com",
           "https://*.fontawesome.com",
         ],
-        // Autoryzacja arkuszy stylów (Google Fonts oraz Cloudflare CDN)
+        
         "style-src": [
           "'self'",
           "'unsafe-inline'",
@@ -107,7 +108,7 @@ app.use(
           "https://datatables.net",
           "https://*.datatables.net",
         ],
-        // Pobieranie plików binarnych czcionek (.woff2) z serwerów gstatic Google
+        
         "font-src": [
           "'self'",
           "data:",
@@ -116,26 +117,28 @@ app.use(
           "https://gstatic.com",
           "https://*.gstatic.com"
         ],
-        "img-src": ["'self'", "data:", "https:"],
-        // Zezwolenie na ramki iframe weryfikacji anty-botowej reCAPTCHA v3
+
+        "img-src": [
+          "'self'", 
+          "data:", 
+          "https:", 
+          "https://*.gstatic.com", 
+          "https://www.google.com"
+        ],
+        
         "frame-src": [
           "'self'",
           "https://google.com",
           "https://*.google.com",
-          "https://google.com"
+          "https://*.gstatic.com"
         ]
       }
     },
-    // Wyłączenie restrykcji izolacji Cross-Origin dla trybu dev, aktywacja na produkcji
     crossOriginOpenerPolicy: isDevelopment ? false : { policy: "same-origin" },
     crossOriginResourcePolicy: isDevelopment ? false : { policy: "same-origin" },
-    
-    // KRYTYCZNA POPRAWKA: Za politykę HSTS i wymuszenie SSL w 100% odpowiada brama OVH, 
-    // dlatego wyłączenie HSTS w Expressie zapobiega pętli przekierowań 301.
     hsts: false
   })
 );
-
 
 app.set("trust proxy", 1);
 app.set("view engine", "pug");
