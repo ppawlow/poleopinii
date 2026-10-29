@@ -1136,3 +1136,27 @@ body, .post-card, .create-post, .info-box, header.fb-navbar, footer.site-footer 
     font-size: 16px !important;
   }
 }
+
+/* =========================================================================
+   🔥 WYMUSZENIE WIDOCZNOŚCI I REPOZYCJONOWANIE PLAKIETKI reCAPTCHA
+   ========================================================================= */
+.grecaptcha-badge {
+  display: block !important;
+  visibility: visible !important;
+  position: fixed !important;
+  bottom: 75px !important; /* Podnosimy lekko do góry, aby nie zasłaniała cookie-bannera */
+  right: 16px !important;
+  z-index: 10002 !important; /* Wyżej niż navbar i karty, ale podLightboxem */
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.15) !important;
+  transition: bottom 0.3s ease-in-out, opacity 0.3s ease-in-out !important;
+}
+
+/* Dostosowanie pozycji na urządzeniach mobilnych */
+@media (max-width: 900px) {
+  .grecaptcha-badge {
+    bottom: 20px !important; /* Na mobile przesuwamy w bezpieczne miejsce */
+    right: 4px !important;
+    transform: scale(0.95); /* Delikatnie zmniejszamy na mniejszych ekranach */
+    transform-origin: right bottom;
+  }
+}
