@@ -158,6 +158,8 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
   }
 }
 
+// public/js/mainApi.js -> zaktualizuj całą funkcję handleAsyncBlockUserSubmit
+
 /**
  * Obsługa asynchronicznego blokowania profilu (klasa .dynamic-block-form)
  */
@@ -193,6 +195,49 @@ async function handleAsyncBlockUserSubmit(form, csrfToken) {
 
         if (data.isBlocked) {
           button.classList.add("is-blocking");
+
+          // =========================================================================
+          // KRYTYCZNA POPRAWKA UX: CZYSZCZENIE STRUMIENIA OBSERWOWANIA PRZY BLOKADZIE
+          // =========================================================================
+          
+          // 1. Znajdź przycisk obserwowania na stronie i zresetuj go do stanu początkowego
+          const followBtn = document.querySelector(".profile-follow-btn");
+          if (followBtn) {
+            followBtn.classList.remove("is-following");
+            const followText = followBtn.querySelector(".btn-text");
+            const followIcon = followBtn.querySelector("i");
+            if (followText) followText.innerText = "Obserwuj";
+            if (followIcon) {
+              followIcon.className = "fa-solid fa-user-plus";
+              followIcon.style.color = ""; // Czyszczenie zielonego podświetlenia
+            }
+          }
+
+          // 2. Usuń mój kfelek (avatar) z siatki obserwujących i zmniejsz licznik
+          if (window.appUser) {
+            const gridContainer = document.getElementById("followers-grid-container");
+            const countBadge = document.getElementById("followers-count-badge");
+
+            if (gridContainer && countBadge) {
+              const myTile = gridContainer.querySelector(`a[data-user-id="${window.appUser.id}"]`);
+              if (myTile) {
+                myTile.remove(); // Usuwamy awatar z widoku
+
+                // Odejmij 1 od licznika osób
+                let currentCount = parseInt(countBadge.getAttribute("data-count")) || 0;
+                currentCount = Math.max(0, currentCount - 1);
+                countBadge.setAttribute("data-count", currentCount);
+                countBadge.innerText = `${currentCount} osób`;
+
+                // Jeśli brak obserwujących, wstrzyknij tekst alternatywny
+                if (currentCount === 0 && !document.getElementById("no-followers-fallback-text")) {
+                  gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
+                }
+              }
+            }
+          }
+          // =========================================================================
+
         } else {
           button.classList.remove("is-blocking");
         }
@@ -246,8 +291,73 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
   }
 }
 
+/**
+ * Obsługa asynchronicznej reedycji komentarza (.comment-edit-form)
+ */
+async function handleAsyncCommentEditSubmit(form, csrfToken) {
+  const textarea = form.querySelector('textarea[name="content"]');
+  if (!textarea || textarea.value.trim().length === 0) return;
+
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const submitBtn = form.querySelector('button[type="submit"]');
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = "...";
+  }
+
+  const formData = new URLSearchParams(new FormData(form)).toString();
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+      },
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        // Wyciągamy ID komentarza z sekcji ID nadrzędnego bloku edycji
+        const editBlock = form.closest(".comment-edit-form-block");
+        const commentId = editBlock.id.replace("comment-edit-block-", "");
+        
+        const textBlock = document.getElementById(`comment-text-${commentId}`);
+        
+        if (textBlock) {
+          // 1. Aktualizujemy treść w locie nowym oczyszczonym tekstem z serwera
+          textBlock.innerText = data.content;
+          
+          // 2. Przywracamy tryb widoku (chowamy edytor, pokazujemy zaktualizowany tekst)
+          editBlock.style.display = "none";
+          textBlock.style.display = "block";
+        }
+      }
+    } else {
+      const errText = await response.text();
+      if (typeof window.Alert === "function") {
+        window.Alert(errText, "Błąd edycji");
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy edycji komentarza:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Zapisz";
+    }
+  }
+}
+
+
 // =========================================================================
-// CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY
+// CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY (ZAKTUALIZOWANY)
 // =========================================================================
 document.addEventListener("submit", function (e) {
   const form = e.target;
@@ -256,7 +366,14 @@ document.addEventListener("submit", function (e) {
   const csrfMeta = document.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
 
-  // Rozbicie logiczne żądań na dedykowane, asynchroniczne funkcje składowe
+  // NOWOŚĆ: Przechwytywanie asynchronicznej edycji komentarza
+  if (form.matches(".comment-edit-form")) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleAsyncCommentEditSubmit(form, csrfToken);
+    return;
+  }
+
   if (form.matches(".comment-form")) {
     e.preventDefault();
     e.stopPropagation();

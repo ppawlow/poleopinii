@@ -161,21 +161,25 @@ async function postBlock(req, res) {
 
     // POPRAWKA LOGIKI RELACJI: Używamy .isBlocking() z prototypów zamiast wadliwego JavaScriptowego .includes()
     const isBlocked = dbUser.isBlocking(targetUser._id);
-
     if (!isBlocked) {
       dbUser.blocks.push(targetUser._id);
+      
+      // 1. BEZWZGLĘDNE CZYSZCZENIE: Ja przestaję obserwować zablokowanego użytkownika
       dbUser.following.pull(targetUser._id);
+      
+      // 2. OBUSTRONNE CZYSZCZENIE: Zablokowany użytkownik również automatycznie przestaje obserwować mnie
+      targetUser.following.pull(dbUser._id);
+      await targetUser.save(); // Zapisujemy zmiany w dokumencie zablokowanego użytkownika
+
       await createLog(
         req,
         `Zablokowano użytkownika: ${targetUser.displayName}`,
-        dbUser.email,
       );
     } else {
       dbUser.blocks.pull(targetUser._id);
       await createLog(
         req,
         `Odblokowano użytkownika: ${targetUser.displayName}`,
-        dbUser.email,
       );
     }
 

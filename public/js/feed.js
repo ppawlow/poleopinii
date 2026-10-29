@@ -840,7 +840,7 @@ window.initAiTopicDiscussion = function (title, summary) {
   const quillInstance = activeQuillInstances["new"];
   if (quillInstance) {
     // Konstruujemy sformatowaną strukturę HTML z cytatem źródłowym AI na początku
-    const formattedHtml = `<blockquote><strong>${summary.trim()}</string></blockquote>`;
+    const formattedHtml = `<blockquote><strong>${summary.trim()}</strong></blockquote>`;
 
     // DangerouslyPasteHTML bezpiecznie parsuje strukturę i umieszcza ją w edytorze
     quillInstance.clipboard.dangerouslyPasteHTML(formattedHtml);

@@ -2,7 +2,7 @@ const rateLimit = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
 const { ObjectId } = require("mongodb");
 const sanitizeHtml = require("sanitize-html");
-const { POST_VISIBILITY, PASSWORD_REGEX } = require("../config");
+const { POST_VISIBILITY, PASSWORD_REGEX, ADMINS } = require("../config");
 // const { isAliasReserved } = require("./security");
 const { verifyBufferSignature } = require("./db");
 
@@ -570,4 +570,16 @@ tools.profileTokenLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 3,
   message: "Osiągnięto limit zmian hasła. Spróbuj ponownie później.",
+});
+
+tools.adminScannerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // Okno 1 godziny
+  max: 5, // Maksymalnie 5 prób wejścia/skanowania na godzinę dla niezalogowanych
+  message: "Dostęp zablokowany z powodu podejrzanej aktywności sieciowej.",
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => {
+    // Pomijamy blokadę, jeśli użytkownik jest zalogowanym administratorem
+    return req.session?.user?.id && ADMINS.includes(req.session.user.id.toString());
+  }
 });

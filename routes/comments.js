@@ -38,9 +38,8 @@ module.exports = express
     handleApiValidationErrors,
     postCommentEdit,
   );
-
 // ==========================================
-// Reedycja komentarza
+// Reedycja komentarza (Zunifikowane API JSON)
 // ==========================================
 async function postCommentEdit(req, res) {
   try {
@@ -76,10 +75,16 @@ async function postCommentEdit(req, res) {
 
     comment.content = cleanContent;
     await post.save();
-    return res.sendStatus(200);
+    
+    // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
+    return res.json({ 
+      success: true, 
+      content: comment.content 
+    });
+
   } catch (err) {
     console.error("Błąd edycji komentarza:", err);
-    return res.status(500).send("Wewnętrzny błąd serwera.");
+    return res.status(500).send("Wystąpił wewnętrzny błąd serwera podczas zapisu zmian.");
   }
 }
 

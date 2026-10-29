@@ -11,6 +11,9 @@ const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const csurf = require("csurf");
 const helmet = require("helmet");
+const { globalLimiter, adminScannerLimiter } = require("./tools/validation");
+const { startNotification } = require("./tools/mailer");
+
 const sanitize = require("express-mongo-sanitize").sanitize;
 const path = require("path");
 const MongoStore = require("connect-mongo").default;
@@ -46,12 +49,10 @@ const {
   //getScopedPosts,
   createVerifiedUser,
 } = require("./tools/db");
-const { globalLimiter } = require("./tools/validation");
-const { startNotification } = require("./tools/mailer");
 
 const app = express();
 // index.js -> Kompletna konfiguracja Helmet i dyrektyw Content Security Policy (CSP)
-/*
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -128,7 +129,7 @@ app.use(
     hsts: false
   })
 );
-*/
+
 
 app.set("trust proxy", 1);
 app.set("view engine", "pug");
@@ -137,6 +138,10 @@ app.set("views", path.join(__dirname, "views"));
 /*******************
  * MIDDLEWARES
  ******************/
+
+// Limitery
+app.use(globalLimiter);
+app.use("/admin", adminScannerLimiter);
 
 // ==========================================
 // 1. OCHRONA PRZED NOSQL INJECTION (SANITYZACJA)
@@ -154,8 +159,6 @@ app.use((req, res, next) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.use(cookieParser());
-
-app.use(globalLimiter);
 
 // ==========================================
 // 3. KONFIGURACJA SESJI
