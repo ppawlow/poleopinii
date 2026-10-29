@@ -259,7 +259,6 @@ tools.validatePublicContent = async function (req, title, content, res = null) {
 
 tools.validateId = function (idName) {
   return (req, res, next) => {
-    console.log(req.params);
     const idValue = req.params[idName];
 
     // 1. Sprawdzenie, czy parametr w ogóle został przekazany
