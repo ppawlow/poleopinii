@@ -372,8 +372,28 @@ async function sendEditorEarnedEmail(user, totalLikes) {
  */
 
 /**
- * Szablon powiadomienia o uzyskaniu statusu Kandydata na redaktora (100 gwiazdek)
+ * Wysyła powiadomienie o uzyskaniu statusu Kandydata na redaktora (100 gwiazdek)
  */
+async function sendEditorCandidateEmail(user, totalLikes) {
+  const mailContent = mailTemplates.getEditorCandidateEmail(user.name, SERVICE_NAME, totalLikes);
+  await sendMail(
+    user.email,
+    "Spełniłeś warunki formalne: Jesteś Kandydatem na Redaktora! ⏳",
+    mailContent
+  );
+}
+
+/**
+ * Wysyła powiadomienie o pomyślnym przegłosowaniu kandydatury przez Kolegium
+ */
+async function sendEditorApprovedByBoardEmail(user) {
+  const mailContent = mailTemplates.getEditorApprovedByBoardEmail(user.name, SERVICE_NAME);
+  await sendMail(
+    user.email,
+    "Oficjalna decyzja Kolegium: Zostałeś mianowany Redaktorem Serwisu! 🌟",
+    mailContent
+  );
+}
   
 module.exports = {
   startNotification,
@@ -389,6 +409,6 @@ module.exports = {
   sendVerificationRejectedEmail,
   sendAccountDeletionRequestEmail,
   sendAccountDeletionSuccessNotification,
-  // sendEditorPromotedEmail,
-  // sendEditorEarnedEmail,
+  sendEditorCandidateEmail,
+  sendEditorApprovedByBoardEmail
 };
