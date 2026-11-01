@@ -1,5 +1,6 @@
 //- views/partials/post-comments.pug
-//- Kontener przeznaczony wyłącznie na listę komentarzy (Ten blok będzie odświeżany asynchronicznie)
+
+//- Kontener przeznaczony na listę komentarzy (będzie odświeżany asynchronicznie)
 .comments-list-container(id=`comments-list-${post._id}`)
     if post.comments && post.comments.length > 0
         each comment in post.comments
@@ -63,8 +64,11 @@
                             span(style="color: #1877f2; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;")
                                 i.fa-solid.fa-thumbs-up
                                 |  #{comment.likedBy.length}
+    else
+        //- Fallback wizualny dla pustej dyskusji (płynnie usuwany przez JS po doklejeniu pierwszego komentarza WS/AJAX)
+        .no-comments-placeholder(id=`no-comments-notice-${post._id}` style="font-size: 13px; color: #65676b; font-style: italic; padding: 8px 12px; margin-bottom: 12px;") 💬 Brak komentarzy. Rozpocznij dyskusję jako pierwszy!
 
-//- Statyczny i nienaruszalny formularz wpisywania nowego komentarza (Zawsze widoczny pod listą)
+//- POPRAWKA: Formularz wyciągnięty na sam dół - teraz ładuje się ZAWSZE, gdy użytkownik jest zalogowany
 if user
     if hasPermission(user, post.visibility, 'COMMENT') && (!userBlocks || !userBlocks.includes(String(post.authorId)))
         form.comment-form.comment-submit-on-enter(action=`/posts/${post._id}/comment` method="POST" style="display: flex; align-items: flex-end; gap: 8px; width: 100%; margin-top: 12px;")

@@ -1,302 +1,104 @@
-require("dotenv").config();
-
-if (!process.env.SESSION_SECRET) {
-  console.error(
-    "BŁĄD KRYTYCZNY: Brak zdefiniowanej zmiennej SESSION_SECRET w pliku .env!",
-  );
-  process.exit(1);
-}
-
-const express = require("express");
-const session = require("express-session");
+// index.js
+const http = require("http");
+const WebSocket = require("ws");
 const cookieParser = require("cookie-parser");
-const csurf = require("csurf");
-const helmet = require("helmet");
-const { globalLimiter, adminScannerLimiter } = require("./tools/validation");
-const { startNotification } = require("./tools/mailer");
-const sanitize = require("express-mongo-sanitize").sanitize;
-const path = require("path");
 const MongoStore = require("connect-mongo").default;
-const {
-  hasPermission,
-  isAdminId,
-  getSubtreeFromRouter,
-  userData,
-  isLoggedIn,
-} = require("./tools/security");
+const app = require("./app");
+const { PORT, DEFAULT_USER } = require("./config");
+const { User, createVerifiedUser } = require("./tools/db");
+const { startNotification } = require("./tools/mailer");
 
-//Konfiguracja serwera
-const {
-  SERVICE_NAME,
-  SERVICE_LOGO,
-  RESERVED_ALIASES,
-  DEFAULT_ASSETS,
-  PORT,
-  FAVICON,
-  LOGOTYP,
-  isDevelopment,
-  DEFAULT_USER,
-  RECAPTCHA_SITE_KEY,
-  useRecaptcha,
-} = require("./config");
+// Tworzymy serwer HTTP owijający aplikację Express
+const server = http.createServer(app);
 
-//Narzędzia
-const { User, Alias, createLog, createVerifiedUser } = require("./tools/db");
+// Inicjalizacja serwera WebSocket
+const wss = new WebSocket.Server({ noServer: true });
 
-const app = express();
+// Globalna mapa aktywnych połączeń WebSocket redaktorów
+const editorConnections = new Set();
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+// Obsługa bezpiecznego upgrade protokołu HTTP -> WS z weryfikacją sesji Expressa
+server.on("upgrade", (request, socket, head) => {
+  cookieParser(process.env.SESSION_SECRET)(request, {}, () => {
+    const sessionStore = MongoStore.create({ 
+      mongoUrl: process.env.MONGODB_URI || "mongodb://localhost:27017/test" 
+    });
+    
+    const sid = request.signedCookies ? request.signedCookies["connect.sid"] : null;
+    
+    if (!sid) {
+      socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+      socket.destroy();
+      return;
+    }
 
-        "script-src": [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fontawesome.com",
-          "https://*.fontawesome.com",
-          "https://datatables.net",
-          "https://*.datatables.net",
-          "https://*.googleapis.com",
-        ],
+    sessionStore.get(sid, async (err, sessionData) => {
+      if (err || !sessionData || !sessionData.user || !sessionData.user.id) {
+        socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n");
+        socket.destroy();
+        return;
+      }
 
-        "script-src-elem": [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fontawesome.com",
-          "https://*.fontawesome.com",
-          "https://google.com",
-          "https://*.google.com",
-          "https://googleapis.com",
-          "https://*.googleapis.com",
-          "https://gstatic.com",
-          "https://*.gstatic.com",
-          "https://datatables.net",
-          "https://*.datatables.net",
-        ],
+      // Sprawdzamy rolę użytkownika bezpośrednio w kolekcji DB przed przyznaniem dostępu do socketu
+      const userDoc = await User.findById(sessionData.user.id);
+      if (!userDoc || userDoc.role !== "editor") {
+        socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+        socket.destroy();
+        return;
+      }
 
-        "script-src-attr": ["'unsafe-inline'"],
-
-        "connect-src": [
-          "'self'",
-          "http://localhost:*",
-          "http://127.0.0.1:*",
-          "ws://localhost:*",
-          "ws://127.0.0.1:*",
-          "https://fontawesome.com",
-          "https://*.fontawesome.com",
-        ],
-
-        "style-src": [
-          "'self'",
-          "'unsafe-inline'",
-          "https://fontawesome.com",
-          "https://*.fontawesome.com",
-          "https://googleapis.com",
-          "https://google.com",
-          "https://*.googleapis.com",
-          "https://cloudflare.com",
-          "https://*.cloudflare.com",
-          "https://datatables.net",
-          "https://*.datatables.net",
-        ],
-
-        "font-src": [
-          "'self'",
-          "data:",
-          "https://fontawesome.com",
-          "https://*.fontawesome.com",
-          "https://gstatic.com",
-          "https://*.gstatic.com",
-        ],
-
-        "img-src": [
-          "'self'",
-          "data:",
-          "https:",
-          "https://*.gstatic.com",
-          "https://www.google.com",
-        ],
-
-        "frame-src": [
-          "'self'",
-          "https://google.com",
-          "https://*.google.com",
-          "https://*.gstatic.com",
-        ],
-      },
-    },
-    crossOriginOpenerPolicy: isDevelopment ? false : { policy: "same-origin" },
-    crossOriginResourcePolicy: isDevelopment
-      ? false
-      : { policy: "same-origin" },
-    hsts: false,
-  }),
-);
-
-app.set("trust proxy", 1);
-app.set("view engine", "pug");
-app.set("views", path.join(__dirname, "views"));
-
-/*******************
- * MIDDLEWARES
- ******************/
-
-// Limitery
-app.use(globalLimiter);
-app.use("/admin", adminScannerLimiter);
-
-// ==========================================
-// 1. OCHRONA PRZED NOSQL INJECTION (SANITYZACJA)
-// ==========================================
-app.use((req, res, next) => {
-  req.params;
-  if (req.body) sanitize(req.body, { allowDots: true });
-  if (req.params) sanitize(req.params, { allowDots: true });
-  next();
+      // Pozytywna autoryzacja - dokonujemy upgrade połączenia
+      wss.handleUpgrade(request, socket, head, (ws) => {
+        ws.userId = userDoc._id.toString();
+        wss.emit("connection", ws, request);
+      });
+    });
+  });
 });
 
-// ==========================================
-// 2. MIDDLEWARE PODSTAWOWE ORAZ PARSERY
-// ==========================================
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use(cookieParser());
+// Zarządzanie cyklem życia socketów redakcyjnych
+wss.on("connection", (ws) => {
+  editorConnections.add(ws);
+  console.log(`[WebSocket] Redaktor dołączył do kanału narad w czasie rzeczywistym. (Aktywnych: ${editorConnections.size})`);
 
-// ==========================================
-// 3. KONFIGURACJA SESJI
-// ==========================================
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI || "mongodb://localhost:27017/test",
-      ttl: 14 * 24 * 60 * 60,
-    }),
-    cookie: {
-      httpOnly: true,
-      secure: isDevelopment ? false : true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 14 * 24 * 60 * 60 * 1000,
-    },
-  }),
-);
-
-// ==========================================
-// 4. OCHRONA ORAZ OBSŁUGA CSRF
-// ==========================================
-app.use(csurf({ cookie: true }));
-
-// Globalne przekazywanie danych do widoków Pug
-app.use(async (req, res, next) => {
-  res.locals = {
-    csrfToken: req.csrfToken(),
-    windowOrigin: req.protocol + "://" + req.get("host"), // <--- DODAJ TĘ LINIJKĘ
-    DEFAULT_ASSETS,
-    SERVICE_NAME,
-    SERVICE_LOGO,
-    FAVICON,
-    LOGOTYP,
-    hasPermission,
-    RECAPTCHA_SITE_KEY,
-    isDevelopment,
-    useRecaptcha,
-  };
-  res.locals.getProfileUrl = function (userDetails) {
-    if (!userDetails) return "/";
-    if (typeof userDetails === "string") return `/profile/${userDetails}`;
-    const userAlias = userDetails.alias || userDetails.authorDetails?.alias;
-    const userId = userDetails._id || userDetails.id || userDetails.authorId;
-    if (userAlias) return `/profile/${userAlias}`;
-    if (userId) return `/profile/${userId.toString()}`;
-    return "/";
-  };
-  next();
+  ws.on("close", () => {
+    editorConnections.delete(ws);
+    console.log(`[WebSocket] Redaktor opuścił kanał narad. (Aktywnych: ${editorConnections.size})`);
+  });
 });
 
-// ==========================================
-// 5. Bezpieczne pobranie danych użytkownika,
-//    jesli jest zalogowany
-// ==========================================
-app.use(userData);
-
-// ==========================================
-// 5. Centralna obsługa błędu CSRF
-// ==========================================
-app.use((err, req, res, next) => {
-  if (err.code !== "EBADCSRFTOKEN") return next(err);
-  res
-    .status(403)
-    .send(
-      "Błąd bezpieczeństwa: Niepoprawny lub brakujący token CSRF. Odśwież stronę.",
-    );
+// Rejestrujemy funkcję nadawczą w kontekście aplikacji Express, by była łatwo dostępna w routerach
+app.set("wsBroadcastEditorPost", (htmlSnippet, senderId) => {
+  const payload = JSON.stringify({ type: "NEW_EDITOR_POST", html: htmlSnippet, senderId });
+  editorConnections.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN && client.userId !== senderId.toString()) {
+      client.send(payload);
+    }
+  });
 });
 
-// =========================================================================
-// 6. MECHANIZM ŚLEDZENIA ROUTERÓW DLA EXPRESS 5
-// =========================================================================
-//Mapa serwera: dla każdej metody oddzielnie pobierzemy endpointy
-const serviceMap = { GET: {}, POST: {} };
-
-// ==========================================
-// 7. PODPIĘCIE ROUTERÓW (config.js)
-// ==========================================
-function setupEndpoints(app) {
-  const { routeDir, routers } = require("./config");
-  for (const k in routers) {
-    const src = routers[k] || k;
-    let routerInstance;
-    if (/.*\.mjs/.test(src)) {
-      routerInstance = require(`${routeDir}/${src}`).default;
-    } else {
-      routerInstance = require(`${routeDir}/${src}`);
+app.set("wsBroadcastEditorComment", (htmlSnippet, postId, senderId) => {
+  const payload = JSON.stringify({ 
+    type: "NEW_EDITOR_COMMENT", 
+    html: htmlSnippet, 
+    postId: postId.toString(),
+    senderId: senderId.toString() 
+  });
+  
+  editorConnections.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN && client.userId !== senderId.toString()) {
+      client.send(payload);
     }
-    app.use(k, routerInstance);
-    for (const m in serviceMap) {
-      serviceMap[m][k.slice(1)] = getSubtreeFromRouter(routerInstance, m);
-    }
-  }
-}
-
-setupEndpoints(app);
-
-// ==========================================
-// 8. OBSŁUGA BŁĘDÓW MULTERA
-// ==========================================
-const multer = require("multer");
-app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    if (err.code === "LIMIT_FILE_SIZE") {
-      return res
-        .status(400)
-        .send(
-          "Błąd przesyłania: Plik jest zbyt duży. Maksymalny rozmiar to 5MB.",
-        );
-    }
-    if (err.code === "LIMIT_UNEXPECTED_FILE") {
-      return res
-        .status(400)
-        .send(
-          "Błąd walidacji: Niedozwolony format pliku. Akceptowane są wyłącznie zdjęcia (JPG, PNG, GIF, WEBP).",
-        );
-    }
-    return res.status(400).send(`Błąd przetwarzania pliku: ${err.message}`);
-  }
-  next(err);
+  });
 });
 
-// ==========================================
-// 9. URUCHOMIENIE APLIKACJI
-// ==========================================
-app.listen(PORT || process.env.PORT, async () => {
+// Uruchomienie infrastruktury serwerowej
+const PORT_APP = PORT || process.env.PORT || 3000;
+server.listen(PORT_APP, async () => {
   if (DEFAULT_USER) {
-    const defaultUser = await createVerifiedUser(DEFAULT_USER);
+    await createVerifiedUser(DEFAULT_USER);
   }
-  console.log(`Aplikacja działa na porcie ${PORT || process.env.PORT}`);
+  console.log(`Aplikacja i serwer WebSocket nasłuchują na porcie ${PORT_APP}`);
   startNotification();
   const { initializeNewsCron } = require("./tools/aiNewsService");
   initializeNewsCron();

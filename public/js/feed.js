@@ -915,3 +915,130 @@ window.submitAiAppeal = async function (postId, buttonElement) {
     buttonElement.innerText = "⚖️ Poproś o weryfikację człowieka";
   }
 };
+
+/**
+ * Inicjalizacja asynchronicznego klienta WebSocket dla Pokoju Narad Redakcji (Real-Time UX)
+ */
+function initEditorsRoomWebSocket() {
+  // Nawiązujemy połączenie tylko wtedy, gdy redaktor fizycznie znajduje się w Pokoju Narad
+  if (window.location.pathname !== "/editors") return;
+
+  const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+  const wsUrl = `${protocol}${window.location.host}`;
+  const socket = new WebSocket(wsUrl);
+
+  socket.onopen = () => {
+    console.log("[WebSocket] Połączono ze strumieniem dyskusji krytycznych Kolegium Redakcyjnego.");
+  };
+
+  socket.onmessage = function (event) {
+    try {
+      const data = JSON.parse(event.data);
+
+      // ===========================================================
+      // 1. OBSŁUGA NOWYCH POSTÓW REDAKCYJNYCH W CZASIE RZECZYWISTYM
+      // ===========================================================
+      if (data.type === "NEW_EDITOR_POST" && data.html) {
+        const postsWrapper = document.getElementById("accordion-posts-wrapper");
+        
+        if (postsWrapper) {
+          // Usuwamy fallback o braku postów, jeśli był widoczny
+          const noPostsFallback = postsWrapper.querySelector(".no-posts");
+          if (noPostsFallback) noPostsFallback.remove();
+
+          // Tworzymy tymczasowy kontener, aby nadać nowemu elementowi style animacji wejściowej
+          const tempContainer = document.createElement("div");
+          tempContainer.innerHTML = data.html;
+          const freshPostCard = tempContainer.firstElementChild;
+
+          if (freshPostCard) {
+            freshPostCard.style.opacity = "0";
+            freshPostCard.style.transform = "translateY(-20px)";
+            freshPostCard.style.transition = "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+
+            // Wstrzykujemy kartę posta na samą górę osi czasu w locie
+            postsWrapper.insertBefore(freshPostCard, postsWrapper.firstChild);
+
+            // Triggerujemy reflow i odpalamy sprzętową animację wejściową (GPU)
+            requestAnimationFrame(() => {
+              freshPostCard.style.opacity = "1";
+              freshPostCard.style.transform = "translateY(0)";
+            });
+
+            // Re-inicjalizujemy słuchacze zdarzeń dla rozwijania nowo przybyłego akordeonu
+            if (typeof window.refreshAccordionListeners === "function") {
+              window.refreshAccordionListeners();
+            }
+          }
+        }
+      }
+
+      // =========================================================================
+      // 2. OBSŁUGA KOMENTARZY REDAKCYJNYCH W CZASIE RZECZYWISTYM (REAL-TIME CHAT)
+      // =========================================================================
+      if (data.type === "NEW_EDITOR_COMMENT" && data.html && data.postId) {
+        const postCard = document.getElementById(`post-${data.postId}`);
+        const targetCommentsList = document.getElementById(`comments-list-${data.postId}`);
+        
+        if (targetCommentsList && postCard) {
+          // POPRAWKA: Ukrywamy placeholder informacyjny "Brak komentarzy", jeśli istniał
+          const emptyNotice = document.getElementById(`no-comments-notice-${data.postId}`);
+          if (emptyNotice) emptyNotice.remove();
+
+          const tempParser = document.createElement("div");
+          tempParser.innerHTML = data.html;
+          const freshCommentCard = tempParser.querySelector(".comment-card");
+          
+          if (freshCommentCard) {
+            freshCommentCard.style.opacity = "0";
+            freshCommentCard.style.transition = "opacity 0.3s ease-out";
+            targetCommentsList.appendChild(freshCommentCard);
+            
+            requestAnimationFrame(() => {
+              freshCommentCard.style.opacity = "1";
+            });
+          }
+
+          // Dynamiczne przeliczanie liczników...
+          const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
+
+          // Dolny pasek statystyk stopki z walidacją gramatyczną liczebnika
+          const commentsCountEl = document.getElementById(`comments-text-${data.postId}`);
+          if (commentsCountEl && typeof liczebnik === "function") {
+            commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+          }
+
+          // Nagłówek dyskusji wewnątrz rozwijanego akordeonu
+          const discussionHeadingEl = document.getElementById(`discussion-heading-${data.postId}`);
+          if (discussionHeadingEl) {
+            discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
+          }
+
+          // Re-inicjalizacja słuchaczy edycji i odpowiedzi dla nowo przybyłego komentarza
+          if (typeof window.refreshAccordionListeners === "function") {
+            window.refreshAccordionListeners();
+          }
+        }
+      }
+
+    } catch (err) {
+      console.error("[WebSocket] Błąd przetwarzania pakietu danych czasu rzeczywistego:", err);
+    }
+  };
+
+  socket.onclose = () => {
+    console.warn("[WebSocket] Połączenie zamknięte. Próba ponownego nawiązania za 5 sekund...");
+    setTimeout(initEditorsRoomWebSocket, 5000); // Mechanizm Auto-Reconnect
+  };
+
+  socket.onerror = (err) => {
+    console.error("[WebSocket] Błąd połączenia strumieniowego:", err);
+    socket.close();
+  };
+}
+
+// Rejestracja inicjalizatora WebSocket po pełnym załadowaniu drzewa DOM
+document.addEventListener("DOMContentLoaded", () => {
+  initEditorsRoomWebSocket();
+});
+

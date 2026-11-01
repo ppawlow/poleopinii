@@ -92,37 +92,42 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
         const postCard = form.closest(".post-card, .editorial-article");
 
         if (postCard) {
-          // Namierzamy kontener przeznaczony wyłącznie na listę komentarzy
-          const targetCommentsListContainer = document.getElementById(
-            `comments-list-${postId}`,
-          );
+          // Namierzamy główny kontener listy komentarzy dla tego konkretnego posta
+          const targetCommentsListContainer = document.getElementById(`comments-list-${postId}`);
+          const emptyNotice = document.getElementById(`no-comments-notice-${postId}`);
 
           if (targetCommentsListContainer) {
-            // Tworzymy tymczasowy parser DOM, aby wyciągnąć nowo wyrenderowaną kartę komentarza
+            // POPRAWKA: Ponieważ serwer zwraca unikalny, wyrenderowany komponent pojedynczego nowego komentarza 
+            // owinięty w strukturę post-comments, parsujemy go i wyciągamy z niego OSTATNI element, 
+            // czyli ten, który autor przed chwilą faktycznie napisał.
             const tempParser = document.createElement("div");
             tempParser.innerHTML = data.html;
 
-            // Pobieramy wyłącznie węzeł nowo utworzonego komentarza (.comment-card)
-            const freshCommentCard = tempParser.querySelector(".comment-card");
+            // Pobieramy wszystkie spakowane karty komentarzy z odpowiedzi serwera
+            const incomingCards = tempParser.querySelectorAll(".comment-card");
+            
+            if (incomingCards.length > 0) {
+              // Wybieramy absolutnie ostatni element z tablicy zwracanego zestawu danych
+              const freshCommentCard = incomingCards[incomingCards.length - 1];
 
-            if (freshCommentCard) {
-              // KRYTYCZNA POPRAWKA: Zamiast nadpisywać .innerHTML, DOKLEJAMY nowy komentarz na koniec listy!
-              targetCommentsListContainer.appendChild(freshCommentCard);
+              if (freshCommentCard) {
+                // Ukrywamy powiadomienie o braku komentarzy, jeśli istniało
+                if (emptyNotice) emptyNotice.remove();
+                
+                // Płynnie doklejamy faktycznie nowy komentarz na sam dół listy
+                targetCommentsListContainer.appendChild(freshCommentCard);
+              }
             }
           }
 
           // =========================================================================
           // AUTOMATYCZNE PRZELICZANIE LICZNIKÓW PO DOKLEJENIU DO DRZEWA DOM
           // =========================================================================
-          // Liczymy wszystkie komentarze fizycznie obecne w strukturze strony dla tego posta
-          const freshCommentsCount =
-            postCard.querySelectorAll(".comment-card").length;
+          const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
 
           // 1. Aktualizacja dolnego paska statystyk stopki
-          const commentsCountEl = document.getElementById(
-            `comments-text-${postId}`,
-          );
-          if (commentsCountEl) {
+          const commentsCountEl = document.getElementById(`comments-text-${postId}`);
+          if (commentsCountEl && typeof liczebnik === "function") {
             commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
               "komentarz",
               "komentarze",
@@ -131,9 +136,7 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
           }
 
           // 2. Aktualizacja nagłówka rozwijanej sekcji dyskusji
-          const discussionHeadingEl = document.getElementById(
-            `discussion-heading-${postId}`,
-          );
+          const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
           if (discussionHeadingEl) {
             discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
           }
@@ -363,13 +366,11 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
       headers: { "X-CSRF-Token": csrfToken },
     });
 
+    // public/js/mainApi.js -> wewnątrz funkcji handleAsyncDeleteSubmit
     if (response.ok) {
       const targetCard = form.closest(".comment-card, .post-card");
       const postCard = form.closest(".post-card, .editorial-article");
-
-      // Sprawdzamy czy usuwany zasób to komentarz
-      const isComment =
-        targetCard && targetCard.classList.contains("comment-card");
+      const isComment = targetCard && targetCard.classList.contains("comment-card");
 
       if (targetCard) {
         targetCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
@@ -378,30 +379,18 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
         setTimeout(() => {
           targetCard.remove();
 
-          // Jeśli usunięto komentarz, natychmiast uaktualniamy liczniki w locie!
           if (isComment && postCard) {
-            // Wyciągamy ID posta ze ścieżki akcji formularza usunięcia komentarza
-            const urlObj = new URL(form.action, window.location.origin);
-            const pathParts = urlObj.pathname.split("/");
-            const postId = pathParts[pathParts.indexOf("posts") + 1];
+            const actionParts = form.action.split("/");
+            const postId = actionParts[actionParts.indexOf("posts") + 1];
 
-            const freshCommentsCount =
-              postCard.querySelectorAll(".comment-card").length;
+            const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
 
-            const commentsCountEl = document.getElementById(
-              `comments-text-${postId}`,
-            );
+            const commentsCountEl = document.getElementById(`comments-text-${postId}`);
             if (commentsCountEl) {
-              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
-                "komentarz",
-                "komentarze",
-                "komentarzy",
-              ]);
+              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
             }
 
-            const discussionHeadingEl = document.getElementById(
-              `discussion-heading-${postId}`,
-            );
+            const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
             if (discussionHeadingEl) {
               discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
             }

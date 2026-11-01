@@ -402,6 +402,16 @@ async function postCreate(req, res) {
           );
           return res.end();
         }
+        // ======================================================
+        // TRANSMISJA WEBSOCKET DLA POSTÓW REDAKCYJNYCH (EDITORS)
+        // ======================================================
+        if (visibility === "editors") {
+          const broadcastFn = req.app.get("wsBroadcastEditorPost");
+          if (typeof broadcastFn === "function") {
+            broadcastFn(htmlSnippet, dbUser._id);
+          }
+        }
+        // =======================================================
 
         return res.json({ success: true, html: htmlSnippet });
       },
@@ -699,6 +709,16 @@ async function postComment(req, res) {
       renderContext,
       (renderErr, htmlSnippet) => {
         if (renderErr) return res.status(500).send("Błąd renderowania komentarza.");
+        // ==========================================================
+        // TRANSMISJA WEBSOCKET DLA KOMENTARZY REDAKCYJNYCH (EDITORS)
+        // ==========================================================
+        if (post.visibility === "editors") {
+          const broadcastCommentFn = req.app.get("wsBroadcastEditorComment");
+          if (typeof broadcastCommentFn === "function") {
+            broadcastCommentFn(htmlSnippet, post._id, dbUser._id);
+          }
+        }
+        // ==========================================================
         return res.json({ success: true, html: htmlSnippet });
       },
     );
