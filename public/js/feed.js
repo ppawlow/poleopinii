@@ -205,9 +205,7 @@ window.prepareEditSubmit = async function (event, postId) {
   if (instance) {
     formData.set("content", instance.getSemanticHTML());
   } else {
-    const hiddenContent = document.getElementById(
-      `edit-hidden-content-${postId}`,
-    );
+    const hiddenContent = document.getElementById(`edit-hidden-content-${postId}`);
     if (hiddenContent) formData.set("content", hiddenContent.value);
   }
 
@@ -220,9 +218,7 @@ window.prepareEditSubmit = async function (event, postId) {
   }
 
   const selectNode = form.querySelector('select[name="visibility"]');
-  const isPublicVerificationTriggered =
-    (selectNode && selectNode.value === "public") ||
-    (selectNode && selectNode.disabled);
+  const isPublicVerificationTriggered = (selectNode && selectNode.value === "public") || (selectNode && selectNode.disabled);
 
   if (selectNode && selectNode.disabled) {
     formData.set("visibility", "public");
@@ -235,12 +231,10 @@ window.prepareEditSubmit = async function (event, postId) {
   const loaderHeading = document.getElementById("loader-status-heading");
   const loaderText = document.getElementById("loader-status-text");
 
-  if (loaderHeading) loaderHeading.innerText = "Trwa weryfikacja artykułu";
-  if (loaderText)
-    loaderText.innerText =
-      "Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa...";
-
+  // Dla postów wewnętrznych (editors) nie potrzebujemy blokady i animacji loaderów AI
   if (loadingModal && isPublicVerificationTriggered) {
+    if (loaderHeading) loaderHeading.innerText = "Trwa weryfikacja artykułu";
+    if (loaderText) loaderText.innerText = "Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa...";
     loadingModal.style.display = "flex";
   }
 
@@ -276,23 +270,18 @@ window.prepareEditSubmit = async function (event, postId) {
               const formattedReport = data.report
                 ? `<hr style="border:0; border-top:1px solid #dddfe2; margin:14px 0;"><div style="background:#fff3f3; padding:14px; border-radius:6px; border-left:4px solid #bc2525; font-size:13px; text-align:left; color:#1c1e21; white-space:pre-wrap; font-family:sans-serif; line-height:1.5;"><strong>📋 Raport AI:</strong><br><br>${data.report}</div>`
                 : "";
-              await window.Alert(
-                `<div><p><strong>⚠️ Błąd:</strong> ${data.error}</p>${formattedReport}</div>`,
-                "🛡️ Ochrona AI",
-              );
+              await window.Alert(`<div><p><strong>⚠️ Błąd:</strong> ${data.error}</p>${formattedReport}</div>`, "🛡️ Ochrona AI");
               return;
             }
 
             if (data.status === "stage1_success") {
-              if (loaderHeading)
-                loaderHeading.innerHTML = "🟢 Etap 1 zakończony";
+              if (loaderHeading) loaderHeading.innerHTML = "🟢 Etap 1 zakończony";
               if (loaderText) loaderText.innerText = data.message;
             }
 
-            // POPRAWKA: Automatyczne wstrzyknięcie lub przeładowanie po sukcesie nowego wpisu publicznego
             if (data.status === "success" && postId === "new") {
               if (loadingModal) loadingModal.style.display = "none";
-              window.location.reload(true); // Twarde odświeżenie gwarantuje załadowanie pełnej osi czasu bazy danych
+              window.location.reload(true);
               return;
             }
 
@@ -308,18 +297,47 @@ window.prepareEditSubmit = async function (event, postId) {
     }
 
     // =========================================================================
-    // SCENARIUSZ B: TRADYCYJNA OBSŁUGA JSON (DLA WPISÓW PRYWATNYCH / RESTRICTED)
+    // SCENARIUSZ B: ULEPSZONA OBSŁUGA DLA WPISÓW PRYWATNYCH / RESTRICTED / EDITORS
     // =========================================================================
     if (response.ok) {
       if (loadingModal) loadingModal.style.display = "none";
 
-      // KRYTYCZNA POPRAWKA: Wymuszamy natychmiastowe odświeżenie okna,
-      // co eliminuje problem z niewyświetlaniem się nowych postów prywatnych/restricted!
-      window.location.reload(true);
+      const responseData = await response.json();
+      
+      if (postId === "new" && responseData.html) {
+        const postsWrapper = document.getElementById("accordion-posts-wrapper");
+        
+        if (postsWrapper) {
+          // Usuwamy komunikat o braku postów, jeśli istnieje
+          const noPostsFallback = postsWrapper.querySelector(".no-posts");
+          if (noPostsFallback) noPostsFallback.remove();
+
+          // Wstrzykujemy nowy post na samą górę listy narad bez przeładowania okna!
+          postsWrapper.insertAdjacentHTML("afterbegin", responseData.html);
+          
+          // Resetujemy edytor Quill i zamykamy bezpiecznie akordeon
+          if (instance) instance.setContents([]);
+          const titleField = document.getElementById("edit-title-new");
+          if (titleField) titleField.value = "";
+          
+          window.cancelSelectedImage("new");
+          window.toggleCreatePostAccordion();
+          
+          // Re-inicjalizacja słuchaczy akordeonów dla nowo dodanej karty wpisu
+          if (typeof window.refreshAccordionListeners === "function") {
+            window.refreshAccordionListeners();
+          }
+        } else {
+          window.location.reload(true);
+        }
+      } else {
+        // Jeśli to była edycja istniejącego szkicu, odświeżamy widok
+        window.location.reload(true);
+      }
     } else {
       if (loadingModal) loadingModal.style.display = "none";
       const responseText = await response.text();
-      await window.Alert(responseText);
+      await window.Alert(responseText, "Błąd walidacji");
     }
   } catch (err) {
     if (loadingModal) loadingModal.style.display = "none";

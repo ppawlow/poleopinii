@@ -32,6 +32,11 @@
                     i.fa-solid.fa-shield-halved(style="color: #bc2525;")
                     | Panel Administratora
 
+            if user.role === 'editor'
+                a.dropdown-item(href="/editors" style="color: #9360f7; font-weight: 600;")
+                    i.fa-solid.fa-user-shield(style="color: #9360f7;")
+                    | Pokój Redakcyjny
+
             if !user.isFullyVerified
                 a.dropdown-item(href="/verify")
                     i.fa-solid.fa-circle-check

@@ -89,9 +89,8 @@ async function postCommentEdit(req, res) {
   }
 }
 
-// ==========================================
-// Polubienie komentarza
-// ==========================================
+// routes/comments.js -> funkcja postCommentLike
+
 async function postCommentLike(req, res) {
   try {
     const post = await Post.findById(req.params.id);
@@ -102,46 +101,45 @@ async function postCommentLike(req, res) {
 
     const dbUser = req.dbUser;
 
+    // Zcentralizowane sprawdzenie uprawnień na podstawie macierzy z config.js
     if (!hasPermission(dbUser, post.visibility, "COMMENT")) {
-      return sendAccessDenied(
-        req,
-        res,
-        'Brak uprawnień: Polubienie komentarza pod postem publicznym wymaga pełnej weryfikacji konta. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>',
-      );
+      const fallbackMsg = post.visibility === 'editors' 
+        ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
+        : 'Brak uprawnień: Polubienie komentarza pod postem publicznym wymaga pełnej weryfikacji konta. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>';
+      return sendAccessDenied(req, res, fallbackMsg);
     }
 
-    const postAuthor = await User.findById(post.authorId);
-    const commentAuthor = await User.findById(comment.authorId);
+    // Jeśli to NIE jest poufny post redakcyjny, sprawdzamy relacje blokad towarzyskich
+    if (post.visibility !== "editors") {
+      const postAuthor = await User.findById(post.authorId);
+      const commentAuthor = await User.findById(comment.authorId);
 
-    const isPostAuthorBlocked =
-      postAuthor &&
-      (dbUser.blocks.includes(postAuthor._id) ||
-        postAuthor.blocks.includes(dbUser._id));
-    const isCommentAuthorBlocked =
-      commentAuthor &&
-      (dbUser.blocks.includes(commentAuthor._id) ||
-        commentAuthor.blocks.includes(dbUser._id));
+      const isPostAuthorBlocked =
+        postAuthor &&
+        (dbUser.blocks.includes(postAuthor._id) ||
+          postAuthor.blocks.includes(dbUser._id));
+      const isCommentAuthorBlocked =
+        commentAuthor &&
+        (dbUser.blocks.includes(commentAuthor._id) ||
+          commentAuthor.blocks.includes(dbUser._id));
 
-    if (isPostAuthorBlocked || isCommentAuthorBlocked) {
-      return res
-        .status(403)
-        .send(
-          "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego komentarza.",
-        );
+      if (isPostAuthorBlocked || isCommentAuthorBlocked) {
+        return res
+          .status(403)
+          .send(
+            "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego komentarza.",
+          );
+      }
     }
 
-    // =========================================================================
-    // POPRAWKA: Zmiana identyfikacji z adresu E-mail na unikalne ID (String)
-    // =========================================================================
     const userIdStr = String(req.session.user.id);
     const index = comment.likedBy.indexOf(userIdStr);
 
     if (index === -1) {
-      comment.likedBy.push(userIdStr); // Zapisujemy unikalne ID
+      comment.likedBy.push(userIdStr);
     } else {
-      comment.likedBy.splice(index, 1); // Usuwamy unikalne ID
+      comment.likedBy.splice(index, 1);
     }
-    // =========================================================================
 
     await post.save();
 

@@ -296,6 +296,12 @@ async function postCreate(req, res) {
 
     const savedPost = await newPost.save();
     await createLog(req, `Utworzono post (${visibility}): ${title}`);
+    // ======================================================
+    // AUTOMATYCZNA DYSTRYBUCJA MAILINGU DLA GRONA REDAKTORÓW
+    // ======================================================
+    if (savedPost.visibility === "editors") {
+      mailer.sendNewEditorPostNotification(dbUser, savedPost, req);
+    }
 
     let parentPostTitle = "Wpis bez tytułu";
     if (savedPost.parentPostId) {
@@ -423,6 +429,16 @@ async function postEdit(req, res) {
       return res.status(403).send("Brak uprawnień do edycji tego wpisu.");
     }
 
+    // =========================================================================
+    // KRYTYCZNA BLOKADA POUFNOŚCI: Zakaz wyprowadzania postów ze strefy editors
+    // =========================================================================
+    if (post.visibility === "editors" && visibility && visibility !== "editors") {
+      return res
+        .status(400)
+        .send("Naruszenie poufności: Wewnętrzne artykuły redakcyjne nie mogą zostać upublicznione ani zmienione na inny format.");
+    }
+    // =========================================================================
+
     if (post.visibility === "public" && visibility !== "public") {
       return res
         .status(400)
@@ -443,17 +459,6 @@ async function postEdit(req, res) {
         .send(
           "Operacja zablokowana: Ten wpis został oznaczony przez moderatora jako nadużycie i nie może zostać ponownie upubliczniony.",
         );
-    }
-
-    // Standardowe sprawdzenie uprawnień przy zmianie widoczności (np. z restricted na public)
-    if (visibility && visibility !== post.visibility) {
-      if (!hasPermission(dbUser, visibility, "CREATE")) {
-        return sendAccessDenied(
-          req,
-          res,
-          "Brak uprawnień: Wymagana weryfikacja konta.",
-        );
-      }
     }
 
     // Flaga pomocnicza, która poinformuje nas czy uruchomiliśmy strumień Server-Sent Events (SSE)
@@ -519,7 +524,8 @@ async function postEdit(req, res) {
     post.authorAvatar = dbUser.avatarUrl;
     post.authorEmail = dbUser.email;
 
-    if (visibility && POST_VISIBILITY.includes(visibility)) {
+    // POPRAWKA: Zmianę widoczności przypisujemy tylko wtedy, gdy stary post nie był postem redakcyjnym
+    if (post.visibility !== "editors" && visibility && POST_VISIBILITY.includes(visibility)) {
       post.visibility = visibility;
     }
 
@@ -537,18 +543,16 @@ async function postEdit(req, res) {
 
     await post.save();
 
-    // KRYTYCZNA POPRAWKA: Jeśli strumień był otwarty, zamykamy go dedykowaną wiadomością SSE i kończymy połączenie
+    // Jeśli strumień był otwarty, zamykamy go dedykowaną wiadomością SSE i kończymy połączenie
     if (isChangingToPublic) {
       res.write(`data: ${JSON.stringify({ status: "edit_success" })}\n\n`);
       return res.end();
     }
 
-    // Klasyczna, czysta odpowiedź HTTP dla postów prywatnych / restricted (gdy strumień nie był otwierany)
+    // Klasyczna odpowiedź HTTP dla postów prywatnych / restricted / editors
     return res.sendStatus(200);
   } catch (err) {
     console.error("Błąd edycji posta:", err);
-
-    // Zabezpieczenie na wypadek awarii wewnątrz aktywnego strumienia
     if (visibility === "public" && post && post.visibility !== "public") {
       try {
         res.write(
@@ -557,12 +561,10 @@ async function postEdit(req, res) {
         return res.end();
       } catch (e) {}
     }
-
-    return res
-      .status(500)
-      .send("Wewnętrzny błąd serwera podczas edycji wpisu.");
+    return res.status(500).send("Wewnętrzny błąd serwera podczas edycji wpisu.");
   }
 }
+
 
 // WYCOFANIE DO SZKICU
 async function postRevert(req, res) {
@@ -589,36 +591,39 @@ async function postComment(req, res) {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono posta.");
     const dbUser = req.dbUser;
-    // =========================================================================
-    // NOWOŚĆ: ZCENTRALIZOWANE SPRAWDZENIE UPRAWNIEŃ DO KOMENTOWANIA
-    // =========================================================================
+
     if (!hasPermission(dbUser, post.visibility, "COMMENT")) {
-      return sendAccessDenied(
-        req,
-        res,
-        "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej",
-      );
+      const fallbackMsg = post.visibility === 'editors'
+        ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
+        : "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
+      return sendAccessDenied(req, res, fallbackMsg);
     }
-    // =========================================================================
-    const postAuthor = await User.findById(post.authorId);
-    if (postAuthor) {
-      const iBlockHim = dbUser.blocks.includes(postAuthor._id);
-      const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
-      if (iBlockHim || heBlocksMe) {
-        return res
-          .status(403)
-          .send(
-            "Operacja zablokowana: Aktywna blokada uniemożliwia dodanie komentarza.",
-          );
+
+    // Blokady sprawdzamy tylko poza wewnętrznym gronem redaktorów
+    if (post.visibility !== "editors") {
+      const postAuthor = await User.findById(post.authorId);
+      if (postAuthor) {
+        const iBlockHim = dbUser.blocks.includes(postAuthor._id);
+        const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
+        if (iBlockHim || heBlocksMe) {
+          return res
+            .status(403)
+            .send(
+              "Operacja zablokowana: Aktywna blokada uniemożliwia dodanie komentarza.",
+            );
+        }
       }
     }
+
     const cleanContent = validateContent(req.body.content);
     if (!cleanContent || cleanContent.trim() === "") {
       return res.status(400).send("Dodawanie zablokowane: Pusta treść.");
     }
+
     const isReply = req.body.content.trim().startsWith("@");
     let recipientId = post.authorId;
     let notificationType = "comment_post";
+
     const commentData = {
       author: dbUser.displayName,
       authorEmail: dbUser.email,
@@ -627,10 +632,12 @@ async function postComment(req, res) {
       content: cleanContent,
       likedBy: [],
     };
+
     post.comments.push(commentData);
     const savedPost = await post.save();
     const addedComment = savedPost.comments[savedPost.comments.length - 1];
-    if (isReply) {
+
+    if (isReply && post.visibility !== "editors") {
       const mentionMatch = req.body.content.match(/^@([^\s]+)/);
       if (mentionMatch) {
         const targetName = mentionMatch[1];
@@ -647,21 +654,22 @@ async function postComment(req, res) {
         }
       }
     }
-    await createNotification({
-      senderId: dbUser._id,
-      recipientId,
-      type: notificationType,
-      postId: post._id,
-      commentId: addedComment._id,
-    });
-    await createLog(
-      req,
-      `Dodano komentarz do posta użytkownika ${post.author}`,
-    );
 
+    // Powiadomienia wewnątrz-systemowe generujemy tylko dla strefy ogólnej, 
+    // aby zachować pełną dyskrecję narad redakcji
+    if (post.visibility !== "editors") {
+      await createNotification({
+        senderId: dbUser._id,
+        recipientId,
+        type: notificationType,
+        postId: post._id,
+        commentId: addedComment._id,
+      });
+    }
+
+    await createLog(req, `Dodano komentarz do posta użytkownika ${post.author}`);
     const { getProfileUrl, urlAliases } = res.locals;
 
-    // Tworzymy miniaturowy, sztuczny kontekst posta zawierający TYLKO ten jeden nowy komentarz
     const renderContext = {
       post: {
         _id: post._id,
@@ -673,9 +681,8 @@ async function postComment(req, res) {
             authorId: dbUser._id,
             authorAvatar: dbUser.avatarUrl || DEFAULT_ASSETS.avatar,
             likedBy: [],
-            isFullyVerified:
-              dbUser.isVerified === true &&
-              dbUser.verificationTransferStatus === "approved",
+            role: dbUser.role, // Przekazanie roli redaktora dla odznaki w komentarzu
+            isFullyVerified: dbUser.isVerified === true && dbUser.verificationTransferStatus === "approved",
           },
         ],
       },
@@ -683,7 +690,7 @@ async function postComment(req, res) {
       user: req.session.user,
       getProfileUrl,
       urlAliases,
-      hasPermission, // Przydatne dla spójności silnika szablonów
+      hasPermission,
       DEFAULT_ASSETS,
     };
 
@@ -691,10 +698,7 @@ async function postComment(req, res) {
       "partials/post-comments",
       renderContext,
       (renderErr, htmlSnippet) => {
-        if (renderErr)
-          return res.status(500).send("Błąd renderowania komentarza.");
-
-        // Odsyłamy skompilowany przez Pug czysty HTML nowego komentarza
+        if (renderErr) return res.status(500).send("Błąd renderowania komentarza.");
         return res.json({ success: true, html: htmlSnippet });
       },
     );
@@ -703,6 +707,7 @@ async function postComment(req, res) {
     return res.status(500).send("Błąd serwera.");
   }
 }
+
 // ==========================================
 // LAJKOWANIE POSTA (Z INTEGRACJĄ MATRYCY UPRAWNIEŃ)
 // ==========================================
@@ -715,25 +720,25 @@ async function postLike(req, res) {
     if (!post) return res.status(404).send("Nie znaleziono posta.");
     const dbUser = req.dbUser;
 
-    // Zcentralizowane sprawdzenie uprawnień do polubień posta
     if (!hasPermission(dbUser, post.visibility, "LIKE")) {
-      return sendAccessDenied(
-        req,
-        res,
-        "Brak uprawnień: Polubienie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej",
-      );
+      const fallbackMsg = post.visibility === 'editors'
+        ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
+        : "Brak uprawnień: Polubienie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
+      return sendAccessDenied(req, res, fallbackMsg);
     }
 
-    const postAuthor = await User.findById(post.authorId);
-    if (postAuthor) {
-      const iBlockHim = dbUser.blocks.includes(postAuthor._id);
-      const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
-      if (iBlockHim || heBlocksMe) {
-        return res
-          .status(403)
-          .send(
-            "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego wpisu.",
-          );
+    if (post.visibility !== "editors") {
+      const postAuthor = await User.findById(post.authorId);
+      if (postAuthor) {
+        const iBlockHim = dbUser.blocks.includes(postAuthor._id);
+        const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
+        if (iBlockHim || heBlocksMe) {
+          return res
+            .status(403)
+            .send(
+              "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego wpisu.",
+            );
+        }
       }
     }
 
@@ -742,10 +747,10 @@ async function postLike(req, res) {
     let actionText = "";
 
     if (index === -1) {
-      post.likedBy.push(userIdStr); // Zapisujemy unikalne ID
+      post.likedBy.push(userIdStr);
       actionText = `Polubiono post użytkownika ${post.author}`;
 
-      if (String(dbUser._id) !== String(post.authorId)) {
+      if (String(dbUser._id) !== String(post.authorId) && post.visibility !== "editors") {
         await createNotification({
           senderId: dbUser._id,
           recipientId: post.authorId,
@@ -754,24 +759,18 @@ async function postLike(req, res) {
         });
       }
     } else {
-      post.likedBy.splice(index, 1); // Usuwamy unikalne ID
+      post.likedBy.splice(index, 1);
       actionText = `Cofnięto polubienie posta użytkownika ${post.author}`;
     }
-    // =========================================================================
 
     await post.save();
     await createLog(req, actionText, dbUser.email);
-    // =========================================================================
-    // SYSTEM GENEROWANIA KANDYDATURY NA REDAKTORA (WYMAGA ZATWIERDZENIA KOLEGIUM)
-    // =========================================================================
-    if (postAuthor && String(dbUser._id) !== String(postAuthor._id)) {
+    
+    // System awansów na redaktora (100 gwiazdek) działa wyłącznie dla postów publicznych
+    if (post.visibility === "public" && postAuthor && String(dbUser._id) !== String(postAuthor._id)) {
       const freshAuthorLikes = await countAuthorPublicLikes(postAuthor._id);
-      
-      // Jeśli autor zdobył dokładnie 100 lajków i jest zwykłym użytkownikiem
       if (freshAuthorLikes === 100 && postAuthor.role === "user") {
         await createLog(req, `[KANDYDATURA NA REDAKTORA] Użytkownik ${postAuthor.name} osiągnął limit 100 lajków. Oczekuje na decyzję Kolegium.`, "System-Awansów");
-        
-        // Informujemy autora, że jego wniosek trafił pod głosowanie ludzkie
         await mailer.sendEditorCandidateEmail(postAuthor, freshAuthorLikes);
       }
     }
@@ -786,6 +785,7 @@ async function postLike(req, res) {
     return res.status(500).send("Błąd serwera podczas polubienia wpisu.");
   }
 }
+
 // STRONICOWANIE
 async function getLoadMore(req, res) {
   try {

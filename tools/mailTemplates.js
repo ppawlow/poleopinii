@@ -354,3 +354,22 @@ html.getEditorApprovedByBoardEmail = (userName, serviceName) => `
       <p style="font-size: 14px; margin-top: 12px;">Z poważaniem,<br><b>Kolegium Redakcyjne ${serviceName}</b></p>
     </div>
   `;
+
+  /**
+ * Szablon powiadomienia o nowym wpisie w Kolegium Redakcyjnym
+ */
+html.getNewEditorPostEmail = (editorName, postTitle, postUrl, serviceName) => `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #9360f7; border-radius: 8px; max-width: 600px; background: #fffdfd;">
+      <h2 style="color: #9360f7; margin-top: 0;">📝 Nowy wpis w Pokoju Narad Redakcji</h2>
+      <p>Dzień dobry,</p>
+      <p>Redaktor <b>${editorName}</b> opublikował nowy, wewnętrzny artykuł na platformie narad <b>${serviceName}</b>.</p>
+      <hr style="border:0; border-top:1px solid #e4e6eb; margin: 16px 0;">
+      <p>Tytuł wątku narad: <b>"${postTitle}"</b></p>
+      <p>Dyskusja oraz treść tego wpisu są poufne i widoczne wyłącznie dla członków Kolegium Redakcyjnego.</p>
+      <p style="margin-top: 20px; text-align: center;">
+        <a href="${postUrl}" style="display: inline-block; background: #9360f7; color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Przejdź do Pokoju Narad</a>
+      </p>
+      <hr style="border:0; border-top:1px solid #e4e6eb; margin: 24px 0 16px 0;">
+      <p style="font-size: 11px; color: #65676b; margin: 0;">To jest wewnętrzny komunikat systemowy platformy ${serviceName}. Treść nie jest dostępna dla standardowych użytkowników ani osób postronnych.</p>
+    </div>
+  `;

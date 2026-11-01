@@ -70,9 +70,10 @@ async function getScopedPosts(req, options = {}) {
   let userFollowingIds = [];
   let exclusionIds = [];
   let userIsAdmin = false;
+  let dbUser = null; // <--- POPRAWKA: Inicjalizacja zmiennej na poziomie całej funkcji
 
   if (req.session && req.session.user) {
-    const dbUser = await mongoose.model("User").findById(req.session.user.id);
+    dbUser = await mongoose.model("User").findById(req.session.user.id);
     if (dbUser) {
       currentUserId = dbUser._id;
       userFollowingIds = dbUser.following || [];
@@ -104,6 +105,7 @@ async function getScopedPosts(req, options = {}) {
     matchConditions.visibility = { $ne: "private" };
   }
 
+  // Budowanie warunków widoczności dla pozostałych widoków
   if (scope !== "following") {
     matchConditions.$or = [
       { visibility: "public" },
@@ -116,6 +118,16 @@ async function getScopedPosts(req, options = {}) {
       },
       { visibility: "private", authorId: currentUserId },
     ];
+
+    // POPRAWKA: Bezpieczne rozszerzenie tablicy $or o strefę 'editors' (zmienna dbUser jest już w zasięgu)
+    if (dbUser && dbUser.role === "editor") {
+      matchConditions.$or.push({ visibility: "editors" });
+    }
+  }
+
+  // Nadpisanie warunków, gdy celujemy bezpośrednio w Pokój Redakcyjny
+  if (scope === "editors") {
+    matchConditions.visibility = "editors";
   }
 
   const pipeline = [
@@ -232,7 +244,7 @@ async function getScopedPosts(req, options = {}) {
               },
               name: { $ifNull: ["$authorDetails.name", "$author"] },
               alias: { $ifNull: ["$authorDetails.alias", null] },
-              role: { $ifNull: ["$authorDetails.role", "user"] } // <-- DODANO: pobieranie roli autora posta
+              role: { $ifNull: ["$authorDetails.role", "user"] }
             },
           },
         },
@@ -284,7 +296,7 @@ async function getScopedPosts(req, options = {}) {
                   in: { $ifNull: ["$$matchedUser.name", "$$c.author"] },
                 },
               },
-              role: { // <-- DODANO: dynamiczne mapowanie roli dla autora komentarza
+              role: {
                 $let: {
                   vars: {
                     matchedUser: {

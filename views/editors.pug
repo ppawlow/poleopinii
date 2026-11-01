@@ -1,0 +1,46 @@
+//- views/editors.pug
+extends layout
+
+block content
+    .main-container
+        //- LEWY PANEL: SKŁAD KOLEGIUM REDAKCYJNEGO
+        aside.left-sidebar
+            div(style="border-bottom: 1px solid var(--color-border); padding-bottom: 8px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px;")
+                i.fa-solid.fa-user-shield(style="color: #9360f7;")
+                span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;") Zespół Redakcyjny
+                
+            if editorsList && editorsList.length > 0
+                each ed in editorsList
+                    a.sidebar-item(href=getProfileUrl({ _id: ed._id, alias: ed.alias || null }) style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px; transition: background 0.2s; padding: 6px 8px;")
+                        img.nav-avatar(src=(ed.avatarUrl || DEFAULT_ASSETS.avatar) style="width:28px; height:28px; object-fit: cover; border: 1px solid #9360f7;")
+                        span(style="font-size: 14px; font-weight: 600; color: #1c1e21;") #{ed.name}
+            else
+                p(style="font-size: 12px; color: #65676b; padding: 8px 12px; font-style: italic;") Brak zarejestrowanych redaktorów.
+        
+        //- ŚRODKOWY PANEL: DYSKUSJA I KREATOR WOKÓŁ KOLEGIUM
+        main.feed
+            .create-post(style="padding: 12px 16px; background: #fffdf0; border: 1px solid #dddfe2; border-left: 4px solid #e5a93c; border-radius: 8px; margin-bottom: 4px;")
+                h3(style="font-size: 14px; font-weight: 700; color: #e5a93c; margin: 0; font-family: sans-serif;") 📝 Pokój Narad Redakcji
+                p(style="font-size: 12px; color: #65676b; margin: 2px 0 0 0;") Posty oraz dyskusje prowadzone w tej sekcji są całkowicie poufne i widoczne wyłącznie dla zespołu Redaktorów.
+
+            //- Załączenie kreatora nowego posta z automatycznym przekazaniem domyślnego zakresu widoczności
+            include partials/create-post.pug
+
+            #accordion-posts-wrapper.accordion-container
+                if posts && posts.length > 0
+                    each post in posts
+                        include partials/post-card.pug
+                else
+                    .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #ffffff; border-radius: 8px; border: 1px dashed var(--color-border); font-style: italic;") Brak wewnętrznych wpisów redakcyjnych. Stwórz pierwszy post powyżej!
+
+            if hasMore
+                #load-more-container(style="text-align: center; margin-top: 20px;")
+                    button#load-more-btn(onclick="loadMorePosts()" style="background:#fff; border:1px solid #dddfe2; padding:10px 24px; border-radius:6px; font-weight:600; cursor:pointer; color:#e5a93c; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;") Pokaż więcej
+
+        //- PRAWY PANEL: PRZEGLĄD TEMATÓW AI NA BIEŻĄCY DZIEŃ
+        aside.right-sidebar
+            a.sidebar-item(href="/topics" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; display: flex; align-items: center; gap: 12px;")
+                i.fa-solid.fa-newspaper(style="color: var(--color-primary);")
+                span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Przegląd dnia
+
+            include partials/news-feed.pug

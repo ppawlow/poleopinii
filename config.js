@@ -4,7 +4,7 @@ module.exports = {
   LOGOTYP: "/logotyp.jpeg",
   FAVICON: "/logo.jpeg",
 
-  POST_VISIBILITY: ["public", "restricted", "private"],
+  POST_VISIBILITY: ["public", "restricted", "private", "editors"],
 
   routeDir: "./routes",
 
@@ -14,6 +14,7 @@ module.exports = {
     "/verify": "verify",
     "/posts": "posts",
     "/profile": "profile",
+    "/editors": "editors",
     "/": "main", //Zawsze na końcu!
   },
 
@@ -86,7 +87,13 @@ module.exports = {
       LIKE: (user) => (user ? true : false),
       COMMENT: (user) => (user ? true : false),
     },
+    editors: {
+      CREATE: (user) => user && user.role === 'editor',
+      LIKE: (user) => user && user.role === 'editor',
+      COMMENT: (user) => user && user.role === 'editor',
+    },
   },
+  
   PROTECTED_USER_DATA: `
      email
      normalizedEmail

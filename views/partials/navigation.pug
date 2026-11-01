@@ -17,3 +17,7 @@ if user
     if user.isAdmin
         a.nav-icon(href="/admin" title="Panel administratora" class=(currentTab === 'admin' ? 'active' : ''))
             i.fa-solid.fa-shield-halved
+
+    if user && user.role === 'editor'
+        a.nav-icon(href="/editors" title="Pokój Redakcyjny" class=(currentTab === 'editors' ? 'active' : ''))
+            i.fa-solid.fa-user-shield

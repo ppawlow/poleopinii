@@ -534,3 +534,169 @@ window.uploadProfilePhoto = async function (input) {
     input.value = "";
   }
 };
+
+/**
+ * Asynchroniczne zarządzanie blokadą profilu za pomocą przełącznika suwakowego (Slider)
+ */
+window.toggleBlockSlider = async function (checkbox, targetUserId) {
+  if (!targetUserId) return;
+
+  // Czasowe zablokowanie suwaka na czas trwania żądania HTTP
+  checkbox.disabled = true;
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+
+  try {
+    const response = await fetch(`/block/${targetUserId}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": csrfToken,
+        "Accept": "application/json"
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        // Ustawiamy stan suwaka zgodnie z odpowiedzią serwera (gdy odblokowano, checked = false)
+        checkbox.checked = data.isBlocked;
+        
+        // Aktualizacja widoczności elementów na stronie profilu (jeśli administrator/użytkownik znajduje się na profilu tej osoby)
+        const mailBtn = document.querySelector(".profile-mail-main-btn");
+        const likeBtns = document.querySelectorAll(".post-like-form, .action-btn, .restricted-feature-trigger");
+        const mainBlockBtn = document.querySelector(".profile-block-main-btn");
+
+        // Jeśli na stronie znajduje się też główny przycisk blokady, zsynchronizuj jego stan
+        if (mainBlockBtn && typeof window.updateButtonState === "function") {
+          const blockConfig = {
+            className: "is-blocking",
+            active: { text: "Odblokuj", icon: "fa-solid fa-user", title: "Odblokuj profil" },
+            inactive: { text: "Zablokuj", icon: "fa-solid fa-user-slash", title: "Blokuj profil" }
+          };
+          window.updateButtonState(mainBlockBtn, data.isBlocked, blockConfig);
+        }
+
+        if (data.isBlocked) {
+          if (mailBtn) mailBtn.style.setProperty("display", "none", "important");
+          if (likeBtns.length > 0) {
+            likeBtns.forEach(btn => {
+              if (btn.querySelector(".fa-star") || btn.classList.contains("post-like-form")) {
+                btn.style.setProperty("display", "none", "important");
+              }
+            });
+          }
+        } else {
+          if (mailBtn) mailBtn.style.setProperty("display", "inline-flex", "important");
+          if (likeBtns.length > 0) {
+            likeBtns.forEach(btn => {
+              if (btn.querySelector(".fa-star") || btn.classList.contains("post-like-form")) {
+                const defaultDisplay = btn.tagName.toLowerCase() === 'form' ? 'inline-block' : 'inline-flex';
+                btn.style.setProperty("display", defaultDisplay, "important");
+              }
+            });
+          }
+          
+          // Opcjonalnie: Jeśli użytkownik odblokował kogoś z poziomu listy na własnym profilu,
+          // możemy płynnie usunąć wiersz/kafelek użytkownika po krótkiej chwili
+          const blockedCountBadge = document.getElementById("blocked-count-badge");
+          if (blockedCountBadge) {
+            let currentCount = parseInt(blockedCountBadge.getAttribute("data-count")) || 0;
+            currentCount = Math.max(0, currentCount - 1);
+            blockedCountBadge.setAttribute("data-count", currentCount);
+            if (typeof liczebnik === "function") {
+              blockedCountBadge.innerText = liczebnik(currentCount, ["osoba", "osoby", "osób"]);
+            }
+            
+            // Płynne usunięcie kafelka z listy zablokowanych
+            const tile = checkbox.closest("div[style*='text-align: center']");
+            if (tile) {
+              tile.style.transition = "all 0.3s ease";
+              tile.style.opacity = "0";
+              tile.style.transform = "scale(0.8)";
+              setTimeout(() => {
+                tile.remove();
+                const accordionContent = document.querySelector("#blocked-count-badge").closest(".accordion-item").querySelector(".accordion-content");
+                const wrapperGrid = accordionContent ? accordionContent.querySelector("div") : null;
+                if (wrapperGrid && wrapperGrid.children.length === 0) {
+                  accordionContent.innerHTML = `<p style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0;">Nie zablokowałeś jeszcze nikogo.</p>`;
+                }
+              }, 300);
+            }
+          }
+        }
+        
+        console.log(`[SYSTEM] Zmieniono status blokady dla użytkownika: ${targetUserId}. Nowy stan: ${data.isBlocked}`);
+      }
+    } else {
+      // W przypadku błędu przywracamy poprzedni stan suwaka
+      checkbox.checked = !checkbox.checked;
+      const errorText = await response.text();
+      if (typeof window.Alert === "function") {
+        window.Alert(`Wystąpił błąd podczas zmiany statusu blokady: ${errorText}`, "Błąd systemowy");
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy przełącznika blokady:", err);
+    checkbox.checked = !checkbox.checked;
+  } finally {
+    // Odblokowanie elementu interfejsu
+    checkbox.disabled = false;
+  }
+};
+
+/**
+ * Asynchroniczne zarządzanie zgodą na wiadomości prywatne za pomocą suwaka
+ */
+window.togglePrivateEmailsSlider = async function (checkbox) {
+  // Blokujemy suwak na czas wykonywania żądania sieciowego
+  checkbox.disabled = true;
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+  
+  // Budujemy parametry żądania - symulujemy wysyłkę partial-settings
+  const serializedBody = new URLSearchParams();
+  serializedBody.set("name", document.querySelector('input[name="name"]')?.value || "");
+  serializedBody.set("email", document.querySelector('input[name="email"]')?.value || "");
+  serializedBody.set("allowPrivateEmails", checkbox.checked);
+
+  try {
+    const response = await fetch("/profile/settings", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": csrfToken,
+        "Accept": "application/json"
+      },
+      body: serializedBody.toString()
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        // Synchronizujemy stan na podstawie odpowiedzi serwera
+        checkbox.checked = data.allowPrivateEmails;
+        console.log(`[USTAWIENIA] Zmieniono status zgody komunikacji prywatnej na: ${data.allowPrivateEmails}`);
+      }
+    } else {
+      // W przypadku błędu przywracamy poprzedni stan suwaka
+      checkbox.checked = !checkbox.checked;
+      const errorText = await response.text();
+      let parsed = {};
+      try { parsed = JSON.parse(errorText); } catch(e) {}
+      if (typeof window.Alert === "function") {
+        window.Alert(`Nie udało się zapisać ustawień: ${parsed.error || errorText}`, "Błąd zapisu");
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy przełącznika e-maili:", err);
+    checkbox.checked = !checkbox.checked;
+  } finally {
+    checkbox.disabled = false;
+  }
+};
+

@@ -394,7 +394,52 @@ async function sendEditorApprovedByBoardEmail(user) {
     mailContent
   );
 }
+
+// tools/mailer.js -> na samym dole pliku
+
+/**
+ * Rozsyła mailing informacyjny o nowym wpisie w strefie editors do całego Kolegium
+ */
+async function sendNewEditorPostNotification(senderUser, savedPost, req) {
+  const { User } = require("./db");
   
+  try {
+    // 1. Pobieramy e-maile wszystkich zarejestrowanych redaktorów, wykluczając autora wpisu
+    const activeEditors = await User.find({
+      role: "editor",
+      _id: { $ne: senderUser._id }
+    }).select("email").lean();
+
+    if (!activeEditors || activeEditors.length === 0) return;
+
+    // 2. Budujemy pełny URL odnośnika bezpośredniego do Pokoju Narad
+    const postUrl = `${req.protocol}://${req.get("host")}/editors`;
+    
+    const mailContent = mailTemplates.getNewEditorPostEmail(
+      senderUser.displayName,
+      savedPost.title || "Wpis bez tytułu",
+      postUrl,
+      SERVICE_NAME
+    );
+
+    // 3. Wysyłamy wiadomości w pętli (wykorzystujemy Promise.all dla wydajności asynchronicznej)
+    const emailPromises = activeEditors.map(editor => {
+      if (editor.email) {
+        return sendMail(
+          editor.email,
+          `[KOLEGIUM] Nowy temat narad redakcji: "${savedPost.title}"`,
+          mailContent
+        );
+      }
+    });
+
+    await Promise.all(emailPromises);
+    console.log(`[SYSTEM MAIL] Rozesłano powiadomienie o nowym wpisie redakcyjnym do ${activeEditors.length} odbiorców.`);
+  } catch (err) {
+    console.error("Krytyczny błąd rozsyłania mailingu do redaktorów:", err);
+  }
+}
+
 module.exports = {
   startNotification,
   sendVerificationEmail,
@@ -410,5 +455,6 @@ module.exports = {
   sendAccountDeletionRequestEmail,
   sendAccountDeletionSuccessNotification,
   sendEditorCandidateEmail,
-  sendEditorApprovedByBoardEmail
+  sendEditorApprovedByBoardEmail,
+  sendNewEditorPostNotification,
 };

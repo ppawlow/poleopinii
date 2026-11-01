@@ -436,6 +436,7 @@ async function postDeleteAiTopic(req, res) {
       .send("Wewnętrzny błąd serwera podczas usuwania zasobu.");
   }
 }
+
 async function postPromoteToEditor(req, res) {
   try {
     const { userId } = req.params;
@@ -451,6 +452,11 @@ async function postPromoteToEditor(req, res) {
     
     // WYSYŁKA OFICJALNEGO POTWIERDZENIA DECYZJI KOLEGIUM
     await mailer.sendEditorApprovedByBoardEmail(user);
+
+    // Dynamiczna detekcja: jeśli żądanie to AJAX/Fetch, zwracamy status 200, w innym wypadku tradycyjny redirect
+    if (req.xhr || req.headers.accept?.includes("json") || req.headers["x-requested-with"] === "XMLHttpRequest") {
+      return res.sendStatus(200);
+    }
 
     return res.redirect("/admin?msg=role_updated");
   } catch (err) {
@@ -472,6 +478,12 @@ async function postDemoteFromEditor(req, res) {
     await user.save();
 
     await createLog(req, `[ADMIN] Odebrano oficjalną rolę Redaktora użytkownikowi: ${user.name}`);
+    
+    // Dynamiczna detekcja typu żądania sieciowego
+    if (req.xhr || req.headers.accept?.includes("json") || req.headers["x-requested-with"] === "XMLHttpRequest") {
+      return res.sendStatus(200);
+    }
+
     return res.redirect("/admin?msg=role_updated");
   } catch (err) {
     console.error(err);

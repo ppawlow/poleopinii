@@ -357,3 +357,61 @@ $(document).ready(function () {
     }
   });
 });
+
+/**
+ * Asynchroniczne zarządzanie rolą Redaktora za pomocą przełącznika suwakowego
+ */
+window.toggleEditorSlider = async function (checkbox, userId) {
+  if (!userId) return;
+
+  // Blokujemy suwak na czas wykonywania żądania sieciowego
+  checkbox.disabled = true;
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+  
+  // Wybieramy odpowiednią ścieżkę w zależności od nowego stanu przełącznika
+  const actionEndpoint = checkbox.checked 
+    ? `/admin/users/${userId}/promote` 
+    : `/admin/users/${userId}/demote`;
+
+  try {
+    const response = await fetch(actionEndpoint, {
+      method: "POST",
+      headers: {
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+
+    if (response.ok) {
+      // Pobieramy nadrzędny wiersz tabeli, aby zaktualizować odznakę roli w locie (UX)
+      const row = checkbox.closest("tr");
+      const roleCell = row ? row.children[1] : null; // Druga kolumna to Rola / Status
+
+      if (roleCell) {
+        if (checkbox.checked) {
+          roleCell.innerHTML = `<span style="background: #f3ebff; color: #9360f7; border: 1px solid #9360f7; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;">🌟 Redaktor (Zatwierdzony)</span>`;
+        } else {
+          roleCell.innerHTML = `<span style="color: #65676b; font-size: 12px;">Standardowy Autor</span>`;
+        }
+      }
+      
+      console.log(`[ADMIN] Pomyślnie zaktualizowano uprawnienia użytkownika o ID: ${userId}`);
+    } else {
+      // W przypadku błędu serwera przywracamy poprzedni stan suwaka
+      checkbox.checked = !checkbox.checked;
+      const errorText = await response.text();
+      if (typeof window.Alert === "function") {
+        window.Alert(`Nie udało się zmienić uprawnień: ${errorText}`, "Błąd serwera");
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy przełącznika redaktora:", err);
+    checkbox.checked = !checkbox.checked;
+  } finally {
+    // Odblokowujemy element interfejsu
+    checkbox.disabled = false;
+  }
+};
