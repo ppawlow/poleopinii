@@ -345,6 +345,36 @@ async function sendAccountDeletionSuccessNotification(userName, userEmail) {
   );
 }
 
+/**
+ * Wysyła powiadomienie o nadaniu roli Redaktora przez Administratora
+ * 
+async function sendEditorPromotedEmail(user) {
+  const mailContent = mailTemplates.getEditorPromotedEmail(user.name, SERVICE_NAME);
+  await sendMail(
+    user.email,
+    "Gratulacje! Zostałeś oficjalnie mianowany Redaktorem Serwisu 🌟",
+    mailContent
+  );
+}
+ */
+
+/**
+ * Wysyła powiadomienie o organicznym zdobyciu rangi Redaktora (100 gwiazdek)
+
+async function sendEditorEarnedEmail(user, totalLikes) {
+  const mailContent = mailTemplates.getEditorEarnedEmail(user.name, SERVICE_NAME, totalLikes);
+  await sendMail(
+    user.email,
+    "Niesamowite osiągnięcie! Społeczność przyznała Ci status Redaktora 🎉",
+    mailContent
+  );
+}
+ */
+
+/**
+ * Szablon powiadomienia o uzyskaniu statusu Kandydata na redaktora (100 gwiazdek)
+ */
+  
 module.exports = {
   startNotification,
   sendVerificationEmail,
@@ -359,4 +389,6 @@ module.exports = {
   sendVerificationRejectedEmail,
   sendAccountDeletionRequestEmail,
   sendAccountDeletionSuccessNotification,
+  // sendEditorPromotedEmail,
+  // sendEditorEarnedEmail,
 };

@@ -299,10 +299,17 @@ async function getId(req, res) {
 
     const totalPublicLikes = await countAuthorPublicLikes(targetUser._id);
 
-    const currentRank =
-      AUTHOR_RANKS.find((rank) => totalPublicLikes >= rank.minLikes) ||
-      AUTHOR_RANKS[AUTHOR_RANKS.length - 1];
-
+    let currentRank;
+    if (targetUser.role === "editor") {
+      // Dla zatwierdzonych redaktorów wymuszamy stałą odznakę
+      currentRank = { name: "🌟 Redaktor Serwisu", color: "#9360f7", bg: "#f3ebff" };
+    } else {
+      // Przypisanie rang standardowych lub statusu kandydata (jeśli lajki >= 100)
+      currentRank =
+        AUTHOR_RANKS.find((rank) => totalPublicLikes >= rank.minLikes) ||
+        AUTHOR_RANKS[AUTHOR_RANKS.length - 1];
+    }
+    
     const { posts } = await getScopedPosts(req, {
       scope: "profile",
       targetUserId: targetUser._id,

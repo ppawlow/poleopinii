@@ -36,19 +36,13 @@ module.exports = {
   },
 
   AUTHOR_RANKS: [
-    { minLikes: 100, name: "🌟 Redaktor", color: "#9360f7", bg: "#f3ebff" },
+    { minLikes: 100, name: "⏳ Kandydat na redaktora", color: "#a855f7", bg: "#f3e8ff" },
     { minLikes: 50, name: "🔥 Wiodący Prym", color: "#bc2525", bg: "#fff3f3" },
-    {
-      minLikes: 20,
-      name: "✍️ Doświadczony Publicysta",
-      color: "#e5a93c",
-      bg: "#fffbf0",
-    },
+    { minLikes: 20, name: "✍️ Doświadczony Publicysta", color: "#e5a93c", bg: "#fffbf0" },
     { minLikes: 5, name: "🌱 Aktywny Autor", color: "#42b72a", bg: "#f0fdf4" },
     { minLikes: 0, name: "🔰 Nowicjusz", color: "#65676b", bg: "#f0f2f5" },
   ],
-
-  ADMINS: [],
+  ADMINS: ["6adeff567d07c910c127ed5d"],
 
   MAIN_ADMIN_EMAIL: `admin@poleopinii.pl`,
 
@@ -77,9 +71,10 @@ module.exports = {
   // ZCENTRALIZOWANA MATRYCA UPRAWNIEŃ
   POST_PERMISSIONS: {
     public: {
-      CREATE: (user) => user && user.isFullyVerified === true,
+      CREATE: (user) => user && (user.isFullyVerified === true || user.role === 'editor' || (user.totalPublicLikes && user.totalLikes >= 100)),
       LIKE: (user) => user && user.isFullyVerified === true,
       COMMENT: (user) => user && user.isFullyVerified === true,
+      BYPASS_AI: (user) => user && user.role === 'editor',
     },
     restricted: {
       CREATE: (user) => (user ? true : false),
@@ -92,7 +87,8 @@ module.exports = {
       COMMENT: (user) => (user ? true : false),
     },
   },
-  PROTECTED_USER_DATA: `email
+  PROTECTED_USER_DATA: `
+     email
      normalizedEmail
      password
      newEmailPending
@@ -109,11 +105,11 @@ module.exports = {
   // ===================================
   // MATRYCA UPRAWNIEŃ W RELACJACH
   // ===================================
-  USER_PERMISSIONS: {
+  USER_PERMISSIONS: { // <--- TUTAJ BYŁO BŁĘDNIE "POST_PERMISSIONS"
     canSendMail: (actingUser, targetUser) =>
       actingUser &&
       targetUser &&
-      actingUser.isFullyVerified &&
+      (actingUser.isFullyVerified || actingUser.role === 'editor') && // Dodane wsparcie dla roli redaktora
       !actingUser.isBlocking(targetUser) &&
       !targetUser.isBlocking(actingUser),
 
@@ -122,7 +118,7 @@ module.exports = {
       targetUser &&
       !actingUser.isBlocking(targetUser) &&
       !targetUser.isBlocking(actingUser) &&
-      (actingUser.isFullyVerified || targetUser.isFollowing(actingUser)),
+      (actingUser.isFullyVerified || actingUser.role === 'editor' || targetUser.isFollowing(actingUser)),
   },
 
   PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/,

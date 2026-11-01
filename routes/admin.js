@@ -21,7 +21,9 @@ module.exports = express
     postAdminApproveUser,
   )
   .post("/verify-user/:userId/reject", postAdminRejectUser)
-  .delete("/topics/:topicId", postDeleteAiTopic);
+  .delete("/topics/:topicId", postDeleteAiTopic)
+  .post("/users/:userId/promote", postPromoteToEditor)
+  .post("/users/:userId/demote", postDemoteFromEditor)
 
 // Pomocnicza funkcja formatująca wpis logu prasowego
 function mapLogDocument(log) {
@@ -80,6 +82,7 @@ async function main(req, res) {
           name: 1,
           email: 1,
           alias: 1,
+          role:  1,
           aiBlockedSafetyCount: { $ifNull: ["$aiBlockedSafetyCount", 0] },
           aiBlockedFactCheckCount: { $ifNull: ["$aiBlockedFactCheckCount", 0] },
           publicCount: {
@@ -431,5 +434,47 @@ async function postDeleteAiTopic(req, res) {
     return res
       .status(500)
       .send("Wewnętrzny błąd serwera podczas usuwania zasobu.");
+  }
+}
+async function postPromoteToEditor(req, res) {
+  try {
+    const { userId } = req.params;
+    if (!ObjectId.isValid(userId)) return res.status(400).send("Nieprawidłowy identyfikator.");
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send("Nie odnaleziono użytkownika.");
+
+    user.role = "editor";
+    await user.save();
+
+    await createLog(req, `[KOLEGIUM REDAKCYJNE] Pomyślnie przegłosowano i zatwierdzono kandydaturę: ${user.name}`);
+    
+    // WYSYŁKA OFICJALNEGO POTWIERDZENIA DECYZJI KOLEGIUM
+    await mailer.sendEditorApprovedByBoardEmail(user);
+
+    return res.redirect("/admin?msg=role_updated");
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Błąd serwera.");
+  }
+}
+
+
+async function postDemoteFromEditor(req, res) {
+  try {
+    const { userId } = req.params;
+    if (!ObjectId.isValid(userId)) return res.status(400).send("Nieprawidłowy identyfikator.");
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send("Nie odnaleziono użytkownika.");
+
+    user.role = "user";
+    await user.save();
+
+    await createLog(req, `[ADMIN] Odebrano oficjalną rolę Redaktora użytkownikowi: ${user.name}`);
+    return res.redirect("/admin?msg=role_updated");
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Błąd serwera.");
   }
 }

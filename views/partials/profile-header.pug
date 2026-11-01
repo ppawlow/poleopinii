@@ -9,16 +9,21 @@
                 | #{profileUser.displayName}
 
             div(style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;")
-                if currentRank
+                if profileUser.role === 'editor'
+                    //- Najwyższy priorytet: Oficjalna ranga na podstawie trwałego zapisu w bazie danych
+                    div.profile-rank-badge(style="display: inline-flex; align-items: center; background: #f3ebff; color: #9360f7; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid #9360f7;" title="Zweryfikowany status Redaktora platformy")
+                        span 🌟 Redaktor Serwisu
+                else if currentRank
+                    //- Fallback: Rangi standardowe lub status Kandydata wyliczany dynamicznie z lajków
                     div.profile-rank-badge(style=`display: inline-flex; align-items: center; background: ${currentRank.bg}; color: ${currentRank.color}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid ${currentRank.color};` title=`Próg punktowy poziomu wynosi: ${currentRank.minLikes} lajków`)
                         span #{currentRank.name}
                         
-                    if profileUser.isFullyVerified
-                        span(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
-                            i.fa-solid.fa-circle-check
-                    else
-                        span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
-                            i.fa-solid.fa-circle-xmark
+                if profileUser.isFullyVerified || profileUser.role === 'editor'
+                    span(title="Profil Zweryfikowany / Zaufany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
+                        i.fa-solid.fa-circle-check
+                else
+                    span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
+                        i.fa-solid.fa-circle-xmark
 
         if user && String(user.id) === String(profileUser._id)
             div.update-photos-container.profile-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
@@ -39,13 +44,10 @@
                     span.btn-text  Ustawienia
 
         else if user
-            //- Pobieramy stany relacji bezpośrednio z metod Mongoose obiektu user (zalogowanego)
             - var amIFollowing = user.isFollowing(profileUser._id)
             - var amIBlocking = user.isBlocking(profileUser._id)
 
             div.profile-guest-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
-                
-                //- 1. POCZTA (Po lewej stronie)
                 if profileUser.allowPrivateEmails
                     if hasPermission(user, 'user', 'canSendMail', profileUser)
                         button.profile-mail-main-btn(type="button" title="Wyślij prywatną wiadomość" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')`) 
@@ -56,7 +58,6 @@
                             i.fa-solid.fa-envelope
                             span.btn-text Wyślij wiadomość
 
-                //- 2. OBSERWUJ (W środku)
                 form.dynamic-follow-form(action=`/follow/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
                     input(type="hidden" name="_csrf" value=csrfToken)
                     button.profile-follow-btn(
@@ -70,7 +71,6 @@
                             i.fa-solid.fa-eye
                         span.btn-text #{amIFollowing ? 'Obserwujesz' : 'Obserwuj'}
 
-                //- 3. BLOKUJ (Po prawej stronie)
                 form.dynamic-block-form(action=`/block/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
                     input(type="hidden" name="_csrf" value=csrfToken)
                     button.profile-block-main-btn(

@@ -212,6 +212,7 @@ async function getScopedPosts(req, options = {}) {
               isFullyVerified: false,
               name: "Anonimowy Użytkownik",
               alias: null,
+              role: "user"
             },
             else: {
               _id: "$authorDetails._id",
@@ -231,6 +232,7 @@ async function getScopedPosts(req, options = {}) {
               },
               name: { $ifNull: ["$authorDetails.name", "$author"] },
               alias: { $ifNull: ["$authorDetails.alias", null] },
+              role: { $ifNull: ["$authorDetails.role", "user"] } // <-- DODANO: pobieranie roli autora posta
             },
           },
         },
@@ -280,6 +282,24 @@ async function getScopedPosts(req, options = {}) {
                     },
                   },
                   in: { $ifNull: ["$$matchedUser.name", "$$c.author"] },
+                },
+              },
+              role: { // <-- DODANO: dynamiczne mapowanie roli dla autora komentarza
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$commentAuthors",
+                            cond: { $eq: ["$$this._id", "$$c.authorId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: { $ifNull: ["$$matchedUser.role", "user"] },
                 },
               },
               isFullyVerified: {

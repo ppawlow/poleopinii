@@ -287,3 +287,70 @@ html.getAccountDeletionSuccessNotification = (userName, serviceName) => `
       <p style="font-size: 12px; color: #65676b; margin: 0;">Wiadomość ma charakter formalnego powiadomienia i potwierdzenia realizacji praw podmiotu danych. Twój adres e-mail został użyty po raz ostatni wyłącznie w celu wysłania tego powiadomienia i nie jest dalej przetwarzany.</p>
     </div>
   `;
+  
+  /**
+ * Szablon powiadomienia o uzyskaniu statusu Kandydata na redaktora (100 gwiazdek)
+ */
+html.getEditorCandidateEmail = (userName, serviceName, totalLikes) => `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #a855f7; border-radius: 8px; max-width: 600px; background: #f3e8ff;">
+      <h2 style="color: #a855f7; margin-top: 0;">⏳ Spełniłeś warunki: Jesteś Kandydatem na Redaktora!</h2>
+      <p>Witaj <b>${userName}</b>,</p>
+      <p>Twoje publikacje na platformie <b>${serviceName}</b> zebrały łącznie <b>${totalLikes} polubień</b>. To oznacza, że automatycznie dołączyłeś do grona <b>Kandydatów na Redaktora</b>.</p>
+      <hr style="border:0; border-top:1px solid #a855f7; margin: 16px 0; opacity: 0.2;">
+      <p><b>Co dzieje się teraz?</b></p>
+      <p>Zgodnie z naszym regulaminem chroniącym platformę przed nadużyciami, Twoja kandydatura została przekazana do <b>Kolegium Redakcyjnego</b>.</p>
+      <p>Zespół redaktorów dokona manualnej oceny rzetelności Twoich tekstów w drodze głosowania. O ostatecznej decyzji i nadaniu pełnych uprawnień zostaniesz powiadomiony mailowo.</p>
+      <hr style="border:0; border-top:1px solid #a855f7; margin: 20px 0; opacity: 0.2;">
+      <p style="font-size: 13px; color: #65676b; margin: 0;">Pozdrawiamy,<br>Kolegium Redakcyjne ${serviceName}</p>
+    </div>
+  `;
+
+/**
+ * Szablon powiadomienia o pomyślnym przegłosowaniu kandydatury
+ */
+html.getEditorApprovedByBoardEmail = (userName, serviceName) => `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #9360f7; border-radius: 8px; max-width: 600px; background: #f3ebff;">
+      <h2 style="color: #9360f7; margin-top: 0;">🌟 Decyzja Kolegium: Zostałeś zatwierdzony jako Redaktor!</h2>
+      <p>Witaj <b>${userName}</b>,</p>
+      <p>Mamy zaszczyt poinformować, że po manualnej weryfikacji Twojej twórczości, <b>Kolegium Redakcyjne platformy ${serviceName} podjęło jednogłośną decyzję o oficjalnym przyjęciu Cię do zespołu Redaktorów</b>.</p>
+      <hr style="border:0; border-top:1px solid #9360f7; margin: 16px 0; opacity: 0.2;">
+      <p><b>Twój profil zyskał pełne przywileje redaktorskie:</b></p>
+      <ul style="line-height: 1.6; color: #050505;">
+        <li><b>Bypass filtrów AI:</b> Twoje wpisy publiczne pojawiają się na osi czasu natychmiast, z pominięciem prewencyjnego audytu AI.</li>
+        <li>Otrzymujesz oficjalną, stałą odznakę <b>🌟 Redaktor Serwisu</b> widoczną dla całej społeczności.</li>
+      </ul>
+      <p style="font-size: 14px; margin-top: 12px;">Z poważaniem,<br><b>Kolegium Redakcyjne ${serviceName}</b></p>
+    </div>
+  `;
+
+  html.getEditorCandidateEmail = (userName, serviceName, totalLikes) => `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #a855f7; border-radius: 8px; max-width: 600px; background: #f3e8ff;">
+      <h2 style="color: #a855f7; margin-top: 0;">⏳ Spełniłeś warunki: Jesteś Kandydatem na Redaktora!</h2>
+      <p>Witaj <b>${userName}</b>,</p>
+      <p>Twoje publikacje na platformie <b>${serviceName}</b> zebrały łącznie <b>${totalLikes} polubień</b>. To oznacza, że automatycznie dołączyłeś do grona <b>Kandydatów na Redaktora</b>.</p>
+      <hr style="border:0; border-top:1px solid #a855f7; margin: 16px 0; opacity: 0.2;">
+      <p><b>Co dzieje się teraz?</b></p>
+      <p>Zgodnie z naszym regulaminem chroniącym platformę przed nadużyciami, Twoja kandydatura została przekazana do <b>Kolegium Redakcyjnego</b>.</p>
+      <p>Zespół redaktorów dokona manualnej oceny rzetelności Twoich tekstów w drodze głosowania. O ostatecznej decyzji i nadaniu pełnych uprawnień zostaniesz powiadomiony mailowo.</p>
+      <hr style="border:0; border-top:1px solid #a855f7; margin: 20px 0; opacity: 0.2;">
+      <p style="font-size: 13px; color: #65676b; margin: 0;">Pozdrawiamy,<br>Kolegium Redakcyjne ${serviceName}</p>
+    </div>
+  `;
+
+/**
+ * Szablon powiadomienia o pomyślnym przegłosowaniu kandydatury
+ */
+html.getEditorApprovedByBoardEmail = (userName, serviceName) => `
+    <div style="font-family: sans-serif; padding: 20px; border: 1px solid #9360f7; border-radius: 8px; max-width: 600px; background: #f3ebff;">
+      <h2 style="color: #9360f7; margin-top: 0;">🌟 Decyzja Kolegium: Zostałeś zatwierdzony jako Redaktor!</h2>
+      <p>Witaj <b>${userName}</b>,</p>
+      <p>Mamy zaszczyt poinformować, że po manualnej weryfikacji Twojej twórczości, <b>Kolegium Redakcyjne platformy ${serviceName} podjęło jednogłośną decyzję o oficjalnym przyjęciu Cię do zespołu Redaktorów</b>.</p>
+      <hr style="border:0; border-top:1px solid #9360f7; margin: 16px 0; opacity: 0.2;">
+      <p><b>Twój profil zyskał pełne przywileje redaktorskie:</b></p>
+      <ul style="line-height: 1.6; color: #050505;">
+        <li><b>Bypass filtrów AI:</b> Twoje wpisy publiczne pojawiają się na osi czasu natychmiast, z pominięciem prewencyjnego audytu AI.</li>
+        <li>Otrzymujesz oficjalną, stałą odznakę <b>🌟 Redaktor Serwisu</b> widoczną dla całej społeczności.</li>
+      </ul>
+      <p style="font-size: 14px; margin-top: 12px;">Z poważaniem,<br><b>Kolegium Redakcyjne ${serviceName}</b></p>
+    </div>
+  `;

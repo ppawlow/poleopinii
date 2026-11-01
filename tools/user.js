@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
   },
+    role: { 
+    type: String, 
+    enum: ["user", "editor"], 
+    default: "user" 
+  },
   isVerified: { type: Boolean, default: false },
   newEmailPending: { type: String, default: null },
   avatarUrl: { type: String, default: DEFAULT_ASSETS.avatar },
@@ -72,6 +77,10 @@ userSchema.virtual("isFullyVerified").get(function () {
   return (
     this.isVerified === true && this.verificationTransferStatus === "approved"
   );
+});
+
+userSchema.virtual("isEditor").get(function () {
+  return this.role === "editor";
 });
 
 userSchema

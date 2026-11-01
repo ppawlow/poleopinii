@@ -18,6 +18,10 @@
                             else
                                 | #{comment.author}
                 
+                            //- Wyświetlanie statusu Redaktora przy komentarzu
+                            if comment.role === 'editor'
+                                span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-size: 11px;") 🌟
+                
                             if comment.isFullyVerified
                                 span(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 11px; display: inline-flex;") 
                                     i.fa-solid.fa-circle-check

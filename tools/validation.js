@@ -317,14 +317,19 @@ tools.handleRedirectValidationErrors = (redirectUrlPrefix) => {
 };
 
 tools.validateFileSignatures = (req, res, next) => {
-  // 1. Obsługa req.file (np. pojedynczy obrazek posta)
+  // Funkcja pomocnicza do wyciągania sygnatury HEX do komunikatu błędu
+  const getBufferHex = (buffer) => {
+    return buffer && Buffer.isBuffer(buffer) 
+      ? buffer.toString("hex", 0, 4).toLowerCase() 
+      : "brak bufora";
+  };
+
   if (req.file) {
     if (!verifyBufferSignature(req.file.buffer, req.file.originalname)) {
+      const detectedHex = getBufferHex(req.file.buffer);
       return res
         .status(400)
-        .send(
-          "Błąd walidacji pliku: Wykryto nieprawidłową sygnaturę (extension-spoofing).",
-        );
+        .send(`Błąd walidacji pliku: Nieprawidłowa sygnatura (Wykryto binarne bajty: ${detectedHex}).`);
     }
   }
 
@@ -333,11 +338,10 @@ tools.validateFileSignatures = (req, res, next) => {
       const filesArray = req.files[fieldName];
       for (const file of filesArray) {
         if (!verifyBufferSignature(file.buffer, file.originalname)) {
+          const detectedHex = getBufferHex(file.buffer);
           return res
             .status(400)
-            .send(
-              `Błąd walidacji: Wykryto nieprawidłową sygnaturę pliku dla pola ${fieldName}.`,
-            );
+            .send(`Błąd walidacji: Nieprawidłowa sygnatura pola ${fieldName} (Wykryto binarne bajty: ${detectedHex}).`);
         }
       }
     }

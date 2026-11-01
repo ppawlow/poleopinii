@@ -473,3 +473,64 @@ window.executeAccountErasure = async function (event) {
     );
   }
 };
+
+/**
+ * Asynchroniczny upload zdjęcia profilowego / tła (AJAX)
+ */
+window.uploadProfilePhoto = async function (input) {
+  if (!input.files || !input.files[0]) return;
+
+  const file = input.files[0];
+  const form = input.closest("form");
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+
+  // Przygotowanie kontenera FormData (Multer oczekuje binarnej struktury multipart/form-data)
+  const formData = new FormData();
+  formData.append(input.name, file);
+
+  // Wizualna informacja dla użytkownika w oknie Alert
+  const loadingText = input.name === "avatar" ? "Wysyłanie nowego awatara..." : "Wysyłanie nowego zdjęcia w tle...";
+  console.log(`[UPLOAD] ${loadingText}`);
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    });
+
+    if (response.ok) {
+      // Sukces: Odświeżamy stronę, aby załadować nowe zdjęcia z bazy danych
+      window.location.reload(true);
+    } else {
+      // Wyciągamy dokładny tekst błędu (w tym nasz diagnostyczny kod HEX z walidatora)
+      const errorText = await response.text();
+      
+      if (typeof window.Alert === "function") {
+        await window.Alert(
+          `<div style="text-align: left; line-height: 1.5;">
+            <p style="color: #bc2525; font-weight: bold; margin-bottom: 8px;">✕ Upload zablokowany</p>
+            <p>${errorText}</p>
+           </div>`, 
+          "Błąd weryfikacji pliku"
+        );
+      } else {
+        alert(`Błąd uploadu:\n\n${errorText}`);
+      }
+      
+      // Czyszczenie pola, aby można było wybrać plik ponownie
+      input.value = "";
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas uploadu zdjęcia:", err);
+    if (typeof window.Alert === "function") {
+      window.Alert("Wystąpił błąd połączenia sieciowego podczas przesyłania grafiki.", "Błąd sieci");
+    }
+    input.value = "";
+  }
+};

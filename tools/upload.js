@@ -3,13 +3,12 @@ const path = require("path");
 
 // UTWARDZONA KONFIGURACJA MULTERA (MEMORY STORAGE)
 const ALLOWED_MAGIC_BYTES = {
-  jpg: ["ffd8ffe0", "ffd8ffe1", "ffd8ffe2", "ffd8ffe3", "ffd8ffe8"],
-  jpeg: ["ffd8ffe0", "ffd8ffe1", "ffd8ffe2", "ffd8ffe3", "ffd8ffe8"],
+  jpg: ["ffd8ffe0", "ffd8ffe1", "ffd8ffe2", "ffd8ffe3", "ffd8ffe8", "ffd8ffdb", "ffd8ffee"],
+  jpeg: ["ffd8ffe0", "ffd8ffe1", "ffd8ffe2", "ffd8ffe3", "ffd8ffe8", "ffd8ffdb", "ffd8ffee"],
   png: ["89504e47"],
   gif: ["47494638"],
   webp: ["52494646"],
-};
-// JEDNA, SKONSOLIDOWANA FUNKCJA WALIDACJI SYGNATUR
+};// JEDNA, SKONSOLIDOWANA FUNKCJA WALIDACJI SYGNATUR
 function verifyBufferSignature(buffer, originalName) {
   try {
     if (!buffer || !Buffer.isBuffer(buffer)) return false;

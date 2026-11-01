@@ -233,23 +233,29 @@ async function postCreate(req, res) {
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
-      res.flushHeaders(); // Wymuszenie wysłania nagłówków przez Nginx proxy
+      res.flushHeaders();
 
-      const aiValidation = await validatePublicContent(
-        req,
-        title,
-        cleanContent,
-        res,
-      );
+      // SPRAWDZENIE UPRAWNIENIA REDAKTORA DO OMINIĘCIA WALIDACJI AI
+      const totalLikes = await countAuthorPublicLikes(dbUser._id);
+      dbUser.totalLikes = totalLikes; // Wstrzyknięcie pomocnicze do hasPermission
 
-      if (!aiValidation.approved) {
+      if (hasPermission(dbUser, "public", "BYPASS_AI")) {
+        // Redaktor pomija Etap 1 i Etap 2 weryfikacji AI
         res.write(
-          `data: ${JSON.stringify({ status: "error", error: aiValidation.reason, report: aiValidation.factCheckReport })}\n\n`,
+          `data: ${JSON.stringify({ status: "stage1_success", message: "✨ Zweryfikowany Redaktor: Pominięto automatyczny audyt AI." })}\n\n`
         );
-        return res.end();
+      } else {
+        const aiValidation = await validatePublicContent(req, title, cleanContent, res);
+
+        if (!aiValidation.approved) {
+          res.write(
+            `data: ${JSON.stringify({ status: "error", error: aiValidation.reason, report: aiValidation.factCheckReport })}\n\n`
+          );
+          return res.end();
+        }
       }
     }
-
+    
     let finalImageName = null;
     if (req.file) {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -731,9 +737,6 @@ async function postLike(req, res) {
       }
     }
 
-    // =========================================================================
-    // POPRAWKA: Zmiana identyfikacji z adresu E-mail na unikalne ID (String)
-    // =========================================================================
     const userIdStr = String(req.session.user.id);
     const index = post.likedBy.indexOf(userIdStr);
     let actionText = "";
@@ -758,7 +761,21 @@ async function postLike(req, res) {
 
     await post.save();
     await createLog(req, actionText, dbUser.email);
-
+    // =========================================================================
+    // SYSTEM GENEROWANIA KANDYDATURY NA REDAKTORA (WYMAGA ZATWIERDZENIA KOLEGIUM)
+    // =========================================================================
+    if (postAuthor && String(dbUser._id) !== String(postAuthor._id)) {
+      const freshAuthorLikes = await countAuthorPublicLikes(postAuthor._id);
+      
+      // Jeśli autor zdobył dokładnie 100 lajków i jest zwykłym użytkownikiem
+      if (freshAuthorLikes === 100 && postAuthor.role === "user") {
+        await createLog(req, `[KANDYDATURA NA REDAKTORA] Użytkownik ${postAuthor.name} osiągnął limit 100 lajków. Oczekuje na decyzję Kolegium.`, "System-Awansów");
+        
+        // Informujemy autora, że jego wniosek trafił pod głosowanie ludzkie
+        await mailer.sendEditorCandidateEmail(postAuthor, freshAuthorLikes);
+      }
+    }
+    
     return res.json({
       success: true,
       liked: index === -1,

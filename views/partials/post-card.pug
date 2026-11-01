@@ -8,7 +8,11 @@
                     h4(style="display: inline-flex; align-items: center; gap: 4px; margin: 0;") 
                         | #{ post.authorDetails ? post.authorDetails.name : post.author }
                 
-                        if post.authorDetails && post.authorDetails.isFullyVerified
+                        //- Oznaczenie oficjalnego, zatwierdzonego przez Kolegium Redaktora
+                        if post.authorDetails && post.authorDetails.role === 'editor'
+                            span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-weight: bold; font-size: 13px; margin-left: 2px;") 🌟
+                
+                        if post.authorDetails && (post.authorDetails.isFullyVerified || post.authorDetails.role === 'editor')
                             sup(title="Profil Zweryfikowany" style="color: #1877f2; display: inline-flex;") 
                                 i.fa-solid.fa-circle-check
                         else
