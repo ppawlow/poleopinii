@@ -239,7 +239,8 @@ async function postCreate(req, res) {
       const totalLikes = await countAuthorPublicLikes(dbUser._id);
       dbUser.totalLikes = totalLikes; // Wstrzyknięcie pomocnicze do hasPermission
 
-      if (hasPermission(dbUser, "public", "BYPASS_AI")) {
+      //if (hasPermission(dbUser, "public", "BYPASS_AI")) {
+      if (dbUser?.role === 'editor') {
         // Redaktor pomija Etap 1 i Etap 2 weryfikacji AI
         res.write(
           `data: ${JSON.stringify({ status: "stage1_success", message: "✨ Zweryfikowany Redaktor: Pominięto automatyczny audyt AI." })}\n\n`
