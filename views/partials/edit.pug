@@ -63,7 +63,8 @@ else
 
         input.edit-title-field(id=`edit-title-${activePost._id}` type="text" name="title" value=(activePost.title || '') style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #dddfe2; border-radius:6px; font-weight:600;" placeholder=(activePost._id === 'new' ? "Dodaj tytuł postu" : ""))
         
-        div(id=`edit-quill-${activePost._id}` style="height:120px; background:#fff; margin-bottom:8px;")
+        //- POPRAWKA: Usunięto sztywne style wysokości "height:120px;", umożliwiając pionowe rozciąganie z poziomu pliku CSS
+        div(id=`edit-quill-${activePost._id}` style="background:#fff; margin-bottom:8px;")
         input(id=`edit-hidden-content-${activePost._id}` type="hidden" name="content")
         
         if activePost.imageUrl
