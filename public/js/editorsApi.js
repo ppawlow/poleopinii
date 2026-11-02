@@ -91,7 +91,7 @@ window.executeEditorFactCheck = async function (postId, buttonElement) {
   }
 
   try {
-    const response = await fetch(`/editors/posts/${postId}/check-facts`, {
+    const response = await fetch(`/editors/posts/${postId}/check`, {
       method: "POST",
       headers: {
         "X-CSRF-Token": csrfToken,
