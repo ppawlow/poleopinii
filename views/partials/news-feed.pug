@@ -14,27 +14,32 @@ if dailyTopics && dailyTopics.length > 0
                     //- Skrót wiadomości
                     p(style="font-size: 14px; color: #050505; line-height: 1.6; margin: 0 0 16px 0; font-family: sans-serif; text-align: justify;") #{topic.summary}
                     
-                    //- Dolny pasek (Stopka): Ważność oraz Przycisk interakcji
-                    .news-card-footer(style="display: flex; gap: 8px; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;")
-                        div(style="display: flex; gap: 6px; align-items: center;")
-                            span(title='Ranga informacji' style=`display: inline-flex; align-items: center; justify-content: center; background: ${isCritical ? '#fff3f3' : '#fffbf0'}; color: ${isCritical ? '#bc2525' : 'var(--color-accent)'}; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; border: 1px solid ${isCritical ? '#f5c6cb' : '#e5a93c'}; white-space: nowrap;`) 
+                    //- Dolny pasek (Stopka): Kontener wielokolumnowy przechodzący w pionową listę bloków (flex-direction: column)
+                    .news-card-footer(style="display: flex; flex-direction: column; gap: 12px; width: 100%; align-items: stretch;")
+                        
+                        //- Sekcja górna stopki: Status płomienia i usuwanie newsa
+                        div(style="display: flex; gap: 8px; align-items: center; justify-content: flex-start;")
+                            span(title='Ranga informacji' style=`display: inline-flex; align-items: center; justify-content: center; background: ${isCritical ? '#fff3f3' : '#fffbf0'}; color: ${isCritical ? '#bc2525' : 'var(--color-accent)'}; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; border: 1px solid ${isCritical ? '#f5c6cb' : '#e5a93c'}; white-space: nowrap; height: 32px;`) 
                                 | 🔥 #{topic.importance}/10
                                 
                             if user && (user.isAdmin || user.role === 'editor')
-                                button.action-btn(type="button" onclick=`window.executeAdminDeleteTopic('${topic._id}', '${topic.title.replace(/'/g, "\\'")}')` style="background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px;")
-                                    i.fa-solid.fa-trash-can
+                                button.action-btn(type="button" onclick=`window.executeAdminDeleteTopic('${topic._id}', '${topic.title.replace(/'/g, "\\'")}')` style="background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb; padding: 0 12px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; height: 32px; margin: 0;")
+                                    i.fa-solid.fa-trash-can(style="margin: 0;")
 
-                        div(style="display: flex; gap: 8px; align-items: center;")
-                            //- NOWOŚĆ: Przycisk generowania profesjonalnego artykułu prasowego przez AI
-                            if user && user.role === 'editor'
-                                button.action-btn(type="button" onclick=`window.generatePressArticleFromTopic('${topic._id}', this)` style="background: #f3ebff; color: #9360f7; border: 1px solid #9360f7; padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px;" title="Wygeneruj rozbudowany artykuł prasowy do prywatnego szkicownika")
-                                    i.fa-solid.fa-robot
-                                    span Opracuj temat z AI
-
+                        //- Sekcja dolna stopki: Przyciski akcji ułożone jeden pod drugim, rozciągnięte na pełne 100% szerokości
+                        div(style="display: flex; flex-direction: column; gap: 8px; width: 100%;")
                             if user
-                                button.action-btn(type="button" onclick=`window.initAiTopicDiscussion('${topic.title.replace(/'/g, "\\'")}', '${topic.summary.replace(/'/g, "\\'")}')` style="background: var(--color-primary, #0f5132); color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px;")
-                                    i.fa-regular.fa-comment-dots
-                                    | Skomentuj wpis
+                                //- POPRAWKA UX: height: auto i line-height normalizują zawijanie długich zdań bez obcinania tła przycisku
+                                button.action-btn(type="button" onclick=`window.initAiTopicDiscussion('${topic.title.replace(/'/g, "\\'")}', '${topic.summary.replace(/'/g, "\\'")}')` style="background: var(--color-primary, #0f5132); color: #ffffff !important; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; height: auto !important; line-height: 1.4 !important; width: 100% !important; margin: 0; box-sizing: border-box; text-align: center;")
+                                    i.fa-regular.fa-comment-dots(style="color: #ffffff !important; flex-shrink: 0;")
+                                    span(style="white-space: normal; text-align: center;") Napisz co o tym myślisz?
+                        
+                                if user.role === 'editor'
+                                    //- POPRAWKA UX: Wymuszamy height: auto !important i padding, co pozwala na bezpieczne zawijanie tekstu na wąskich ekranach
+                                    button.action-btn(type="button" onclick=`window.generatePressArticleFromTopic('${topic._id}', this)` style="background: #f3ebff; color: #9360f7; border: 1px solid #9360f7; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; height: auto !important; line-height: 1.4 !important; width: 100% !important; margin: 0; box-sizing: border-box; text-align: center;" title="Wygeneruj rozbudowany artykuł prasowy do prywatnego szkicownika")
+                                        i.fa-solid.fa-robot(style="flex-shrink: 0;")
+                                        span(style="white-space: normal; text-align: center;") Opracuj temat z AI
+
 else
     .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #fff; border-radius: 8px; font-size: 13px; border: 1px dashed var(--color-border); font-family: sans-serif; width: 100%;") 
         | ⏳ Trwa pobieranie aktualnych komunikatów. Odśwież stronę za chwilę...

@@ -1,5 +1,9 @@
 a.nav-icon(href="/" title="Strona główna" class=(currentTab === 'home' ? 'active' : ''))
     i.fa-solid.fa-house
+
+if user && user.role === 'editor'
+    a.nav-icon(href="/editors" title="Redakcja" class=(currentTab === 'editors' ? 'active' : ''))
+        i.fa-solid.fa-users
     
 a.nav-icon(href=`/topics` title="Przegląd dnia" class=(currentTab === 'topics' ? 'active' : ''))
     i.fa-solid.fa-newspaper
@@ -17,7 +21,3 @@ if user
     if user.isAdmin
         a.nav-icon(href="/admin" title="Panel administratora" class=(currentTab === 'admin' ? 'active' : ''))
             i.fa-solid.fa-shield-halved
-
-    if user && user.role === 'editor'
-        a.nav-icon(href="/editors" title="Pokój Redakcyjny" class=(currentTab === 'editors' ? 'active' : ''))
-            i.fa-solid.fa-user-shield
