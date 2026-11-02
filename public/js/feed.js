@@ -297,41 +297,46 @@ window.prepareEditSubmit = async function (event, postId) {
     }
 
     // =========================================================================
-    // SCENARIUSZ B: ULEPSZONA OBSŁUGA DLA WPISÓW PRYWATNYCH / RESTRICTED / EDITORS
+    // SCENARIUSZ B: BEZPIECZNA OBSŁUGA DLA WPISÓW PRYWATNYCH / RESTRICTED / EDITORS
     // =========================================================================
     if (response.ok) {
       if (loadingModal) loadingModal.style.display = "none";
 
-      const responseData = await response.json();
-      
-      if (postId === "new" && responseData.html) {
-        const postsWrapper = document.getElementById("accordion-posts-wrapper");
+      // POPRAWKA: Sprawdzamy typ zawartości (Content-Type). Jeśli to nie JSON, nie parsujemy go, tylko odświeżamy stronę
+      const contentType = response.headers.get("content-type");
+      if (contentType && contentType.includes("application/json")) {
+        const responseData = await response.json();
         
-        if (postsWrapper) {
-          // Usuwamy komunikat o braku postów, jeśli istnieje
-          const noPostsFallback = postsWrapper.querySelector(".no-posts");
-          if (noPostsFallback) noPostsFallback.remove();
+        if (postId === "new" && responseData.html) {
+          const postsWrapper = document.getElementById("accordion-posts-wrapper");
+          
+          if (postsWrapper) {
+            const noPostsFallback = postsWrapper.querySelector(".no-posts");
+            if (noPostsFallback) noPostsFallback.remove();
 
-          // Wstrzykujemy nowy post na samą górę listy narad bez przeładowania okna!
-          postsWrapper.insertAdjacentHTML("afterbegin", responseData.html);
-          
-          // Resetujemy edytor Quill i zamykamy bezpiecznie akordeon
-          if (instance) instance.setContents([]);
-          const titleField = document.getElementById("edit-title-new");
-          if (titleField) titleField.value = "";
-          
-          window.cancelSelectedImage("new");
-          window.toggleCreatePostAccordion();
-          
-          // Re-inicjalizacja słuchaczy akordeonów dla nowo dodanej karty wpisu
-          if (typeof window.refreshAccordionListeners === "function") {
-            window.refreshAccordionListeners();
+            // Wstrzykujemy nowy post na samą górę listy narad bez przeładowania okna
+            postsWrapper.insertAdjacentHTML("afterbegin", responseData.html);
+            
+            // Resetujemy edytor Quill i zamykamy bezpiecznie akordeon
+            if (instance) instance.setContents([]);
+            const titleField = document.getElementById("edit-title-new");
+            if (titleField) titleField.value = "";
+            
+            window.cancelSelectedImage("new");
+            window.toggleCreatePostAccordion();
+            
+            if (typeof window.refreshAccordionListeners === "function") {
+              window.refreshAccordionListeners();
+            }
+          } else {
+            window.location.reload(true);
           }
         } else {
+          // Jeśli to był sukces zapisu edycji (paczka JSON), odświeżamy widok
           window.location.reload(true);
         }
       } else {
-        // Jeśli to była edycja istniejącego szkicu, odświeżamy widok
+        // Serwer zwrócił surowy status tekstowy (np. "OK" z res.sendStatus(200)) - bezpieczny fallback
         window.location.reload(true);
       }
     } else {

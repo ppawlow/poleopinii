@@ -15,19 +15,26 @@ if dailyTopics && dailyTopics.length > 0
                     p(style="font-size: 14px; color: #050505; line-height: 1.6; margin: 0 0 16px 0; font-family: sans-serif; text-align: justify;") #{topic.summary}
                     
                     //- Dolny pasek (Stopka): Ważność oraz Przycisk interakcji
-                    .news-card-footer
-                        span(title='Ranga informacji' style=`display: inline-flex; align-items: center; justify-content: center; background: ${isCritical ? '#fff3f3' : '#fffbf0'}; color: ${isCritical ? '#bc2525' : 'var(--color-accent)'}; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; border: 1px solid ${isCritical ? '#f5c6cb' : '#e5a93c'}; white-space: nowrap;`) 
-                            | 🔥 #{topic.importance}/10
-                            
-                        if user && user.isAdmin
-                            button.action-btn(type="button" onclick=`window.executeAdminDeleteTopic('${topic._id}', '${topic.title.replace(/'/g, "\\'")}')` style="background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;")
-                                i.fa-solid.fa-trash-can
-                                | Usuń news
-                        
-                        if user
-                            button.action-btn(type="button" onclick=`window.initAiTopicDiscussion('${topic.title.replace(/'/g, "\\'")}', '${topic.summary.replace(/'/g, "\\'")}')` style="display:block; float:right; background: var(--color-primary, #0f5132); color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: auto; line-height: normal; transition: background 0.2s;")
-                                i.fa-regular.fa-comment-dots
-                                | Napisz co o tym myślisz?
+                    .news-card-footer(style="display: flex; gap: 8px; justify-content: space-between; align-items: center; width: 100%; flex-wrap: wrap;")
+                        div(style="display: flex; gap: 6px; align-items: center;")
+                            span(title='Ranga informacji' style=`display: inline-flex; align-items: center; justify-content: center; background: ${isCritical ? '#fff3f3' : '#fffbf0'}; color: ${isCritical ? '#bc2525' : 'var(--color-accent)'}; padding: 4px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 700; border: 1px solid ${isCritical ? '#f5c6cb' : '#e5a93c'}; white-space: nowrap;`) 
+                                | 🔥 #{topic.importance}/10
+                                
+                            if user && (user.isAdmin || user.role === 'editor')
+                                button.action-btn(type="button" onclick=`window.executeAdminDeleteTopic('${topic._id}', '${topic.title.replace(/'/g, "\\'")}')` style="background: #fff3f3; color: #bc2525; border: 1px solid #f5c6cb; padding: 6px 12px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px;")
+                                    i.fa-solid.fa-trash-can
+
+                        div(style="display: flex; gap: 8px; align-items: center;")
+                            //- NOWOŚĆ: Przycisk generowania profesjonalnego artykułu prasowego przez AI
+                            if user && user.role === 'editor'
+                                button.action-btn(type="button" onclick=`window.generatePressArticleFromTopic('${topic._id}', this)` style="background: #f3ebff; color: #9360f7; border: 1px solid #9360f7; padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px;" title="Wygeneruj rozbudowany artykuł prasowy do prywatnego szkicownika")
+                                    i.fa-solid.fa-robot
+                                    span Opracuj temat z AI
+
+                            if user
+                                button.action-btn(type="button" onclick=`window.initAiTopicDiscussion('${topic.title.replace(/'/g, "\\'")}', '${topic.summary.replace(/'/g, "\\'")}')` style="background: var(--color-primary, #0f5132); color: white; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 600; font-size: 12.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px;")
+                                    i.fa-regular.fa-comment-dots
+                                    | Skomentuj wpis
 else
     .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #fff; border-radius: 8px; font-size: 13px; border: 1px dashed var(--color-border); font-family: sans-serif; width: 100%;") 
         | ⏳ Trwa pobieranie aktualnych komunikatów. Odśwież stronę za chwilę...

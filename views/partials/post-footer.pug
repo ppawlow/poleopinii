@@ -33,10 +33,17 @@
             button.action-btn.reply-post-btn(type="button" onclick=`window.openReplyPostModal('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Polemizuj")
                 i.fa-regular.fa-comments
                 span.btn-text Polemizuj
+
+        //- DEDYKOWANY PRZYCISK ASYSTY DLA REDAKTORA Z PODPIĘTYM ZABEZPIECZENIEM PRZED PRZYPADKOWYM KLIKNIĘCIEM
+        if user.role === 'editor' && post.visibility !== 'editors'
+            button.action-btn.factcheck-trigger-btn(type="button" onclick=`window.executeEditorFactCheckWithConfirm('${post._id}', this)` title="Uruchom zaawansowany audyt faktograficzny AI" style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;")
+                i.fa-solid.fa-magnifying-glass-location
+                span.btn-text Sprawdź fakty z AI
     else
         button.action-btn(disabled)
           i.fa-regular.fa-star
           span.btn-text Doceń
+          
     if post.visibility === 'public'
         button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Udostępnij")
             i.fa-regular.fa-share-from-square

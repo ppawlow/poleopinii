@@ -50,8 +50,9 @@ html(lang="pl")
         script(src="/js/mainApi.js")
         script(src="https://kit.fontawesome.com/8861df8022.js" crossorigin="anonymous")
         script(src="/js/feed.js")
-        // script(src="https://google.com")
-
+        if user && user.role === 'editor'
+            script(src="/js/editorsApi.js")
+            
         block head
     body
         if user

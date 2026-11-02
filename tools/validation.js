@@ -95,167 +95,147 @@ tools.validateContent = function (content) {
 };
 // tools/validation.js
 
-// ZMIANA: Dodano opcjonalny parametr res na końcu sygnatury
+// tools/validation.js - Sekcja integracji z Gemini AI
+
+/**
+ * ETAP 1: Audyt Bezpieczeństwa i zgodności z Regulaminem (Safety, Hate Speech, Policy)
+ */
+tools.checkContentSafety = async function (ai, title, content) {
+  const fullTextToAnalyze = `Tytuł: ${title}\nTreść: ${content.replace(/<\/?[^>]+(>|$)/g, "")}`;
+  const safetyInstruction = `Jesteś rygorystycznym algorytmem moderującym treść na poważnej platformie publicystycznej. 
+  Przeanalizuj przesłany tekst pod kątem: wulgaryzmów (w tym ukrytych), mowy nienawiści, dyskryminacji (rasowej, religijnej, płciowej), wzywania do przemocy, nawoływania do łamania prawa oraz treści pornograficznych.
+  Zwróć dane wyłącznie jako ustrukturyzowany obiekt JSON zawierający pola:
+  - 'approved' (wartość Boolean: true jeśli tekst jest bezpieczny, false jeśli wykryto naruszenie).
+  - 'reason' (krótki, konkretny tekst po polsku wyjaśniający powód odrzucenia, lub null jeśli approved wynosi true).`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.8-flash",
+    contents: fullTextToAnalyze,
+    config: {
+      systemInstruction: safetyInstruction,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          approved: { type: "BOOLEAN" },
+          reason: { type: "STRING" },
+        },
+        required: ["approved", "reason"],
+      },
+    },
+  });
+
+  return {
+    result: JSON.parse(response.text),
+    meta: response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 }
+  };
+};
+
+/**
+ * ETAP 2: Autodetekcja błędów faktograficznych (Fact-Checking z Google Search)
+ */
+tools.checkContentFacts = async function (ai, title, content) {
+  const fullTextToAnalyze = `Tytuł: ${title}\nTreść: ${content.replace(/<\/?[^>]+(>|$)/g, "")}`;
+  const factCheckInstruction = `Jesteś niezależnym, obiektywnym ekspertem weryfikującym fakty (Fact-checker). 
+  Przeanalizuj przesłany artykuł prasowy pod względem faktograficznym. Wykryj wszelkie kłamstwa, rażące manipulacje, nieprawdziwe daty, błędne nazwiska lub zmyślone wydarzenia historyczne/polityczne.
+  Zwróć dane wyłącznie jako ustrukturyzowany obiekt JSON zawierający pola:
+  - 'hasErrors' (wartość Boolean: true jeśli wykryto błędy faktograficzne lub fake news, false jeśli informacje są prawdziwe).
+  - 'report' (szczegółowy, punktowy raport w języku polskim. Jeśli hasErrors wynosi true, wypisz konkretne błędy i podaj prawdę. Jeśli hasErrors wynosi false, napisz krótko: 'Weryfikacja pomyślna. Nie wykryto błędów faktograficznych.').`;
+
+  const response = await ai.models.generateContent({
+    model: "gemini-3.8-flash",
+    contents: fullTextToAnalyze,
+    config: {
+      tools: [{ googleSearch: {} }], // Aktywacja Groundingu w chmurze Google
+      systemInstruction: factCheckInstruction,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "OBJECT",
+        properties: {
+          hasErrors: { type: "BOOLEAN" },
+          report: { type: "STRING" },
+        },
+        required: ["hasErrors", "report"],
+      },
+    },
+  });
+
+  return {
+    result: JSON.parse(response.text),
+    meta: response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 }
+  };
+};
+
+/**
+ * Centralny Koordynator Walidacji Publicznej (Notice & Takedown / DSA Rule)
+ */
 tools.validatePublicContent = async function (req, title, content, res = null) {
   try {
     const { GoogleGenAI } = require("@google/genai");
     const { createLog } = require("./systemLog");
 
-    const ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
-      apiVersion: "v1beta",
-    });
-
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: "v1beta" });
     const dbUser = req.dbUser;
     const executionEmail = dbUser ? dbUser.email : "Anonimowy Twórca";
-    const fullTextToAnalyze = `Tytuł wpisu: ${title}\nTreść wpisu: ${content.replace(/<\/?[^>]+(>|$)/g, "")}`;
     const totalTokens = { input: 0, output: 0, total: 0 };
 
-    // =========================================================================
-    // ETAP 1: AUDYT BEZPIECZEŃSTWA (Safety, Hate Speech, Policy)
-    // =========================================================================
-    const safetyInstruction = `Jesteś rygorystycznym algorytmem moderującym treść na poważnej platformie publicystycznej. 
-    Przeanalizuj przesłany tekst pod kątem: wulgaryzmów (w tym ukrytych), mowy nienawiści, dyskryminacji (rasowej, religijnej, płciowej), wzywania do przemocy, nawoływania do łamania prawa oraz treści pornograficznych/erotycznych.
-    Zwróć dane wyłącznie jako ustrukturyzowany obiekt JSON zawierający pola:
-    - 'approved' (wartość Boolean: true jeśli tekst jest bezpieczny, false jeśli wykryto naruszenie).
-    - 'reason' (krótki, konkretny tekst po polsku wyjaśniający powód odrzucenia, lub null jeśli approved wynosi true).`;
+    // 1. Wywołanie Etapu 1: Bezpieczeństwo
+    const safetyData = await tools.checkContentSafety(ai, title, content);
+    totalTokens.input += safetyData.meta.promptTokenCount;
+    totalTokens.output += safetyData.meta.candidatesTokenCount;
+    totalTokens.total += safetyData.meta.totalTokenCount;
 
-    const safetyResponse = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: fullTextToAnalyze,
-      config: {
-        systemInstruction: safetyInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            approved: { type: "BOOLEAN" },
-            reason: { type: "STRING" },
-          },
-          required: ["approved", "reason"],
-        },
-      },
-    });
-
-    const safetyResult = JSON.parse(safetyResponse.text);
-
-    const safetyMeta = safetyResponse.usageMetadata || {
-      promptTokenCount: 0,
-      candidatesTokenCount: 0,
-      totalTokenCount: 0,
-    };
-    totalTokens.input += safetyMeta.promptTokenCount;
-    totalTokens.output += safetyMeta.candidatesTokenCount;
-    totalTokens.total += safetyMeta.totalTokenCount;
-
-    if (!safetyResult.approved) {
-      const logMessage = `[AI MODERACJA - BLOKADA] Odrzucono post publiczny ze względów bezpieczeństwa ("${title}"). Powód: ${safetyResult.reason}. Zużycie API: In: ${totalTokens.input} | Out: ${totalTokens.output} | Total: ${totalTokens.total} tokenów.`;
-      await createLog(req, logMessage, executionEmail);
-
+    if (!safetyData.result.approved) {
+      await createLog(req, `[AI MODERACJA - BLOKADA] Odrzucono post publiczny ("${title}"). Powód: ${safetyData.result.reason}`, executionEmail);
       if (dbUser && typeof dbUser.updateOne === "function") {
         await dbUser.updateOne({ $inc: { aiBlockedSafetyCount: 1 } });
       }
-
       return {
         approved: false,
-        reason:
-          safetyResult.reason ||
-          "Treść została odrzucona przez filtry bezpieczeństwa systemu.",
-        factCheckReport:
-          "Weryfikacja faktograficzna została wstrzymana z powodu wykrycia naruszeń polityki bezpieczeństwa.",
+        reason: safetyData.result.reason || "Treść odrzucona przez filtry bezpieczeństwa.",
+        factCheckReport: "Weryfikacja faktów wstrzymana."
       };
     }
 
-    // =========================================================================
-    // NOWOŚĆ: WYDRUK STRUMIENIOWY (SSE) DLA PRZEGLĄDARKI PO 1. ETAPIE
-    // =========================================================================
+    // Informacja SSE dla frontu po przejściu Etapu 1
     if (res && typeof res.write === "function") {
-      res.write(
-        `data: ${JSON.stringify({ status: "stage1_success", message: "Wstępna ocena bezpieczeństwa przeszła pozytywnie. Trwa weryfikacja faktograficzna..." })}\n\n`,
-      );
+      res.write(`data: ${JSON.stringify({ status: "stage1_success", message: "Wstępna ocena bezpieczeństwa przeszła pozytywnie. Trwa weryfikacja faktograficzna..." })}\n\n`);
     }
-    // =========================================================================
 
-    // =========================================================================
-    // ETAP 2: AUTODETEKCJA BŁĘDÓW FAKTOGRAFICZNYCH (Fact-Checking)
-    // =========================================================================
-    const factCheckInstruction = `Jesteś niezależnym, obiektywnympexpertem weryfikującym fakty (Fact-checker). 
-    Przeanalizuj przesłany artykuł prasowy pod względem faktograficznym. Wykryj wszelkie kłamstwa, rażące manipulacje, nieprawdziwe daty, błędne nazwiska lub zmyślone wydarzenia historyczne/polityczne.
-    Zwróć dane wyłącznie jako ustrukturyzowany obiekt JSON zawierający pola:
-    - 'hasErrors' (wartość Boolean: true jeśli wykryto błędy faktograficzne lub fake news, false jeśli informacje są prawdziwe).
-    - 'report' (szczegółowy, punktowy raport w języku polskim. Jeśli hasErrors wynosi true, wypisz konkretne błędy i podaj prawdę. Jeśli hasErrors wynosi false, napisz krótko: 'Weryfikacja pomyślna. Nie wykryto błędów faktograficznych.').`;
-
-    const factCheckResponse = await ai.models.generateContent({
-      model: "gemini-3.8-flash",
-      contents: fullTextToAnalyze,
-      config: {
-        tools: [{ googleSearch: {} }],
-        systemInstruction: factCheckInstruction,
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "OBJECT",
-          properties: {
-            hasErrors: { type: "BOOLEAN" },
-            report: { type: "STRING" },
-          },
-          required: ["hasErrors", "report"],
-        },
-      },
-    });
-
-    const factCheckResult = JSON.parse(factCheckResponse.text);
-
-    const fcMeta = factCheckResponse.usageMetadata || {
-      promptTokenCount: 0,
-      candidatesTokenCount: 0,
-      totalTokenCount: 0,
-    };
-    totalTokens.input += fcMeta.promptTokenCount;
-    totalTokens.output += fcMeta.candidatesTokenCount;
-    totalTokens.total += fcMeta.totalTokenCount;
+    // 2. Wywołanie Etapu 2: Fact-Checking
+    const factData = await tools.checkContentFacts(ai, title, content);
+    totalTokens.input += factData.meta.promptTokenCount;
+    totalTokens.output += factData.meta.candidatesTokenCount;
+    totalTokens.total += factData.meta.totalTokenCount;
 
     let finalLogMessage = "";
-    if (factCheckResult.hasErrors) {
-      finalLogMessage = `[AI FACT-CHECK - ODRZUCENIE] Zablokowano próbę publikacji fake-news ("${title}"). Wykryto błędy w faktach. Zużycie API: In: ${totalTokens.input} | Out: ${totalTokens.output} | Total: ${totalTokens.total} tokenów.`;
-
+    if (factData.result.hasErrors) {
+      finalLogMessage = `[AI FACT-CHECK - ODRZUCENIE] Zablokowano fake-news ("${title}"). Zużycie tokenów: ${totalTokens.total}`;
       if (dbUser && typeof dbUser.updateOne === "function") {
         await dbUser.updateOne({ $inc: { aiBlockedFactCheckCount: 1 } });
       }
     } else {
-      finalLogMessage = `[AI VALIDATOR - SUKCES] Post publiczny pomyślnie przeszedł dwuetapowy audyt ("${title}"). Zatwierdzono do publikacji globalnej. Zużycie API: In: ${totalTokens.input} | Out: ${totalTokens.output} | Total: ${totalTokens.total} tokenów.`;
+      finalLogMessage = `[AI VALIDATOR - SUKCES] Post publiczny pomyślnie przeszedł audyt ("${title}"). Zużycie tokenów: ${totalTokens.total}`;
     }
 
     await createLog(req, finalLogMessage, executionEmail);
 
     return {
-      approved: !factCheckResult.hasErrors,
-      reason: factCheckResult.hasErrors
-        ? "Wykryto rażące błędy faktograficzne lub fake-news."
-        : null,
-      factCheckReport: factCheckResult.report,
+      approved: !factData.result.hasErrors,
+      reason: factData.result.hasErrors ? "Wykryto rażące błędy faktograficzne lub fake-news." : null,
+      factCheckReport: factData.result.report
     };
-  } catch (err) {
-    console.error(
-      "Krytyczny błąd modułu walidacji AI (validatePublicContent):",
-      err,
-    );
-    try {
-      const { createLog } = require("./systemLog");
-      await createLog(
-        req,
-        `[AI VALIDATOR AWARIA] Krytyczny błąd podczas weryfikacji wpisu. Powód: ${err.message}`,
-        dbUser?.email || "System-Error",
-      );
-    } catch (e) {}
 
+  } catch (err) {
+    console.error("Krytyczny błąd modułu walidacji AI:", err);
     return {
       approved: false,
-      reason:
-        "Wewnętrzny błąd serwera podczas weryfikacji treści przez sztuczną inteligencję.",
-      factCheckReport: "Nie udało się wygenerować raportu.",
+      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści.",
+      factCheckReport: "Nie udało się wygenerować raportu."
     };
   }
 };
+
 
 tools.validateId = function (idName) {
   return (req, res, next) => {

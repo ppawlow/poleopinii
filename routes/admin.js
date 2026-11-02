@@ -21,7 +21,6 @@ module.exports = express
     postAdminApproveUser,
   )
   .post("/verify-user/:userId/reject", postAdminRejectUser)
-  .delete("/topics/:topicId", postDeleteAiTopic)
   .post("/users/:userId/promote", postPromoteToEditor)
   .post("/users/:userId/demote", postDemoteFromEditor)
 
@@ -401,39 +400,6 @@ async function postAdminRejectUser(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).send("Wewnętrzny błąd serwera.");
-  }
-}
-
-// HANDLER: Ręczne usuwanie faktu dnia AI przez Administratora
-async function postDeleteAiTopic(req, res) {
-  try {
-    const { topicId } = req.params;
-
-    if (!ObjectId.isValid(topicId)) {
-      return res.status(400).send("Nieprawidłowy identyfikator tematu.");
-    }
-
-    const { TopicOfTheDay } = require("../tools/db");
-    const deletedTopic = await TopicOfTheDay.findByIdAndDelete(topicId);
-
-    if (!deletedTopic) {
-      return res
-        .status(404)
-        .send("Nie odnaleziono podanego tematu w bazie danych.");
-    }
-
-    // Rejestracja zdarzenia w logach audytowych platformy
-    await createLog(
-      req,
-      `[MODERACJA AI] Administrator usunął ręcznie temat dnia: "${deletedTopic.title}"`,
-    );
-
-    return res.sendStatus(200);
-  } catch (err) {
-    console.error("Błąd podczas usuwania tematu AI przez administratora:", err);
-    return res
-      .status(500)
-      .send("Wewnętrzny błąd serwera podczas usuwania zasobu.");
   }
 }
 
