@@ -337,8 +337,8 @@ tools.postValidationRules = [
   body("content")
     .notEmpty()
     .withMessage("Treść wpisu nie może być pusta.")
-    .isLength({ max: 10000 })
-    .withMessage("Treść wpisu jest zbyt długa (maksymalnie 10 000 znaków)."),
+    .isLength({ max: 20000 })
+    .withMessage("Treść wpisu jest zbyt długa (maksymalnie 20 000 znaków)."),
   body("visibility")
     .isIn(POST_VISIBILITY)
     .withMessage("Niepoprawny poziom widoczności."),
