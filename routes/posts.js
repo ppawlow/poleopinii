@@ -186,7 +186,7 @@ async function postCreate(req, res) {
   try {
     const dbUser = req.dbUser;
 
-    if (!parentPostId) {
+    if (parentPostId) {
       if (!hasPermission(dbUser, visibility, "CREATE")) {
         return sendAccessDenied(
           req,
@@ -234,13 +234,11 @@ async function postCreate(req, res) {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
       res.flushHeaders();
-
-      // SPRAWDZENIE UPRAWNIENIA REDAKTORA DO OMINIĘCIA WALIDACJI AI
-      const totalLikes = await countAuthorPublicLikes(dbUser._id);
-      dbUser.totalLikes = totalLikes; // Wstrzyknięcie pomocnicze do hasPermission
-
-      //if (hasPermission(dbUser, "public", "BYPASS_AI")) {
-      if (dbUser?.role === 'editor') {
+      
+      const bypassAI = hasPermission(dbUser, "public", "BYPASS_AI");
+      console.log("bypassAI: ", bypassAI);
+      
+      if (bypassAI) {
         // Redaktor pomija Etap 1 i Etap 2 weryfikacji AI
         res.write(
           `data: ${JSON.stringify({ status: "stage1_success", message: "✨ Zweryfikowany Redaktor: Pominięto automatyczny audyt AI." })}\n\n`
@@ -429,7 +427,6 @@ async function postCreate(req, res) {
   }
 }
 
-// routes/posts.js -> funkcja postEdit
 
 async function postEdit(req, res) {
   const { title, content, visibility } = req.body;
@@ -479,7 +476,7 @@ async function postEdit(req, res) {
     // =========================================================================
     // OBSŁUGA STRUMIENIOWANIA SSE DLA ZMIANY STATUSU NA PUBLICZNY
     // =========================================================================
-    if (isChangingToPublic) {
+    if (isChangingToPublic && !dbUser.isEditor) {
       const targetTitle = title ? title.trim() : post.title;
 
       res.setHeader("Content-Type", "text/event-stream");

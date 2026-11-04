@@ -60,37 +60,37 @@ module.exports = {
     DEFAULT_PROVIDER: process.env.AI_PROVIDER || "gemini",
 
     // Częstotliwość odpytywania w formacie CRON
-    // "0 4 * * *"     -> Codziennie o 04:00 rano (Zalecane produkcyjnie)
-    // "*/15 * * * *"  -> Co każde 15 minut (Przydatne do testów deweloperskich)
-    // "0 */2 * * *"   -> Co każde 2 godziny
+    // Przykłady:
+    // "0 4 * * *"     -> Codziennie o 04:00 rano 
+    // "0 */4 * * *"   -> Co 4 godziny (od 0:00)
     CRON_SCHEDULE: "0 4,10,16,22 * * *",
 
     // Maksymalna liczba tematów zapisywanych w prawym panelu
     MAX_TOPICS: 10,
   },
 
-  // ZCENTRALIZOWANA MATRYCA UPRAWNIEŃ
+  // MATRYCA UPRAWNIEŃ W ZAKRESIE PUBLIKACJI
   POST_PERMISSIONS: {
     public: {
-      CREATE: (user) => user && (user.isFullyVerified === true || user.role === 'editor' || (user.totalPublicLikes && user.totalLikes >= 100)),
-      LIKE: (user) => user && user.isFullyVerified === true,
-      COMMENT: (user) => user && user.isFullyVerified === true,
-      BYPASS_AI: (user) => user && user.role === 'editor',
+      CREATE:   (user) => user?.isPublicAllowed,
+      LIKE:     (user) => user?.isPublicAllowed,
+      COMMENT:  (user) => user?.isPublicAllowed,
+      BYPASS_AI:(user) => user?.isEditor,
     },
     restricted: {
-      CREATE: (user) => (user ? true : false),
-      LIKE: (user) => (user ? true : false),
-      COMMENT: (user) => (user ? true : false),
+      CREATE:   (user) => user ? true : false,
+      LIKE:     (user) => user ? true : false,
+      COMMENT:  (user) => user ? true : false,
     },
     private: {
-      CREATE: (user) => (user ? true : false),
-      LIKE: (user) => (user ? true : false),
-      COMMENT: (user) => (user ? true : false),
+      CREATE:   (user) => user ? true : false,
+      LIKE:     (user) => user ? true : false,
+      COMMENT:  (user) => user ? true : false,
     },
     editors: {
-      CREATE: (user) => user && user.role === 'editor',
-      LIKE: (user) => user && user.role === 'editor',
-      COMMENT: (user) => user && user.role === 'editor',
+      CREATE:   (user) => user?.isEditor,
+      LIKE:     (user) => user?.isEditor,
+      COMMENT:  (user) => user?.isEditor,
     },
   },
   
@@ -114,18 +114,16 @@ module.exports = {
   // ===================================
   USER_PERMISSIONS: { // <--- TUTAJ BYŁO BŁĘDNIE "POST_PERMISSIONS"
     canSendMail: (actingUser, targetUser) =>
-      actingUser &&
-      targetUser &&
-      (actingUser.isFullyVerified || actingUser.role === 'editor') && // Dodane wsparcie dla roli redaktora
+      actingUser && targetUser &&
+      actingUser.isPublicAllowed &&
       !actingUser.isBlocking(targetUser) &&
       !targetUser.isBlocking(actingUser),
 
     canReplyWithPost: (actingUser, targetUser) =>
-      actingUser &&
-      targetUser &&
+      actingUser && targetUser &&
       !actingUser.isBlocking(targetUser) &&
       !targetUser.isBlocking(actingUser) &&
-      (actingUser.isFullyVerified || actingUser.role === 'editor' || targetUser.isFollowing(actingUser)),
+      (actingUser.isPublicAllowed || targetUser.isFollowing(actingUser)),
   },
 
   PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/,

@@ -83,6 +83,11 @@ userSchema.virtual("isEditor").get(function () {
   return this.role === "editor";
 });
 
+userSchema.virtual("isPublicAllowed").get(function () {
+  return this.isEditor || this.isFullyVerified
+});
+
+
 userSchema
   .virtual("token")
   .get(function () {
