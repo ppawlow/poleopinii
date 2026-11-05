@@ -605,3 +605,82 @@ window.sharePost = async function (postId, postTitle) {
     modal.style.display = "flex";
   }
 };
+
+/**
+ * Osłona anty-kosztowa przed przypadkowym uruchomieniem audytu AI przez Czytelnika
+ */
+window.executeReaderFactCheckWithConfirm = async function (postId, buttonElement) {
+  if (!postId || !buttonElement) return;
+
+  const message = "Czy chcesz uruchomić zaawansowaną weryfikację faktograficzną dla tego wpisu? Algorytm Gemini przeszuka sieć za pomocą Google Search Grounding i opublikuje oficjalny raport w sekcji Polemik pod tym artykułem. Tę akcję można wykonać tylko raz.";
+  
+  const confirmed = typeof window.Confirm === "function"
+    ? await window.Confirm(message, "Uruchomić Fact-Checking AI?")
+    : confirm(message);
+
+  if (!confirmed) return;
+
+  window.executeReaderFactCheckPayload(postId, buttonElement);
+};
+
+/**
+ * Asynchroniczne wywołanie publicznej analityki tekstu
+ */
+window.executeReaderFactCheckPayload = async function (postId, buttonElement) {
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+  
+  // Pobieramy instancję modalu ładowania z szablonu modal.pug
+  const loadingModal = document.getElementById("custom-loading-modal");
+  const loaderHeading = document.getElementById("loader-status-heading");
+  const loaderText = document.getElementById("loader-status-text");
+
+  if (loadingModal) {
+    if (loaderHeading) loaderHeading.innerText = "🤖 Trwa Fact-Checking AI w czasie rzeczywistym...";
+    if (loaderText) loaderText.innerText = "System analizuje artykuł, mapuje kluczowe tezy oraz weryfikuje dane faktograficzne w chmurze informacyjnej Google. Proszę czekać, to może potrwać około 15-30 sekund.";
+    loadingModal.style.display = "flex";
+  }
+
+  // Blokada przycisku przed double-tap
+  buttonElement.disabled = true;
+
+  try {
+    const response = await fetch(`/posts/${postId}/factcheck-reader`, {
+      method: "POST",
+      headers: {
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest"
+      }
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (loadingModal) loadingModal.style.display = "none";
+
+      // Przycisk znika na stałe (usuwamy z drzewa DOM)
+      buttonElement.remove();
+
+      await window.Alert(
+        `<div style="text-align: left; line-height: 1.5;">
+          <p style="color: #146c43; font-weight: bold; margin-bottom: 6px;">🟢 Analiza ukończona!</p>
+          <p>${data.message}</p>
+         </div>`,
+        "Centrum Analityczne AI"
+      );
+
+      // Przeładowujemy okno z kotwicą celującą bezpośrednio w nowo utworzony post polemiczny bota
+      window.location.href = `/posts/${postId}#post-${data.reportPostId}`;
+      window.location.reload(true);
+
+    } else {
+      if (loadingModal) loadingModal.style.display = "none";
+      buttonElement.disabled = false;
+      const errText = await response.text();
+      window.Alert(`Nie udało się wywołać audytu AI: ${errText}`, "Błąd krytyczny");
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy Fact-Checkingu czytelnika:", err);
+    if (loadingModal) loadingModal.style.display = "none";
+    buttonElement.disabled = false;
+    window.Alert("Wystąpił błąd połączenia z serwerem operacyjnym.", "Błąd sieci");
+  }
+};

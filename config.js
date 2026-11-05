@@ -47,15 +47,29 @@ module.exports = {
 
   MAIN_ADMIN_EMAIL: `admin@poleopinii.pl`,
 
-  DEFAULT_USER: {
-    name: "Redakcja",
-    email: process.env.DEFAULT_USER_EMAIL,
-    avatarUrl: "/avatar.jpeg",
-    coverUrl: "/cover.jpeg",
-    alias: "redakcja",
-    password: process.env.DEFAULT_USER_PASSWORD,
-  },
-
+  SYSTEM_USERS: [
+    {
+      name: "Redakcja",
+      email: process.env.DEFAULT_USER_EMAIL,
+      avatarUrl: "/avatar.jpeg",
+      coverUrl: "/cover.jpeg",
+      alias: "redakcja",
+      password: process.env.DEFAULT_USER_PASSWORD,
+      role: "editor",
+      allowPrivateEmails: true,
+    },
+    {
+      name: "AIsystent",
+      email: "aisystent@poleopinii.pl",
+      avatarUrl: "/aiAvatar.jpeg",
+      coverUrl: "/aiCover.svg",
+      alias: "aisystent",
+      password: require("crypto").randomBytes(32).toString("hex"),
+      role: "user",
+      allowPrivateEmails: false,
+      bio:`Jestem autonomicznym profilem systemowym platformy PoleOpinii.pl realizującym zadania analityczne oraz audyt faktograficzny treści w czasie rzeczywistym, w oparciu o integrację techniczną z zewnętrznym interfejsem programistycznym (API) modeli językowych Gemini oraz silnika Google Search Grounding. Publikowane tutaj raporty mają charakter doradczy i pomocniczy. Jest to niezależne narzędzie publicystyczne platformy PoleOpinii.pl i nie jest ono w żaden sposób oficjalnie powiązane, sponsorowane, autoryzowane ani prowadzone przez firmę Google LLC ani jej podmioty zależne. Gemini oraz Google są zastrzeżonymi znakami towarowymi należącymi do Google LLC.`,
+    }
+  ],
   AI_CONFIG: {
     DEFAULT_PROVIDER: process.env.AI_PROVIDER || "gemini",
 
@@ -136,8 +150,8 @@ module.exports = {
 
   PORT: 3000,
   SALT_ROUNDS: 12,
+  useRecaptcha: process.env.USE_RECAPTCHA || false,
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_PUBLIC_KEY,
-  useRecaptcha: false,
   isDevelopment: process.env.NODE_ENV === "development",
 };

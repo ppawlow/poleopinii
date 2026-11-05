@@ -488,3 +488,48 @@
     padding: 0 !important;
   }
 }
+
+/* =========================================================================
+   FIX DLA STRON INFORMACYJNYCH: REGULAMIN I POLITYKA PRYWATNOŚCI NA MOBILE
+   ========================================================================= */
+@media (max-width: 900px) {
+  /* Usunięcie twardych marginesów kontenera nadrzędnego podstron prawnych */
+  .main-container:has(.create-post:has(h2)) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+  }
+
+  /* Spłaszczenie ramki tekstowej dokumentów do krawędzi (efekt edge-to-edge) */
+  .feed > .create-post:has(h2) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px 16px !important; /* Padding dopasowany do kart .post-card na mobile */
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #e4e6eb; /* Subtelna linia odcinająca stopkę */
+  }
+
+  /* Wyśrodkowanie i delikatne zmniejszenie nagłówków h2 na mniejszych ekranach */
+  .feed > .create-post:has(h2) h2 {
+    font-size: 22px !important;
+    line-height: 1.3 !important;
+    margin-bottom: 12px !important;
+  }
+
+  /* Optymalizacja czytelności justowanego tekstu na ekranach smartfonów */
+  .feed > .create-post:has(h2) .article-text-content {
+    text-align: left !important; /* Wyłączenie męczącego na mobile justowania */
+    font-size: 14.5px !important; /* Kompaktowa i czytelna czcionka */
+    line-height: 1.6 !important;
+  }
+
+  /* Dopasowanie wcięć dla list numerowanych (ol/ul) wewnątrz regulaminów */
+  .feed > .create-post:has(h2) .article-text-content ol,
+  .feed > .create-post:has(h2) .article-text-content ul {
+    margin-left: 20px !important;
+    padding: 4px 0 !important;
+  }
+}

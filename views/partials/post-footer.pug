@@ -11,19 +11,9 @@
 .post-actions(style="display: flex; padding: 4px 0; border-bottom: 1px solid #e4e6eb; gap: 8px; flex-wrap: wrap;")
     if user
         if hasPermission(user, post.visibility, 'LIKE') && (!userBlocks || !userBlocks.includes(String(post.authorId))) && String(user.id) !== String(post.authorId)
-            form.post-like-form(action=`/posts/${post._id}/like` method="POST" data-post-id=post._id style="margin: 0; display: inline-block;")
-                input(type="hidden" name="_csrf" value=csrfToken)
-                button.action-btn(type="submit" title="Zarządzaj oceną wpisu")
-                    if post.isLikedByMe
-                        i.fa-solid.fa-star
-                        span.btn-text.like-text Cofnij
-                    else
-                        i.fa-regular.fa-star
-                        span.btn-text.like-text Doceń
+            //- ... (formularz like)
         else if String(user.id) !== String(post.authorId)
-            button.action-btn.restricted-feature-trigger(type="button" data-reason="like_public" title="Kliknij, aby dowiedzieć się więcej")
-                i.fa-regular.fa-star
-                span.btn-text Doceń
+            //- ... (button like restricted)
                 
         button.action-btn.comment-trigger-btn(type="button" onclick=`toggleCommentsVisibility('${post._id}')` title="Napisz komentarz")
             i.fa-regular.fa-comment
@@ -34,11 +24,20 @@
                 i.fa-regular.fa-comments
                 span.btn-text Polemizuj
 
-        //- DEDYKOWANY PRZYCISK ASYSTY DLA REDAKTORA Z PODPIĘTYM ZABEZPIECZENIEM PRZED PRZYPADKOWYM KLIKNIĘCIEM
-        if user.role === 'editor' && post.visibility !== 'editors'
-            button.action-btn.factcheck-trigger-btn(type="button" onclick=`window.executeEditorFactCheckWithConfirm('${post._id}', this)` title="Uruchom zaawansowany audyt faktograficzny AI" style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;")
-                i.fa-solid.fa-magnifying-glass-location
-                span.btn-text Sprawdź fakty z AI
+        //- DEDYKOWANY PRZYCISK DLA CZYTELNIKA: Uruchomienie Fact-Checkingu (Widoczny jeśli nie ma jeszcze polemiki bota)
+        if post.visibility === 'public' && !post.isAbuseReport
+            //- Szukamy w spakowanej tablicy komentarzy/polemik czy Gemini AI już tam jest
+            - var hasAiReport = debatePosts && debatePosts.some(d => d.authorEmail === 'gemini-ai@poleopinii.pl')
+            if !hasAiReport
+                button.action-btn.factcheck-reader-trigger-btn(
+                    type="button" 
+                    id=`factcheck-btn-${post._id}`
+                    onclick=`window.executeReaderFactCheckWithConfirm('${post._id}', this)` 
+                    title="Zleć niezależny audyt faktograficzny algorytmom AI" 
+                    style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;"
+                )
+                    i.fa-solid.fa-robot
+                    span.btn-text Sprawdź wiarygodność z AI
     else
         button.action-btn(disabled)
           i.fa-regular.fa-star

@@ -167,7 +167,7 @@ tools.checkContentFacts = async function (ai, title, content) {
 };
 
 /**
- * Centralny Koordynator Walidacji Publicznej (Notice & Takedown / DSA Rule)
+ * Centralny Koordynator Walidacji Publicznej (Zostaje TYLKO Etap 1: Bezpieczeństwo)
  */
 tools.validatePublicContent = async function (req, title, content, res = null) {
   try {
@@ -179,7 +179,7 @@ tools.validatePublicContent = async function (req, title, content, res = null) {
     const executionEmail = dbUser ? dbUser.email : "Anonimowy Twórca";
     const totalTokens = { input: 0, output: 0, total: 0 };
 
-    // 1. Wywołanie Etapu 1: Bezpieczeństwo
+    // Wywołanie Etapu 1: Bezpieczeństwo i zgodność z regulaminem
     const safetyData = await tools.checkContentSafety(ai, title, content);
     totalTokens.input += safetyData.meta.promptTokenCount;
     totalTokens.output += safetyData.meta.candidatesTokenCount;
@@ -192,50 +192,30 @@ tools.validatePublicContent = async function (req, title, content, res = null) {
       }
       return {
         approved: false,
-        reason: safetyData.result.reason || "Treść odrzucona przez filtry bezpieczeństwa.",
-        factCheckReport: "Weryfikacja faktów wstrzymana."
+        reason: safetyData.result.reason || "Treść odrzucona przez filtry bezpieczeństwa."
       };
     }
 
-    // Informacja SSE dla frontu po przejściu Etapu 1
+    // Informacja dla frontu o sukcesie Etapu 1 - natychmiast kończymy sukcesem
     if (res && typeof res.write === "function") {
-      res.write(`data: ${JSON.stringify({ status: "stage1_success", message: "Wstępna ocena bezpieczeństwa przeszła pozytywnie. Trwa weryfikacja faktograficzna..." })}\n\n`);
+      res.write(`data: ${JSON.stringify({ status: "stage1_success", message: "✨ Weryfikacja bezpieczeństwa przeszła pomyślnie. Publikowanie..." })}\n\n`);
     }
 
-    // 2. Wywołanie Etapu 2: Fact-Checking
-    const factData = await tools.checkContentFacts(ai, title, content);
-    totalTokens.input += factData.meta.promptTokenCount;
-    totalTokens.output += factData.meta.candidatesTokenCount;
-    totalTokens.total += factData.meta.totalTokenCount;
-
-    let finalLogMessage = "";
-    if (factData.result.hasErrors) {
-      finalLogMessage = `[AI FACT-CHECK - ODRZUCENIE] Zablokowano fake-news ("${title}"). Zużycie tokenów: ${totalTokens.total}`;
-      if (dbUser && typeof dbUser.updateOne === "function") {
-        await dbUser.updateOne({ $inc: { aiBlockedFactCheckCount: 1 } });
-      }
-    } else {
-      finalLogMessage = `[AI VALIDATOR - SUKCES] Post publiczny pomyślnie przeszedł audyt ("${title}"). Zużycie tokenów: ${totalTokens.total}`;
-    }
-
-    await createLog(req, finalLogMessage, executionEmail);
+    await createLog(req, `[AI VALIDATOR - SUKCES] Post publiczny przeszedł audyt regulaminu ("${title}"). Zużycie tokenów: ${totalTokens.total}`, executionEmail);
 
     return {
-      approved: !factData.result.hasErrors,
-      reason: factData.result.hasErrors ? "Wykryto rażące błędy faktograficzne lub fake-news." : null,
-      factCheckReport: factData.result.report
+      approved: true,
+      reason: null
     };
 
   } catch (err) {
     console.error("Krytyczny błąd modułu walidacji AI:", err);
     return {
       approved: false,
-      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści.",
-      factCheckReport: "Nie udało się wygenerować raportu."
+      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści."
     };
   }
 };
-
 
 tools.validateId = function (idName) {
   return (req, res, next) => {

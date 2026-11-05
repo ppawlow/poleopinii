@@ -225,8 +225,10 @@ async function addUser(name, email, password = null) {
   }
 }
 
+// tools/user.js
+
 async function createVerifiedUser(userData) {
-  const { name, email, alias, avatarUrl, coverUrl, password } = userData;
+  const { name, email, alias, avatarUrl, coverUrl, password, role, allowPrivateEmails, bio } = userData;
   const cleanAlias = alias?.trim().toLowerCase();
 
   try {
@@ -238,8 +240,15 @@ async function createVerifiedUser(userData) {
       };
     }
 
+    // Wywołujemy addUser, aby utworzyć podstawowy szkielet dokumentu
     const dbUser = await addUser(name, email, password);
     if (dbUser.error) return dbUser;
+
+    // PRZEKAZYWANIE ROLI: Jeśli rola została zdefiniowana w konfiguracji (np. "editor"), 
+    // przypisujemy ją. W innym przypadku Mongoose użyje domyślnej wartości ("user").
+    if (role) {
+      dbUser.role = role;
+    }
 
     dbUser.isVerified = true;
     dbUser.verificationTransferStatus = "approved";
@@ -248,11 +257,17 @@ async function createVerifiedUser(userData) {
       .createHash("sha256")
       .update(`AUTO-ACCOUNT-${cleanAlias || "default"}`)
       .digest("hex");
-    dbUser.allowPrivateEmails = true;
+
+    // DYNAMICZNA ZGODA NA E-MAILE: Przypisujemy wartość z konfiguracji (true/false).
+    // Jeśli nie podano w obiekcie, domyślnie ustawiamy true dla kont systemowych (stary fallback).
+    dbUser.allowPrivateEmails = typeof allowPrivateEmails !== "undefined" ? allowPrivateEmails : true;
+    
+    dbUser.bio = typeof bio !== "undefined" ? bio : '';
+
     dbUser.securityToken = undefined;
     dbUser.securityTokenExpires = undefined;
 
-    // ZAPISUJEMY ALIAS BEZPOŚREDNIO W DOKUMENCIE UŻYTKOWNIKA
+    // Zapisujemy alias bezpośrednio w dokumencie użytkownika
     if (cleanAlias) dbUser.alias = cleanAlias;
 
     if (avatarUrl) dbUser.avatarUrl = avatarUrl;
@@ -269,6 +284,7 @@ async function createVerifiedUser(userData) {
     };
   }
 }
+
 
 module.exports = {
   User,

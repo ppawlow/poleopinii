@@ -62,6 +62,7 @@ module.exports = express
 
   .use("/:id", validateId("id"))
   .post("/:id/delete-image", postDeleteImage)
+  .post("/:id/factcheck-reader", postReaderFactCheck)
 
   .post(
     "/:id/edit",
@@ -1174,5 +1175,83 @@ async function postCreatePublicReport(req, res) {
     return res
       .status(500)
       .send("Wewnętrzny błąd serwera podczas walidacji lub zapisu zgłoszenia.");
+  }
+}
+
+// Odizolowany publiczny endpoint żądania Fact-Checkingu AI przez czytelnika
+async function postReaderFactCheck(req, res) {
+  try {
+    const postId = req.params.id;
+    const dbUser = req.dbUser; // Aktywny czytelnik
+    const { GoogleGenAI } = require("@google/genai");
+    const { checkContentFacts } = require("../tools/validation");
+
+    // 1. Pobieramy oryginalny post
+    const originalPost = await Post.findById(postId);
+    if (!originalPost) {
+      return res.status(404).send("Nie odnaleziono podanego artykułu.");
+    }
+
+    // 2. Namierzamy systemowe konto bota "Gemini AI" w bazie danych
+    const aiUser = await User.findOne({ normalizedEmail: "aisystent@poleopinii.pl" });
+    if (!aiUser) {
+      return res.status(500).send("Krytyczny błąd systemu: Profil wizualny AI nie został zainicjalizowany.");
+    }
+
+    // 3. Sprawdzamy, czy dla tego posta istnieje już polemika stworzona przez "Gemini AI"
+    const existingAnalysis = await Post.findOne({
+      parentPostId: originalPost._id,
+      authorId: aiUser._id
+    });
+
+    if (existingAnalysis) {
+      return res.status(400).send("Ten post posiada już wygenerowany raport oceny wiarygodności.");
+    }
+
+    // 4. Uruchamiamy model LLM (Gemini 3.8 Flash + Google Search Grounding)
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: "v1beta" });
+    const factCheckAnalysis = await checkContentFacts(ai, originalPost.title, originalPost.content);
+
+    // 5. Zapisujemy raport jako oficjalny artykuł polemiczny (Polemika) przypisany do konta "Gemini AI"
+    const reportTitle = factCheckAnalysis.result.hasErrors
+      ? `⚠️ Korekta Faktograficzna AI: "${originalPost.title}"`
+      : `🟢 Certyfikat Wiarygodności AI: "${originalPost.title}"`;
+
+    // Formatowanie tekstu do standardu artykułów (zamiana znaków nowej linii z raportu na akapity HTML)
+    const formattedContent = factCheckAnalysis.result.report
+      .split("\n")
+      .filter(line => line.trim().length > 0)
+      .map(line => `<p>${line.trim()}</p>`)
+      .join("");
+
+    const aiReportPost = new Post({
+      title: reportTitle.substring(0, 95),
+      author: aiUser.name,
+      authorEmail: aiUser.email,
+      authorId: aiUser._id,
+      authorAvatar: aiUser.avatarUrl,
+      content: formattedContent,
+      visibility: "public", // Publikacja jawna dla całej społeczności
+      parentPostId: originalPost._id,
+      isAbuseReport: false // Zwykły post polemiczny (Debata)
+    });
+
+    const savedReport = await aiReportPost.save();
+
+    // Rejestracja w logu audytowym
+    await createLog(
+      req,
+      `[PUBLICZNY FACT-CHECK AI] Użytkownik ${dbUser.name} wywołał analizę dla posta o ID: ${originalPost._id}. Wygenerowano polemikę o ID: ${savedReport._id}`
+    );
+
+    return res.json({
+      success: true,
+      message: "Analiza zakończona pomyślnie. Raport został dodany do sekcji polemik pod artykułem.",
+      reportPostId: savedReport._id
+    });
+
+  } catch (err) {
+    console.error("Błąd publicznego potoku Fact-Checking AI:", err);
+    return res.status(500).send("Wewnętrzny błąd serwera podczas analityki tekstu.");
   }
 }
