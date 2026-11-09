@@ -129,7 +129,7 @@
     max-height: calc(100vh - 56px) !important;
     overflow-y: auto !important;
     background-color: #ffffff !important;
-    z-index: 10000 !important;
+    z-index: 10002 !important;
     padding: 20px 16px !important;
     transform: translateX(-100%) !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -148,7 +148,7 @@
     max-height: calc(100vh - 56px) !important;
     overflow-y: auto !important;
     background-color: #ffffff !important;
-    z-index: 10000 !important;
+    z-index: 10002 !important;
     padding: 20px 16px !important;
     transform: translateX(100%) !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
