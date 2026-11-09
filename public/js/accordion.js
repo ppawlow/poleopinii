@@ -582,23 +582,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const isLeftOpen = document.body.classList.contains("has-left-sidebar");
     const isRightOpen = document.body.classList.contains("has-right-sidebar");
 
-    // GEST: Ruch palca od lewej do prawej (Odsłaniamy lewą szufladę lub zamykamy prawą)
+    // GEST: Przesunięcie palca od lewej do prawej (Ruch w prawo -> odsłaniamy LEWY panel "Obserwowani")
     if (distanceX > minSwipeDistance) {
       if (isRightOpen) {
         closeAllSidebars();
       } else if (!isLeftOpen) {
         document.body.classList.add("has-left-sidebar");
-        document.body.style.overflow = "hidden"; // Blokada skrolowania tła
+        document.body.style.overflow = "hidden";
       }
     }
 
-    // GEST: Ruch palca od prawej do lewej (Odsłaniamy prawą szufladę lub zamykamy lewą)
+    // GEST: Przesunięcie palca od prawej do lewej (Ruch w lewo -> odsłaniamy PRAWY panel "Przegląd dnia")
     if (distanceX < -minSwipeDistance) {
       if (isLeftOpen) {
         closeAllSidebars();
       } else if (!isRightOpen) {
         document.body.classList.add("has-right-sidebar");
-        document.body.style.overflow = "hidden"; // Blokada skrolowania tła
+        document.body.style.overflow = "hidden";
       }
     }
   }

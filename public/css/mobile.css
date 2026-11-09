@@ -561,5 +561,37 @@
     background: transparent;
   }
 
-  /* ... Reszta Twojego pliku: optymalizacje dotykowe < 600px pozostają nienaruszone ... */
+  /* PANEL LEWY: Schowany za lewą krawędzią okna mobilnego */
+  body .left-sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 56px) !important;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    background-color: #ffffff !important;
+    z-index: 10000 !important; /* Pod navbarem, który ma 10002 */
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    will-change: transform;
+  }
+
+  /* PANEL PRAWY: Schowany za prawą krawędzią okna mobilnego */
+  body .right-sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 56px !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 56px) !important;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    background-color: #ffffff !important;
+    z-index: 10000 !important; /* Pod navbarem, który ma 10002 */
+    transform: translateX(100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    will-change: transform;
+  }
 }
