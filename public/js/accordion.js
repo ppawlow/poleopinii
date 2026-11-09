@@ -486,100 +486,180 @@ window.acceptCookieLaw = function () {
   }
 };
 // =========================================================================
-// INTEGRALNA MOBILNA OBSŁUGA GESTÓW (SWIPE) - UTWARDZONA WERSJA EMULACJI
+// ZAAWANSOWANA EMULACJA DOTYKU 1:1 - EFEKT PRZYKLEJENIA PALCA DO EKRANU
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Aktywacja automatyzacji gestów wyłącznie dla urządzeń komórkowych (szerokość <= 900px)
   if (window.innerWidth > 900) return;
 
-  // Tworzymy techniczną, przezroczystą nakładkę przechwytującą dotyk powrotny
   const overlay = document.createElement("div");
   overlay.className = "sidebar-overlay";
   document.body.appendChild(overlay);
 
+  const leftSidebar = document.querySelector(".left-sidebar");
+  const rightSidebar = document.querySelector(".right-sidebar");
+  const mainFeed = document.querySelector("main.feed");
+
+  if (!leftSidebar || !rightSidebar || !mainFeed) return;
+
   let touchStartX = 0;
   let touchStartY = 0;
-  let touchEndX = 0;
-  let touchEndY = 0;
+  let currentDeltaX = 0;
+  let isDragging = false;
+  let initialActiveSidebar = "none"; // "none", "left", "right"
+  const screenWidth = window.innerWidth;
 
-  const minSwipeDistance = 50; // Subtelnie obniżony próg dla lepszej czułości na telefonach
-  const maxVerticalDeviatedDistance = 40; // Maksymalny dopuszczalny ruch w pionie
+  function setInteractiveStyles(deltaX, useTransition = false) {
+    const transitionStyle = useTransition ? "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : "none";
+    
+    // Nadanie płynności lub jej wyłączenie na czas przeciągania
+    leftSidebar.style.transition = transitionStyle;
+    rightSidebar.style.transition = transitionStyle;
+    mainFeed.style.transition = transitionStyle;
 
-  function handleSwipeGesture() {
-    const distanceX = touchEndX - touchStartX;
-    const distanceY = Math.abs(touchEndY - touchStartY);
-
-    // Odrzucenie gestu, jeśli użytkownik wyraźnie skroluje tablicę w pionie
-    if (distanceY > maxVerticalDeviatedDistance) return;
-
-    const isLeftOpen = document.body.classList.contains("has-left-sidebar");
-    const isRightOpen = document.body.classList.contains("has-right-sidebar");
-
-    // GEST: Przesunięcie palca od lewej do prawej (Ruch w prawo -> odsłaniamy LEWY panel "Obserwowani")
-    if (distanceX > minSwipeDistance) {
-      if (isRightOpen) {
-        closeAllSidebars();
-      } else if (!isLeftOpen) {
-        document.body.classList.remove("has-right-sidebar");
-        document.body.classList.add("has-left-sidebar");
-        document.body.style.overflow = "hidden";
+    // SCENARIUSZ A: Ruch w prawo (Wysuwamy LEWY panel lub chowamy PRAWY)
+    if (deltaX > 0) {
+      if (initialActiveSidebar === "right") {
+        // Chowamy prawy panel (od 0 do 100% szerokości)
+        const percent = Math.min(100, (deltaX / screenWidth) * 100);
+        rightSidebar.style.transform = `translateX(${percent}%)`;
+        mainFeed.style.transform = `translateX(${-100 + percent}vw)`;
+      } else if (initialActiveSidebar === "none") {
+        // Wysuwamy lewy panel (od -100% do 0)
+        const percent = Math.min(100, (deltaX / screenWidth) * 100);
+        leftSidebar.style.transform = `translateX(${-100 + percent}%)`;
+        mainFeed.style.transform = `translateX(${percent}vw)`;
+      }
+    } 
+    // SCENARIUSZ B: Ruch w lewo (Wysuwamy PRAWY panel lub chowamy LEWY)
+    else if (deltaX < 0) {
+      const absDeltaX = Math.abs(deltaX);
+      if (initialActiveSidebar === "left") {
+        // Chowamy lewy panel
+        const percent = Math.min(100, (absDeltaX / screenWidth) * 100);
+        leftSidebar.style.transform = `translateX(${-percent}%)`;
+        mainFeed.style.transform = `translateX(${100 - percent}vw)`;
+      } else if (initialActiveSidebar === "none") {
+        // Wysuwamy prawy panel
+        const percent = Math.min(100, (absDeltaX / screenWidth) * 100);
+        rightSidebar.style.transform = `translateX(${100 - percent}%)`;
+        mainFeed.style.transform = `translateX(${-percent}vw)`;
       }
     }
+  }
 
-    // GEST: Przesunięcie palca od prawej do lewej (Ruch w lewo -> odsłaniamy PRAWY panel "Przegląd dnia")
-    if (distanceX < -minSwipeDistance) {
-      if (isLeftOpen) {
-        closeAllSidebars();
-      } else if (!isRightOpen) {
-        document.body.classList.remove("has-left-sidebar");
-        document.body.classList.add("has-right-sidebar");
-        document.body.style.overflow = "hidden";
-      }
-    }
+  function openLeft() {
+    document.body.classList.remove("has-right-sidebar");
+    document.body.classList.add("has-left-sidebar");
+    document.body.style.overflow = "hidden";
+    
+    leftSidebar.style.transform = "translateX(0)";
+    rightSidebar.style.transform = "translateX(100%)";
+    mainFeed.style.transform = "translateX(100vw)";
+  }
+
+  function openRight() {
+    document.body.classList.remove("has-left-sidebar");
+    document.body.classList.add("has-right-sidebar");
+    document.body.style.overflow = "hidden";
+    
+    leftSidebar.style.transform = "translateX(-100%)";
+    rightSidebar.style.transform = "translateX(0)";
+    mainFeed.style.transform = "translateX(-100vw)";
   }
 
   function closeAllSidebars() {
     document.body.classList.remove("has-left-sidebar", "has-right-sidebar");
-    document.body.style.overflow = ""; // Przywrócenie domyślnego skrolowania feedu
+    document.body.style.overflow = "";
+    
+    leftSidebar.style.transform = "translateX(-100%)";
+    rightSidebar.style.transform = "translateX(100%)";
+    mainFeed.style.transform = "translateX(0)";
   }
 
-  // Monitorowanie współrzędnych startowych dotyku
+  // REJESTRACJA DOTYKU: Start
   document.addEventListener("touchstart", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
+    
+    touchStartX = e.changedTouches.screenX;
+    touchStartY = e.changedTouches.screenY;
+    currentDeltaX = 0;
+    isDragging = false;
+
+    if (document.body.classList.contains("has-left-sidebar")) {
+      initialActiveSidebar = "left";
+    } else if (document.body.classList.contains("has-right-sidebar")) {
+      initialActiveSidebar = "right";
+    } else {
+      initialActiveSidebar = "none";
+    }
   }, { passive: true });
 
-  // KRYTYCZNA POPRAWKA: Blokowanie domyślnego przewijania strony TYLKO podczas poziomego swipe'a
+  // REJESTRACJA DOTYKU: Ruch (Śledzenie pozycji palca 1:1)
   document.addEventListener("touchmove", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-    
-    let currentX = e.changedTouches[0].screenX;
-    let currentY = e.changedTouches[0].screenY;
-    
-    let currentDistanceX = Math.abs(currentX - touchStartX);
-    let currentDistanceY = Math.abs(currentY - touchStartY);
 
-    // Jeśli ruch w poziomie jest większy niż w pionie, traktujemy to jako intencjonalny swipe boczny
-    // i odcinamy domyślny skrol przeglądarki flagą { passive: false }
-    if (currentDistanceX > currentDistanceY && currentDistanceX > 10) {
-      if (e.cancelable) e.preventDefault();
+    const currentX = e.changedTouches.screenX;
+    const currentY = e.changedTouches.screenY;
+    
+    const diffX = currentX - touchStartX;
+    const diffY = Math.abs(currentY - touchStartY);
+
+    // Detekcja intencji: ruch poziomy musi dominować nad skrolowaniem pionowym
+    if (!isDragging && Math.abs(diffX) > diffY && Math.abs(diffX) > 10) {
+      isDragging = true;
     }
-  }, { passive: false }); // Wymuszone aktywne nasłuchiwanie ruchu
 
-  // Monitorowanie współrzędnych końcowych dotyku i uruchomienie logiki gestu
+    if (isDragging) {
+      if (e.cancelable) e.preventDefault(); // Blokujemy pionowy skrol feedu
+      currentDeltaX = diffX;
+      setInteractiveStyles(currentDeltaX, false); // Ruch 1:1 bez animacji opóźniającej
+    }
+  }, { passive: false });
+
+  // REJESTRACJA DOTYKU: Koniec (Decyzja na podstawie progu procentowego)
   document.addEventListener("touchend", (e) => {
-    if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipeGesture();
+    if (!isDragging) return;
+    isDragging = false;
+
+    const dragThreshold = screenWidth * 0.3; // 30% ekranu wystarczy do zatwierdzenia akcji
+
+    // Aktywacja płynnych przejść dla wykończenia animacji puszczenia palca
+    setInteractiveStyles(currentDeltaX, true);
+
+    setTimeout(() => {
+      if (initialActiveSidebar === "none") {
+        if (currentDeltaX > dragThreshold) {
+          openLeft();
+        } else if (currentDeltaX < -dragThreshold) {
+          openRight();
+        } else {
+          closeAllSidebars();
+        }
+      } else if (initialActiveSidebar === "left") {
+        if (currentDeltaX < -dragThreshold) {
+          closeAllSidebars();
+        } else {
+          openLeft();
+        }
+      } else if (initialActiveSidebar === "right") {
+        if (currentDeltaX > dragThreshold) {
+          closeAllSidebars();
+        } else {
+          openRight();
+        }
+      }
+    }, 10);
   }, { passive: true });
 
-  // Obsługa kliknięcia w obszar zamykający
-  overlay.addEventListener("click", closeAllSidebars);
+  overlay.addEventListener("click", () => {
+    setInteractiveStyles(0, true);
+    setTimeout(closeAllSidebars, 10);
+  });
 
-  // Automatyczne zamknięcie struktury pulpitów przy przejściu na podstrony z poziomu menu
   document.querySelectorAll(".sidebar-item, .dropdown-item").forEach((item) => {
-    item.addEventListener("click", closeAllSidebars);
+    item.addEventListener("click", () => {
+      setInteractiveStyles(0, true);
+      setTimeout(closeAllSidebars, 10);
+    });
   });
 });
