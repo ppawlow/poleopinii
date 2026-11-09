@@ -548,7 +548,7 @@ window.acceptCookieLaw = function () {
 };
 
 // =========================================================================
-// MOBILNA OBSŁUGA GESTÓW (SWIPE) - EFEKT SYNCHRONICZNEGO PRZESUWANIA CAŁOŚCI
+// MOBILNA OBSŁUGA GESTÓW (SWIPE) - SYMERYCZNY EFEKT DLA PANELLI I FEEDU
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
   if (window.innerWidth > 900) return;
@@ -557,7 +557,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const rightSidebar = document.querySelector(".right-sidebar");
   if (!leftSidebar || !rightSidebar) return;
 
-  // Tworzymy przezroczystą nakładkę łapiącą kliknięcia powrotne
   const overlay = document.createElement("div");
   overlay.className = "sidebar-overlay";
   document.body.appendChild(overlay);
@@ -568,18 +567,19 @@ document.addEventListener("DOMContentLoaded", () => {
   let touchEndY = 0;
 
   const minSwipeDistance = 60; 
-  const maxVerticalDeviatedDistance = 40;
+  const maxVerticalDeviatedDistance = 45; // Subtelnie podniesiony margines dla wygody gestu
 
   function handleSwipeGesture() {
     const distanceX = touchEndX - touchStartX;
     const distanceY = Math.abs(touchEndY - touchStartY);
 
+    // Jeśli ruch pionowy dominował, ignorujemy akcję (zwykłe przewijanie postów)
     if (distanceY > maxVerticalDeviatedDistance) return;
 
     const isLeftOpen = document.body.classList.contains("has-left-sidebar");
     const isRightOpen = document.body.classList.contains("has-right-sidebar");
 
-    // GEST: Przesunięcie palcem w PRAWO (Odsłaniamy lewą kolumnę)
+    // GEST: Przesunięcie palcem od lewej do prawej (Odsłaniamy lewą kolumnę lub zamykamy prawą)
     if (distanceX > minSwipeDistance) {
       if (isRightOpen) {
         closeAllSidebars();
@@ -589,7 +589,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
 
-    // GEST: Przesunięcie palcem w LEWO (Odsłaniamy prawą kolumnę)
+    // GEST: Przesunięcie palcem od prawej do lewej (Odsłaniamy prawą kolumnę lub zamykamy lewą)
     if (distanceX < -minSwipeDistance) {
       if (isLeftOpen) {
         closeAllSidebars();
