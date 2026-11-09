@@ -1,0 +1,21 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#bc2525'
+
+block email-body
+  h2(style="color: #bc2525; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 4px;") Wniosek o natychmiastowe usunięcie treści
+  h4(style="color: #bc2525; margin-top: 0; font-size: 14px; font-weight: bold; margin-bottom: 16px; text-transform: uppercase;") Żądanie Takedown - Prawa Autorskie
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Administratorze,
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Zarejestrowano pilne zgłoszenie roszczenia autorskiego wobec wpisu: #[strong "#{originalTitle}"].
+  
+  p(style="font-size: 14px; font-weight: bold; color: #1c1e21; margin: 16px 0 6px 0;") Szczegóły roszczenia własności intelektualnej:
+  div(style="background-color: #fff3f3; padding: 14px; border-radius: 6px; border-left: 4px solid #bc2525; color: #1c1e21; font-style: italic; font-size: 14px; line-height: 1.5; margin-bottom: 16px;")
+    | !{reportContent}
+    
+  p(style="font-size: 13px; color: #65676b; line-height: 1.5; margin-bottom: 20px;") Zgodnie z dyrektywami prawnymi DSA oraz doktryną Safe Harbor, system powinien niezwłocznie poddać analizie zgłoszony materiał w celu uniknięcia współodpowiedzialności prawnej za naruszenie.
+  
+  table(cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;")
+    tr
+      td
+        a(href=adminUrl style="display: inline-block; background-color: #bc2525; color: #ffffff; font-weight: bold; padding: 11px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;") Przejdź do centrum administracyjnego

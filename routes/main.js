@@ -1,6 +1,7 @@
 const express = require("express");
 const path = require("path");
 const fsPromises = require("fs").promises;
+const { renderPartial } = require("../tools/pug2html");
 
 const {
   User,
@@ -272,13 +273,7 @@ async function getSearchApi(req, res) {
         profileUrl: doc.alias ? `/profile/${doc.alias}` : `/profile/${doc._id}`,
       };
 
-      const htmlSnippet = await new Promise((resolve) => {
-        req.app.render(
-          "partials/search-result-card",
-          { resultUser: mappedUser },
-          (err, html) => resolve(html || ""),
-        );
-      });
+      const htmlSnippet = renderPartial("search-result-card", { resultUser: mappedUser });
       finalHtml += htmlSnippet;
     }
 
@@ -369,7 +364,7 @@ async function getEventsApi(req, res) {
     const { Notification } = require("../tools/db");
     const events = await Notification.aggregate([
       {
-        $match: { recipientId: currentUserId, createdAt: { gt: sevenDaysAgo } },
+        $match: { recipientId: currentUserId, createdAt: { $gt: sevenDaysAgo } },
       },
       { $sort: { createdAt: -1 } },
       { $limit: 50 },
@@ -381,7 +376,7 @@ async function getEventsApi(req, res) {
           as: "sender",
         },
       },
-      { $unwind: "sender" },
+      { $unwind: "$sender" },
       {
         $lookup: {
           from: "posts",
@@ -390,7 +385,7 @@ async function getEventsApi(req, res) {
           as: "post",
         },
       },
-      { $unwind: { path: "post", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$post", preserveNullAndEmptyArrays: true } },
     ]);
 
     const { urlAliases } = res.locals;
@@ -418,15 +413,9 @@ async function getEventsApi(req, res) {
         postTitle: ev.post ? ev.post.title || "Wpis bez tytułu" : "Twój post",
       };
 
-      const htmlSnippet = await new Promise((resolve) => {
-        req.app.render("partials/event-row", { ev: evContext }, (err, html) =>
-          resolve(html || ""),
-        );
-      });
-
+      const htmlSnippet = renderPartial("event-row", { ev: evContext });
       formattedEvents.push({ _id: ev._id, html: htmlSnippet });
     }
-
     return res.json({ success: true, events: formattedEvents });
   } catch (err) {
     console.error("Błąd API powiadomień:", err);

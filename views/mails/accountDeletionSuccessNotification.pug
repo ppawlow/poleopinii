@@ -1,0 +1,10 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#146c43'
+
+block email-body
+  h2(style="color: #146c43; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Realizacja prawa do bycia zapomnianym
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Dzień dobry,
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 16px 0;") Informujemy, że proces całkowitego usuwania danych przypisanych do tożsamości #[strong #{userName}] został pomyślnie sfinalizowany. Wszystkie wpisy dziennika, adresy IP, artykuły, logi sesyjne oraz komentarze zostały bezpowrotnie zatarte w produkcyjnej strukturze bazodanowej.
+  p(style="font-size: 12px; color: #65676b; line-height: 1.5; margin: 16px 0 0 0;") Wiadomość stanowi formalne, ostatnie potwierdzenie wykonania procedury RODO. Twój adres e-mail nie jest dalej przetwarzany.

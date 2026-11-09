@@ -1,0 +1,10 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#146c43'
+
+block email-body
+  h2(style="color: #146c43; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Blokada moderatorska została zdjęta
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{authorName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Informujemy, że zespół moderacji zweryfikował poprawki i naniesione korekty faktograficzne we wpisie: #[strong "#{originalTitle}"].
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 16px 0;") Blokada została oficjalnie uchylona. Status trwałego ograniczenia widoczności został wymazany z bazy danych, dzięki czemu odzyskałeś pełną swobodę zarządzania artykułem – możesz go ponownie opublikować jako **Publiczny** z poziomu edytora.

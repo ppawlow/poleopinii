@@ -1,0 +1,16 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#bc2525'
+
+block email-body
+  h2(style="color: #bc2525; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Ograniczenie widoczności wpisu publicznego
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{authorName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Zespół moderacji platformy zakończył procedurę weryfikacyjną dotyczącą zgłoszenia skierowanego przeciwko Twojemu artykułowi: #[strong "#{originalTitle}"].
+  
+  p(style="font-size: 14px; font-weight: bold; color: #1c1e21; margin: 16px 0 6px 0;") Podstawa interwencji moderatorskiej:
+  div(style="background-color: #f8f9fa; padding: 14px; border-radius: 6px; border-left: 4px solid #65676b; color: #555; font-style: italic; font-size: 14px; line-height: 1.5; margin-bottom: 16px;")
+    | !{reportContent}
+    
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Zgłoszenie uznano za uzasadnione. Na wpis nałożono kaskadowe restrykcje strukturalne: widoczność została trwale zmieniona na stopień **Dla obserwujących (Restricted)**, a możliwość samodzielnego przywrócenia statusu publicznego została zablokowana.
+  p(style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 16px 0 0 0;") Regulamin zabrania publikacji treści noszących znamiona spamu, wulgaryzmów oraz mowy nienawiści. Powtarzające się naruszenia mogą skutkować blokadą interakcji konta.

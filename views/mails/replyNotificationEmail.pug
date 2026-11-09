@@ -1,0 +1,15 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#1877f2'
+
+block email-body
+  h2(style="color: #1c1e21; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Nowy artykuł polemiczny
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Dzień dobry #[strong #{authorName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Użytkownik #[strong #{senderDisplayName}] opublikował nowy wpis w bezpośredniej odpowiedzi na Twój artykuł pod tytułem: #[em "#{originalTitle}"].
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 20px 0;") Tytuł nowej odpowiedzi: #[strong "#{decodedTitle}"]
+  
+  table(cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;")
+    tr
+      td
+        a(href=postUrl style="display: inline-block; background-color: #1877f2; color: #ffffff; font-weight: bold; padding: 11px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;") Przejdź do dyskusji polemicznej

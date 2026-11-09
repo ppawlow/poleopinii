@@ -51,11 +51,7 @@ async function postCommentEdit(req, res) {
     if (!comment) return res.status(404).send("Komentarz nie istnieje.");
 
     // Weryfikacja autora komentarza (IDOR Protection)
-    if (
-      !comment.authorId ||
-      !req.session.user.id ||
-      String(comment.authorId) !== String(req.session.user.id)
-    ) {
+    if (!comment.isOwnedBy(req.dbUser)) {
       return res.status(403).send("Brak uprawnień do edycji tego komentarza.");
     }
 
@@ -175,17 +171,11 @@ async function postCommentDelete(req, res) {
         .status(403)
         .send("Brak uprawnień: Niepoprawny kontekst autoryzacji zasobu.");
     }
-    const isCommentAuthor =
-      String(comment.authorId) === String(req.session.user.id);
-    const isPostAuthor =
-      post.authorId && String(post.authorId) === String(req.session.user.id);
-    if (!isCommentAuthor && !isPostAuthor) {
-      return res
-        .status(403)
-        .send(
-          "Brak uprawnień: Nie jesteś autorem tego komentarza ani właścicielem wpisu.",
-        );
+    
+    if (!comment.isOwnedBy(req.dbUser) && !post.isOwnedBy(req.dbUser)) {
+      return res.status(403).send("Brak uprawnień: Nie jesteś autorem tego komentarza ani właścicielem wpisu.");
     }
+
     post.comments.pull(req.params.commentId);
     await post.save();
     await createLog(

@@ -1,0 +1,9 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#146c43'
+
+block email-body
+  h2(style="color: #146c43; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Weryfikacja tożsamości zakończona sukcesem
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{userName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 0 0;") Informujemy, że przelew uwierzytelniający został pomyślnie zweryfikowany i zaksięgowany przez administratora. Twój profil zyskał status **Wiarygodny profil**. Wszelkie ograniczenia dotyczące zasięgu publikacji publicznych, komentarzy oraz interakcji zostały trwale usunięte z Twojego konta.

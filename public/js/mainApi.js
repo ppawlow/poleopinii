@@ -48,7 +48,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /**
- * Obsługa asynchronicznego dodawania komentarzy (klasa .comment-form)
+ * Zoptymalizowana obsługa asynchronicznego dodawania komentarzy (Zgodna z nową strukturą renderPartial)
  */
 async function handleAsyncCommentSubmit(form, csrfToken) {
   const inputField = form.querySelector('textarea[name="content"]');
@@ -90,42 +90,35 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
       const data = await response.json();
       if (data.success && data.html) {
         const postCard = form.closest(".post-card, .editorial-article");
+        const commentsWrapper = document.getElementById(`comments-wrapper-${postId}`);
 
-        if (postCard) {
-          // Namierzamy główny kontener listy komentarzy dla tego konkretnego posta
-          const targetCommentsListContainer = document.getElementById(`comments-list-${postId}`);
-          const emptyNotice = document.getElementById(`no-comments-notice-${postId}`);
-
-          if (targetCommentsListContainer) {
-            // POPRAWKA: Ponieważ serwer zwraca unikalny, wyrenderowany komponent pojedynczego nowego komentarza 
-            // owinięty w strukturę post-comments, parsujemy go i wyciągamy z niego OSTATNI element, 
-            // czyli ten, który autor przed chwilą faktycznie napisał.
-            const tempParser = document.createElement("div");
-            tempParser.innerHTML = data.html;
-
-            // Pobieramy wszystkie spakowane karty komentarzy z odpowiedzi serwera
-            const incomingCards = tempParser.querySelectorAll(".comment-card");
+        if (postCard && commentsWrapper) {
+          // Namierzamy nadrzędny kontener dyskusji (zdefiniowany w post-footer.pug)
+          const targetBlock = commentsWrapper.querySelector(".article-comments-block");
+          
+          if (targetBlock) {
+            // 1. Płynnie podmieniamy całą zawartość sekcji (komentarze + nagłówek + nowy formularz)
+            targetBlock.innerHTML = data.html;
             
-            if (incomingCards.length > 0) {
-              // Wybieramy absolutnie ostatni element z tablicy zwracanego zestawu danych
-              const freshCommentCard = incomingCards[incomingCards.length - 1];
+            // 2. KRYTYCZNA POPRAWKA: Re-inicjalizujemy słuchacze zdarzeń, aby nowo wstrzyknięte pole tekstowe 
+            // natychmiast zarejestrowało nasłuchiwanie zdarzeń (auto-resize oraz wysyłkę na klawisz Enter)
+            if (typeof window.refreshAccordionListeners === "function") {
+              window.refreshAccordionListeners();
+            }
 
-              if (freshCommentCard) {
-                // Ukrywamy powiadomienie o braku komentarzy, jeśli istniało
-                if (emptyNotice) emptyNotice.remove();
-                
-                // Płynnie doklejamy faktycznie nowy komentarz na sam dół listy
-                targetCommentsListContainer.appendChild(freshCommentCard);
-              }
+            // 3. Pobieramy nowo wygenerowane pole tekstowe z dolnej części nowej struktury DOM
+            const freshInputField = targetBlock.querySelector(`#comment-input-field-${postId}`);
+            if (freshInputField) {
+              freshInputField.value = ""; // Bezwzględne wyczyszczenie wpisanej treści
+              freshInputField.style.height = "36px"; // Przywrócenie domyślnej, startowej wysokości pola
+              freshInputField.focus(); // Ponowne osadzenie kursora dla zachowania płynności mikro-UX
             }
           }
 
-          // =========================================================================
-          // AUTOMATYCZNE PRZELICZANIE LICZNIKÓW PO DOKLEJENIU DO DRZEWA DOM
-          // =========================================================================
-          const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
+          // Wyliczamy aktualny stan liczników na podstawie nowo wstrzykniętych kart `.comment-card`
+          const freshCommentsCount = commentsWrapper.querySelectorAll(".comment-card").length;
 
-          // 1. Aktualizacja dolnego paska statystyk stopki
+          // Aktualizacja dolnego paska statystyk na karcie głównej artykułu
           const commentsCountEl = document.getElementById(`comments-text-${postId}`);
           if (commentsCountEl && typeof liczebnik === "function") {
             commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
@@ -135,25 +128,16 @@ async function handleAsyncCommentSubmit(form, csrfToken) {
             ]);
           }
 
-          // 2. Aktualizacja nagłówka rozwijanej sekcji dyskusji
+          // Aktualizacja wewnętrznego nagłówka h3 rozwijanej sekcji dyskusyjnej
           const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
           if (discussionHeadingEl) {
             discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
           }
         }
-
-        // Resetowanie wartości pola i zachowanie fokusu dla kolejnego komentarza
-        inputField.value = "";
-        inputField.style.height = "auto";
-        inputField.focus();
-
-        if (typeof window.refreshAccordionListeners === "function") {
-          window.refreshAccordionListeners();
-        }
       }
     }
   } catch (err) {
-    console.error("Błąd podczas asynchronicznego dodawania komentarza:", err);
+    console.error("Błąd podczas asynchronicznego dodawania komentarza przez AJAX:", err);
   } finally {
     form.dataset.loading = "false";
     if (submitBtn) submitBtn.disabled = false;
@@ -346,6 +330,9 @@ async function handleAsyncBlockUserSubmit(form, csrfToken) {
 /**
  * Obsługa bezpiecznego usuwania zasobów (akcje zawierające endpoint /delete)
  */
+/**
+ * Obsługa bezpiecznego usuwania zasobów (zarówno postów, jak i komentarzy) przez AJAX
+ */
 async function handleAsyncDeleteSubmit(form, csrfToken) {
   const confirmMsg =
     form.getAttribute("data-confirm") ||
@@ -366,36 +353,59 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
       headers: { "X-CSRF-Token": csrfToken },
     });
 
-    // public/js/mainApi.js -> wewnątrz funkcji handleAsyncDeleteSubmit
     if (response.ok) {
+      // Znajduje najbliższą kartę komentarza (.comment-card) lub posta (.post-card)
       const targetCard = form.closest(".comment-card, .post-card");
       const postCard = form.closest(".post-card, .editorial-article");
       const isComment = targetCard && targetCard.classList.contains("comment-card");
 
       if (targetCard) {
+        // Płynna animacja znikania z elementu z widoku (UX)
         targetCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
         targetCard.style.opacity = "0";
         targetCard.style.transform = "scale(0.98)";
+        
         setTimeout(() => {
           targetCard.remove();
 
+          // Jeśli usunięto komentarz, dynamicznie aktualizujemy liczniki bez przeładowania strony
           if (isComment && postCard) {
+            let postId = "";
             const actionParts = form.action.split("/");
-            const postId = actionParts[actionParts.indexOf("posts") + 1];
+            const postsIndex = actionParts.indexOf("posts");
+            if (postsIndex !== -1 && actionParts[postsIndex + 1]) {
+              postId = actionParts[postsIndex + 1];
+            }
 
             const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
 
+            // Aktualizacja licznika w stopce posta (np. "3 komentarze")
             const commentsCountEl = document.getElementById(`comments-text-${postId}`);
-            if (commentsCountEl) {
+            if (commentsCountEl && typeof liczebnik === "function") {
               commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
             }
 
+            // Aktualizacja nagłówka sekcji komentarzy (Dyskusja (3))
             const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
             if (discussionHeadingEl) {
               discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
             }
+
+            // Jeśli to był ostatni komentarz, wstrzyknij informację o braku komentarzy
+            const commentsListContainer = document.getElementById(`comments-list-${postId}`);
+            if (freshCommentsCount === 0 && commentsListContainer) {
+              commentsListContainer.insertAdjacentHTML(
+                "afterbegin",
+                `<div class="no-comments-placeholder" id="no-comments-notice-${postId}" style="font-size: 13px; color: #65676b; font-style: italic; padding: 8px 12px; margin-bottom: 12px;">💬 Brak komentarzy. Rozpocznij dyskusję jako pierwszy!</div>`
+              );
+            }
           }
         }, 200);
+      }
+    } else {
+      const errText = await response.text();
+      if (typeof window.Alert === "function") {
+        window.Alert(`Nie udało się usunąć: ${errText}`, "Błąd systemu");
       }
     }
   } catch (err) {
@@ -469,9 +479,12 @@ async function handleAsyncCommentEditSubmit(form, csrfToken) {
   }
 }
 
+// public/js/mainApi.js -> Zaktualizowany blok dispatchera na samym dole pliku
+
 // =========================================================================
 // CENTRALNY DISPATCHER STRUMIENIA ZDARZEŃ FORMULARZY
 // =========================================================================
+
 document.addEventListener("submit", function (e) {
   const form = e.target;
   if (!form || !form.action) return;
@@ -479,7 +492,7 @@ document.addEventListener("submit", function (e) {
   const csrfMeta = document.querySelector('meta[name="csrf-token"]');
   const csrfToken = csrfMeta ? csrfMeta.getAttribute("content") : "";
 
-  // Edycja komentarza
+  // 1. Reedycja i zapis zmian komentarza
   if (form.classList.contains("comment-edit-form")) {
     e.preventDefault();
     e.stopPropagation();
@@ -487,15 +500,27 @@ document.addEventListener("submit", function (e) {
     return;
   }
 
-  // Dodawanie komentarza (wyszukuje dopasowanie niezależnie od innych klas)
-  if (form.classList.contains("comment-form")) {
+  // 2. Lajkowanie komentarza
+  if (form.classList.contains("comment-like-form") || form.action.includes("/comments/") && form.action.includes("/like")) {
+    e.preventDefault();
+    e.stopPropagation();
+    // Przekierowujemy bezpośrednio do wbudowanego mechanizmu, który obsłuży to bez przeładowania
+    fetch(form.action, {
+      method: "POST",
+      headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "XMLHttpRequest" }
+    }).then(() => window.location.reload()); // Najprostszy, stabilny przeładunek dbający o spójność stanów
+    return;
+  }
+
+  // 3. Dodawanie nowego komentarza (Ignoruje ścieżki reedycji i lajków)
+  if (form.classList.contains("comment-form") || (form.action.includes("/comment") && !form.action.includes("/comments/"))) {
     e.preventDefault();
     e.stopPropagation();
     handleAsyncCommentSubmit(form, csrfToken);
     return;
   }
 
-  // Polubienie posta
+  // 4. Polubienie posta głównego (post-card)
   if (form.classList.contains("post-like-form")) {
     e.preventDefault();
     e.stopPropagation();
@@ -503,7 +528,7 @@ document.addEventListener("submit", function (e) {
     return;
   }
 
-  // Blokowanie użytkownika
+  // 5. Blokowanie użytkownika
   if (form.classList.contains("dynamic-block-form")) {
     e.preventDefault();
     e.stopPropagation();
@@ -511,7 +536,7 @@ document.addEventListener("submit", function (e) {
     return;
   }
 
-  // Usuwanie zasobów
+  // 6. Usuwanie zasobów (Zunifikowana asynchroniczna kaskada dla postów oraz komentarzy)
   if (form.action.includes("/delete")) {
     e.preventDefault();
     e.stopPropagation();
@@ -519,6 +544,7 @@ document.addEventListener("submit", function (e) {
     return;
   }
 });
+
 
 window.closeShareModal = function () {
   const modal = document.getElementById("custom-share-modal");

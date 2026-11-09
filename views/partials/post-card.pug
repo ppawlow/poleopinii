@@ -46,7 +46,7 @@
                             span(style="background: #fff3f3; color: #bc2525; border: 1px solid #bc2525; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;") 🛡️ Zablokowany przez moderatora
                             button(type="button" onclick=`executePostUnlock('${post._id}')` style="background: #146c43; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: background 0.2s;") Cofnij blokadę
             
-            if user && (String(post.authorId) === String(user.id) || String(post.authorId) === String(user._id))
+            if user && user.isOwnerOf(post)
                 .author-actions(style="margin-left: auto; display: flex; gap: 12px; align-items: center;" onclick="event.stopPropagation();")
                     button.edit-btn(onclick=`window.toggleInlineEdit('${post._id}', event);` style="background:none; border:none; color:#1877f2; cursor:pointer; font-weight:600; font-size:13px; display:flex; align-items:center; gap:4px;")
                         i.fa-solid.fa-pen(title="Edytuj post")

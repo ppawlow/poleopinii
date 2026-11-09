@@ -1,0 +1,10 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#a855f7'
+
+block email-body
+  h2(style="color: #a855f7; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Spełnienie kryteriów formalnych: Kandydat na Redaktora
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{userName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 16px 0;") Twoja twórczość publicystyczna zgromadziła łącznie #[strong #{totalLikes} polubień] społeczności. Tym samym spełniłeś wymóg formalny regulaminu i dołączyłeś do grona **Kandydatów na Redaktora**.
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 0 0;") Twoja kandydatura została przekazana do wewnętrznego Pokoju Narad Kolegium Redakcyjnego, gdzie zespół dokona rzetelnej, manualnej oceny merytorycznej Twojej publicystyki w drodze tajnego głosowania. O ostatecznej decyzji poinformujemy Cię niezwłocznie.

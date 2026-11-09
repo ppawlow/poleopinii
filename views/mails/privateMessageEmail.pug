@@ -1,0 +1,24 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#1877f2'
+
+block email-body
+  div(style="background-color: #fff3f3; border: 1px solid #f5c6cb; padding: 12px; border-radius: 6px; font-size: 13px; color: #bc2525; font-weight: bold; line-height: 1.5; margin-bottom: 20px;")
+    | Ostrzeżenie przed wyłudzeniami (Anti-Phishing):#[br]
+    span(style="font-weight: normal; color: #555;") Wiadomość została wygenerowana przez zewnętrznego użytkownika platformy. Administracja serwisu nigdy nie prosi o podawanie haseł ani prywatnych danych autoryzacyjnych w wiadomościach e-mail.
+    
+  h3(style="color: #1c1e21; margin-top: 0; font-size: 18px; font-weight: 700; margin-bottom: 4px;") Otrzymałeś nową wiadomość prywatną
+  p(style="font-size: 13px; color: #42b72a; font-weight: bold; margin-top: 0; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.5px;") Zweryfikowany profil nadawcy
+  
+  p(style="font-size: 14px; color: #65676b; margin-bottom: 12px;") Nadawca: #[strong #{senderDisplayName}] (Adres nadawcy: #{senderEmail})
+  
+  div(style="font-size: 15px; color: #050505; white-space: pre-wrap; background-color: #f0f2f5; padding: 16px; border-radius: 6px; border: 1px solid #e4e6eb; line-height: 1.5; margin-bottom: 20px;")
+    | !{messageText}
+    
+  p(style="font-size: 13px; color: #65676b; line-height: 1.5; margin-bottom: 16px;") Aby odpowiedzieć bezpośrednio, użyj funkcji "Odpowiedz" (Reply) w swoim programie pocztowym. Odpowiedź trafi bezpośrednio na prywatną skrzynkę nadawcy.
+  
+  table(cellpadding="0" cellspacing="0" border="0")
+    tr
+      td
+        a(href=senderProfileUrl style="display: inline-block; background-color: #1877f2; color: #ffffff; font-weight: bold; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-size: 13.5px;") Zobacz profil nadawcy

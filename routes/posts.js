@@ -3,6 +3,7 @@ const path = require("path");
 const fsPromises = require("fs").promises;
 const { ObjectId } = require("mongodb");
 const mailer = require("../tools/mailer");
+const { renderPartial } = require("../tools/pug2html"); 
 
 const {
   User,
@@ -125,10 +126,8 @@ async function getId(req, res) {
       .lean();
 
     const debatePosts = abuseAndReplyPostsRaw.filter((p) => !p.isAbuseReport);
-    const userIsAdmin = isAdminId(req.session?.user?.id) || false;
+    const userIsAdmin = isAdminId(req.dbUser?.id) || false;
 
-    // KRYTYCZNA POPRAWKA BEZPIECZEŃSTWA: Całkowite wyczyszczenie danych sygnalisty (Biała lista)
-    // Zamiast modyfikacji przez undefined, tworzymy całkowicie nowy, bezpieczny obiekt
     const abuseReports = abuseAndReplyPostsRaw
       .filter((p) => p.isAbuseReport)
       .map((report) => {
@@ -366,15 +365,16 @@ async function postCreate(req, res) {
     };
 
     const { getProfileUrl, urlAliases } = res.locals;
-    const isUserAdmin =
-      typeof isAdminId === "function" ? isAdminId(dbUser._id) : false;
+    const isUserAdmin = typeof isAdminId === "function" ? isAdminId(dbUser._id) : false;
 
-    return req.app.render(
-      "partials/post-card",
-      {
+    // ======================================================
+    // ZCENTRALIZOWANE RENDEROWANIE Z UŻYCIEM PUG2HTML
+    // ======================================================
+    try {
+      const htmlSnippet = renderPartial("post-card", {
         post: renderPost,
         csrfToken: req.csrfToken(),
-        user: req.session.user,
+        user: res.locals.user,
         userBlocks: (dbUser.blocks || []).map((id) => id.toString()),
         hasPermission,
         isAdmin: isUserAdmin,
@@ -382,40 +382,31 @@ async function postCreate(req, res) {
         getProfileUrl,
         urlAliases,
         SERVICE_NAME,
-      },
-      (renderErr, htmlSnippet) => {
-        if (renderErr) {
-          if (visibility === "public") {
-            res.write(
-              `data: ${JSON.stringify({ status: "error", error: "Błąd kompilacji szablonu interfejsu." })}\n\n`,
-            );
-            return res.end();
-          }
-          return res
-            .status(500)
-            .send("Błąd renderowania komponentu interfejsu.");
-        }
+      });
 
-        if (visibility === "public") {
-          res.write(
-            `data: ${JSON.stringify({ status: "success", html: htmlSnippet })}\n\n`,
-          );
-          return res.end();
-        }
-        // ======================================================
-        // TRANSMISJA WEBSOCKET DLA POSTÓW REDAKCYJNYCH (EDITORS)
-        // ======================================================
-        if (visibility === "editors") {
-          const broadcastFn = req.app.get("wsBroadcastEditorPost");
-          if (typeof broadcastFn === "function") {
-            broadcastFn(htmlSnippet, dbUser._id);
-          }
-        }
-        // =======================================================
+      if (visibility === "public") {
+        res.write(`data: ${JSON.stringify({ status: "success", html: htmlSnippet })}\n\n`);
+        return res.end();
+      }
 
-        return res.json({ success: true, html: htmlSnippet });
-      },
-    );
+      // TRANSMISJA WEBSOCKET DLA POSTÓW REDAKCYJNYCH (EDITORS)
+      if (visibility === "editors") {
+        const broadcastFn = req.app.get("wsBroadcastEditorPost");
+        if (typeof broadcastFn === "function") {
+          broadcastFn(htmlSnippet, dbUser._id);
+        }
+      }
+
+      return res.json({ success: true, html: htmlSnippet });
+
+    } catch (renderErr) {
+      console.error("[PUG RENDER ERROR] Błąd kompilacji post-card w postCreate:", renderErr);
+      if (visibility === "public") {
+        res.write(`data: ${JSON.stringify({ status: "error", error: "Błąd kompilacji szablonu interfejsu." })}\n\n`);
+        return res.end();
+      }
+      return res.status(500).send("Błąd renderowania komponentu interfejsu.");
+    }
   } catch (err) {
     console.error("Błąd tworzenia posta:", err);
     if (visibility === "public") {
@@ -428,13 +419,12 @@ async function postCreate(req, res) {
   }
 }
 
-
 async function postEdit(req, res) {
   const { title, content, visibility } = req.body;
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (String(post.authorId) !== String(req.session.user.id)) {
+    if (!post.isOwnedBy(req.dbUser)) {
       return res.status(403).send("Brak uprawnień do edycji tego wpisu.");
     }
 
@@ -580,7 +570,7 @@ async function postRevert(req, res) {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (String(post.authorId) !== String(req.session.user.id)) {
+    if (!post.isOwnedBy(req.dbUser)) {
       return res.status(403).send("Brak uprawnień do modyfikacji tego zasobu.");
     }
     post.visibility = "private";
@@ -604,7 +594,7 @@ async function postComment(req, res) {
     if (!hasPermission(dbUser, post.visibility, "COMMENT")) {
       const fallbackMsg = post.visibility === 'editors'
         ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
-        : "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
+        : "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konto. Dowiedz się więcej";
       return sendAccessDenied(req, res, fallbackMsg);
     }
 
@@ -679,48 +669,61 @@ async function postComment(req, res) {
     await createLog(req, `Dodano komentarz do posta użytkownika ${post.author}`);
     const { getProfileUrl, urlAliases } = res.locals;
 
+    // Pobieramy i mapujemy całą historyczną oraz aktualną listę komentarzy z bazy danych
+    // Wstrzykujemy role oraz statusy pełnej weryfikacji dla każdego z autorów w locie
+    const mappedComments = await Promise.all(post.comments.map(async (c) => {
+      const commentAuthorDoc = await User.findById(c.authorId).select("role isVerified verificationTransferStatus");
+      return {
+        _id: c._id,
+        content: c.content,
+        likedBy: c.likedBy || [],
+        createdAt: c.createdAt,
+        authorId: c.authorId,
+        authorAvatar: c.authorAvatar,
+        author: c.author,
+        role: commentAuthorDoc ? commentAuthorDoc.role : "user",
+        isFullyVerified: commentAuthorDoc ? (commentAuthorDoc.isVerified === true && commentAuthorDoc.verificationTransferStatus === "approved") : false
+      };
+    }));
+    
+    post.comments = mappedComments; 
     const renderContext = {
-      post: {
-        _id: post._id,
-        comments: [
-          {
-            _id: addedComment._id,
-            content: addedComment.content,
-            author: dbUser.displayName,
-            authorId: dbUser._id,
-            authorAvatar: dbUser.avatarUrl || DEFAULT_ASSETS.avatar,
-            likedBy: [],
-            role: dbUser.role, // Przekazanie roli redaktora dla odznaki w komentarzu
-            isFullyVerified: dbUser.isVerified === true && dbUser.verificationTransferStatus === "approved",
-          },
-        ],
-      },
+      post,
       csrfToken: req.csrfToken(),
-      user: req.session.user,
+      user: res.locals.user,
+      userBlocks: (dbUser.blocks || []).map((id) => id.toString()), // <--- DODATKOWO: Przekazujemy listę blokad dla widoku
       getProfileUrl,
       urlAliases,
       hasPermission,
       DEFAULT_ASSETS,
     };
+    
+  // ======================================================
+  // ZCENTRALIZOWANE RENDEROWANIE Z UŻYCIEM PUG2HTML
+  // ======================================================
+  try {
+    const htmlSnippet = renderPartial("post-comments", renderContext);
 
-    return req.app.render(
-      "partials/post-comments",
-      renderContext,
-      (renderErr, htmlSnippet) => {
-        if (renderErr) return res.status(500).send("Błąd renderowania komentarza.");
-        // ==========================================================
-        // TRANSMISJA WEBSOCKET DLA KOMENTARZY REDAKCYJNYCH (EDITORS)
-        // ==========================================================
-        if (post.visibility === "editors") {
-          const broadcastCommentFn = req.app.get("wsBroadcastEditorComment");
-          if (typeof broadcastCommentFn === "function") {
-            broadcastCommentFn(htmlSnippet, post._id, dbUser._id);
-          }
-        }
-        // ==========================================================
-        return res.json({ success: true, html: htmlSnippet });
-      },
-    );
+    // TRANSMISJA WEBSOCKET DLA KOMENTARZY REDAKCYJNYCH (EDITORS)
+    if (post.visibility === "editors") {
+      const broadcastCommentFn = req.app.get("wsBroadcastEditorComment");
+      if (typeof broadcastCommentFn === "function") {
+        broadcastCommentFn(htmlSnippet, post._id, dbUser._id);
+      }
+    }
+
+    // POPRAWKA: Jawne sprawdzenie czy żądanie oczekuje odpowiedzi JSON (XHR / Fetch)
+    if (req.xhr || req.headers.accept?.includes("json") || req.headers["x-requested-with"] === "XMLHttpRequest") {
+      return res.json({ success: true, html: htmlSnippet });
+    }
+
+    // Tradycyjny fallback w przypadku braku AJAXa (przekierowanie z kotwicą do dyskusji)
+    return res.redirect(`/posts/${post._id}#discussion-heading-${post._id}`);
+
+    } catch (renderErr) {
+      console.error("[PUG RENDER ERROR] Błąd kompilacji post-comments w postComment:", renderErr);
+      return res.status(500).send("Błąd renderowania komentarza.");
+    }
   } catch (err) {
     console.error("Błąd podczas dodawania komentarza:", err);
     return res.status(500).send("Błąd serwera.");
@@ -761,7 +764,7 @@ async function postLike(req, res) {
       }
     }
 
-    const userIdStr = String(req.session.user.id);
+    const userIdStr = String(req.dbUser.id);
     const index = post.likedBy.indexOf(userIdStr);
     let actionText = "";
 
@@ -786,7 +789,7 @@ async function postLike(req, res) {
     await createLog(req, actionText, dbUser.email);
     
     // System awansów na redaktora (100 gwiazdek) działa wyłącznie dla postów publicznych
-    if (post.visibility === "public" && postAuthor && String(dbUser._id) !== String(postAuthor._id)) {
+    if (post.visibility === "public" && postAuthor && !post.isOwnedBy(dbUser)) {
       const freshAuthorLikes = await countAuthorPublicLikes(postAuthor._id);
       if (freshAuthorLikes === 100 && postAuthor.role === "user") {
         await createLog(req, `[KANDYDATURA NA REDAKTORA] Użytkownik ${postAuthor.name} osiągnął limit 100 lajków. Oczekuje na decyzję Kolegium.`, "System-Awansów");
@@ -810,49 +813,44 @@ async function getLoadMore(req, res) {
   try {
     const skip = parseInt(req.query.skip) || 0;
     const limit = 5;
+    
     const { posts, totalPosts } = await getScopedPosts(req, {
       scope: "home",
       skip,
       limit,
     });
+    
     const hasMore = totalPosts > skip + limit;
-    const app = req.app;
     let htmlOutput = "";
 
     const { getProfileUrl, urlAliases } = res.locals;
+    const isUserAdmin = req.dbUser && typeof isAdminId === "function" ? isAdminId(req.dbUser._id) : false;
 
     for (const post of posts) {
+      // Przygotowanie pełnego kontekstu tożsamości i uprawnień zgodnego z wymaganiami partials/post-card.pug
       const renderContext = {
         post,
         csrfToken: req.csrfToken(),
-        user:
-          req.session && req.session.user
-            ? {
-                id: req.session.user.id,
-                name: req.session.user.name,
-                avatarUrl: req.session.user.avatarUrl,
-                isFullyVerified: req.session.user.isFullyVerified || false,
-              }
-            : null,
+        user: res.locals.user, // Znormalizowany bezpieczny profil z middleware security.js
         getProfileUrl,
         urlAliases,
         hasPermission: hasPermission,
+        isAdmin: isUserAdmin,
         DEFAULT_ASSETS: DEFAULT_ASSETS,
+        SERVICE_NAME: SERVICE_NAME
       };
-      const htmlSnippet = await new Promise((resolve, reject) => {
-        app.render("partials/post-card", renderContext, (err, html) => {
-          if (err) return reject(err);
-          resolve(html);
-        });
-      });
+
+      // Zunifikowane i bezpieczne renderowanie partiala bez jawnych obietnic i callbacków
+      const htmlSnippet = renderPartial("post-card", renderContext);
       htmlOutput += htmlSnippet;
     }
-    res.json({ html: htmlOutput, hasMore: hasMore });
+    
+    return res.json({ html: htmlOutput, hasMore: hasMore });
   } catch (err) {
-    res.status(500).json({ error: "Błąd ładowania" });
+    console.error("Krytyczny błąd asynchronicznego stronicowania postów:", err);
+    return res.status(500).json({ error: "Błąd ładowania kolejnej paczki wpisów." });
   }
 }
-// routes/posts.js
 
 async function postDelete(req, res) {
   if (!ObjectId.isValid(req.params.id)) {
@@ -868,8 +866,7 @@ async function postDelete(req, res) {
 
     // Autoryzacja właściciela wpisu
     if (
-      !post.authorId ||
-      String(post.authorId) !== String(req.session.user.id)
+      !post.authorId || !post.isOwnedBy(req.session.user)
     ) {
       return res
         .status(403)
@@ -931,7 +928,7 @@ async function postDeleteImage(req, res) {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (String(post.authorId) !== String(req.session.user.id)) {
+    if (!post.isOwnedBy(req.session.user)) {
       return res.status(403).send("Brak uprawnień do edycji tego zasobu.");
     }
     if (post.visibility === "public") {
@@ -969,7 +966,7 @@ async function postAppeal(req, res) {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (String(post.authorId) !== String(req.session.user.id)) {
+    if (!post.isOwnedBy(req.session.user)) {
       return res.status(403).send("Brak uprawnień do tego zasobu.");
     }
 

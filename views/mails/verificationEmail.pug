@@ -1,0 +1,16 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#1877f2'
+
+block email-body
+  h2(style="color: #1c1e21; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Weryfikacja konta i aktywacja profilu
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{userName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 20px 0;") Dziękujemy za rejestrację. Aby zweryfikować swój adres e-mail i ustawić bezpieczne hasło dostępu, kliknij w poniższy przycisk:
+  
+  table(cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;")
+    tr
+      td
+        a(href=verificationLink style="display: inline-block; background-color: #1877f2; color: #ffffff; font-weight: bold; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 15px;") Aktywuj konto i ustaw hasło
+
+  p(style="font-size: 13px; color: #65676b; line-height: 1.5; margin: 20px 0 0 0;") W panelu konta będzie czekać na Ciebie opcjonalny, drugi etap weryfikacji tożsamości (zwrotny przelew 1 PLN), który odblokowuje pełne możliwości publicystyczne i chroni społeczność przed botami.

@@ -1,0 +1,13 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#bc2525'
+
+block email-body
+  h2(style="color: #bc2525; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Weryfikacja tożsamości odrzucona
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Dzień dobry #[strong #{userName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Przesłany wniosek uwierzytelniający został odrzucony z wynikiem negatywnym. Rachunek bankowy, z którego nadszedł przelew, jest już przypisany do innego profilu w systemie. Regulamin zabrania tworzenia multikont przez tę samą osobę fizyczną.
+  if adminComment && adminComment.trim().length > 0
+    p(style="font-size: 14px; font-weight: bold; color: #1c1e21; margin: 16px 0 6px 0;") Dodatkowe wyjaśnienie administratora:
+    div(style="background-color: #f8f9fa; padding: 12px; border-radius: 6px; border-left: 4px solid #bc2525; color: #555; font-size: 14px; line-height: 1.5; margin-bottom: 16px;")
+      | #{adminComment}

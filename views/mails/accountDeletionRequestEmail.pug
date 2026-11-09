@@ -1,0 +1,18 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#bc2525'
+
+block email-body
+  h2(style="color: #bc2525; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Żądanie trwałe usunięcia profilu (RODO)
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{userName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Zarejestrowaliśmy formalny wniosek o realizację prawa do bycia zapomnianym i skasowanie danych osobowych z bazy danych aplikacji.
+  p(style="color: #bc2525; font-weight: bold; font-size: 15px; margin: 16px 0;") Uwaga: Ta operacja jest całkowicie nieodwracalna. Spowoduje bezpowrotne wymazanie artykułów, komentarzy i struktury relacji społecznościowych.
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 20px 0;") Jeśli podtrzymujesz swoją decyzję, kliknij w poniższy przycisk bezpieczeństwa, aby sfinalizować usuwanie:
+  
+  table(cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 20px;")
+    tr
+      td
+        a(href=deletionLink style="display: inline-block; background-color: #bc2525; color: #ffffff; font-weight: bold; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-size: 14px;") Potwierdzam - Usuń trwale moje konto
+        
+  p(style="font-size: 12px; color: #65676b; line-height: 1.5; margin: 20px 0 0 0;") Odnośnik wygasa automatycznie po upływie 24 godzin. Jeśli wniosek nie został zainicjowany przez Ciebie, zignoruj tę wiadomość.

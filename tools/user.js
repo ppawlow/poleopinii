@@ -87,6 +87,10 @@ userSchema.virtual("isPublicAllowed").get(function () {
   return this.isEditor || this.isFullyVerified
 });
 
+userSchema.methods.isOwnerOf = function (post) {
+  if (!post || !post.authorId) return false;
+  return this._id.equals(post.authorId);
+};
 
 userSchema
   .virtual("token")

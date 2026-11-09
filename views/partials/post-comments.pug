@@ -1,5 +1,3 @@
-//- views/partials/post-comments.pug
-
 //- Kontener przeznaczony na listę komentarzy (będzie odświeżany asynchronicznie)
 .comments-list-container(id=`comments-list-${post._id}`)
     if post.comments && post.comments.length > 0
@@ -52,13 +50,13 @@
                             else
                                 button.restricted-feature-trigger(type="button" data-reason="comment_public" style="background: none; border: none; color: inherit; font-weight: bold; cursor: pointer; font-size: inherit; padding: 0;") Odpowiedz
                             
-                            if String(comment.authorId) === String(user.id)
+                            if user && (user._id.equals(comment.authorId) || user.id === String(comment.authorId))
                                 button(type="button" onclick=`toggleCommentEdit('${comment._id}')` style="background: none; border: none; color: inherit; cursor: pointer; font-size: inherit; padding: 0;") Edytuj
                             
-                            if String(comment.authorId) === String(user.id) || String(post.authorId) === String(user.id)
-                                form(action=`/posts/${post._id}/comments/${comment._id}/delete` method="POST" style="display: inline; margin: 0;" data-confirm="Czy na pewno chcesz usunąć ten komentarz?")
-                                    input(type="hidden" name="_csrf" value=csrfToken)
-                                    button(type="submit" style="background: none; border: none; color: #bc2525; cursor: pointer; font-size: inherit; padding: 0;") Usuń
+                                if user.isOwnerOf(post) || user._id.equals(comment.authorId) || user.id === String(comment.authorId)
+                                    form(action=`/posts/${post._id}/comments/${comment._id}/delete` method="POST" style="display: inline; margin: 0;" data-confirm="Czy na pewno chcesz usunąć ten komentarz?")
+                                        input(type="hidden" name="_csrf" value=csrfToken)
+                                        button(type="submit" style="background: none; border: none; color: #bc2525; cursor: pointer; font-size: inherit; padding: 0;") Usuń
                 
                         if comment.likedBy && comment.likedBy.length > 0
                             span(style="color: #1877f2; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;")
@@ -68,7 +66,7 @@
         //- Fallback wizualny dla pustej dyskusji (płynnie usuwany przez JS po doklejeniu pierwszego komentarza WS/AJAX)
         .no-comments-placeholder(id=`no-comments-notice-${post._id}` style="font-size: 13px; color: #65676b; font-style: italic; padding: 8px 12px; margin-bottom: 12px;") 💬 Brak komentarzy. Rozpocznij dyskusję jako pierwszy!
 
-//- POPRAWKA: Formularz wyciągnięty na sam dół - teraz ładuje się ZAWSZE, gdy użytkownik jest zalogowany
+//- KRYTYCZNA POPRAWKA: Formularz posiada teraz poprawnie zadeklarowane klasy (.comment-form) niezbędne dla AJAX-a
 if user
     if hasPermission(user, post.visibility, 'COMMENT') && (!userBlocks || !userBlocks.includes(String(post.authorId)))
         form.comment-form.comment-submit-on-enter(action=`/posts/${post._id}/comment` method="POST" style="display: flex; align-items: flex-end; gap: 8px; width: 100%; margin-top: 12px;")

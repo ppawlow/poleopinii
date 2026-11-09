@@ -1,0 +1,21 @@
+- var borderTopColor = borderTopColor || '#1877f2'
+block email-config
+
+doctype html
+html(lang="pl")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+  body(style="margin: 0; padding: 0; background-color: #f0f2f5; font-family: sans-serif; -webkit-text-size-adjust: 100%;")
+    table(cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f0f2f5; padding: 20px 12px;")
+      tr
+        td(align="center")
+          table(cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #ffffff; border: 1px solid #e4e6eb; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);")
+            if borderTopColor
+              tr
+                td(style=`background-color: ${borderTopColor}; height: 4px; line-height: 4px; font-size: 1px;`) &nbsp;
+            
+            tr
+              td(style="padding: 24px; background-color: #ffffff;")
+                block email-body
+                include footer.pug

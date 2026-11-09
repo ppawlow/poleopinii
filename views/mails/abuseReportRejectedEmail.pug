@@ -1,0 +1,9 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#65676b'
+
+block email-body
+  h2(style="color: #1c1e21; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Rozstrzygnięcie zgłoszenia nadużycia
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Dzień dobry,
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 0 0;") Informujemy, że Twoje zgłoszenie nadużycia dotyczące wpisu #[strong "#{originalTitle}"] zostało szczegółowo przeanalizowane przez zespół moderacji. Po zbadaniu kontekstu oraz argumentacji stron, zgłoszenie uznano za nieuzasadnione i zostało ono oficjalnie odrzucone. Wpis pozostaje publicznie dostępny bez restrykcji.

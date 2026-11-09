@@ -1,0 +1,10 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#146c43'
+
+block email-body
+  h2(style="color: #146c43; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Wynik rozpatrzenia Twojego zgłoszenia
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Dzień dobry,
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 16px 0;") Dziękujemy za dbanie o porządek w serwisie. Informujemy, że zgłoszenie nadużycia dotyczące wpisu #[strong "#{originalTitle}"] zostało zamknięte decyzją moderatora.
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 0 0;") Po dokładnym audycie, zarzuty uznano za zasadne. Na artykuł nałożono restrykcje widoczności, a autor utracił przywileje ponownego upublicznienia zaskarżonych treści.

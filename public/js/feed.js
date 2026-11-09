@@ -267,10 +267,7 @@ window.prepareEditSubmit = async function (event, postId) {
 
             if (data.status === "error") {
               if (loadingModal) loadingModal.style.display = "none";
-              const formattedReport = data.report
-                ? `<hr style="border:0; border-top:1px solid #dddfe2; margin:14px 0;"><div style="background:#fff3f3; padding:14px; border-radius:6px; border-left:4px solid #bc2525; font-size:13px; text-align:left; color:#1c1e21; white-space:pre-wrap; font-family:sans-serif; line-height:1.5;"><strong>📋 Raport AI:</strong><br><br>${data.report}</div>`
-                : "";
-              await window.Alert(`<div><p><strong>⚠️ Błąd:</strong> ${data.error}</p>${formattedReport}</div>`, "🛡️ Ochrona AI");
+              await window.Alert(data.error, "🛡️ Ochrona AI");
               return;
             }
 
@@ -936,100 +933,94 @@ function initEditorsRoomWebSocket() {
     console.log("[WebSocket] Połączono ze strumieniem dyskusji krytycznych Kolegium Redakcyjnego.");
   };
 
-  socket.onmessage = function (event) {
-    try {
-      const data = JSON.parse(event.data);
+// public/js/feed.js -> Fragment wewnątrz funkcji initEditorsRoomWebSocket()
 
-      // ===========================================================
-      // 1. OBSŁUGA NOWYCH POSTÓW REDAKCYJNYCH W CZASIE RZECZYWISTYM
-      // ===========================================================
-      if (data.type === "NEW_EDITOR_POST" && data.html) {
-        const postsWrapper = document.getElementById("accordion-posts-wrapper");
-        
-        if (postsWrapper) {
-          // Usuwamy fallback o braku postów, jeśli był widoczny
-          const noPostsFallback = postsWrapper.querySelector(".no-posts");
-          if (noPostsFallback) noPostsFallback.remove();
+socket.onmessage = function (event) {
+  try {
+    const data = JSON.parse(event.data);
 
-          // Tworzymy tymczasowy kontener, aby nadać nowemu elementowi style animacji wejściowej
-          const tempContainer = document.createElement("div");
-          tempContainer.innerHTML = data.html;
-          const freshPostCard = tempContainer.firstElementChild;
+    // ===========================================================
+    // 1. OBSŁUGA NOWYCH POSTÓW REDAKCYJNYCH W CZASIE RZECZYWISTYM
+    // ===========================================================
+    if (data.type === "NEW_EDITOR_POST" && data.html) {
+      const postsWrapper = document.getElementById("accordion-posts-wrapper");
+      if (postsWrapper) {
+        const noPostsFallback = postsWrapper.querySelector(".no-posts");
+        if (noPostsFallback) noPostsFallback.remove();
 
-          if (freshPostCard) {
-            freshPostCard.style.opacity = "0";
-            freshPostCard.style.transform = "translateY(-20px)";
-            freshPostCard.style.transition = "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+        const tempContainer = document.createElement("div");
+        tempContainer.innerHTML = data.html;
+        const freshPostCard = tempContainer.firstElementChild;
 
-            // Wstrzykujemy kartę posta na samą górę osi czasu w locie
-            postsWrapper.insertBefore(freshPostCard, postsWrapper.firstChild);
+        if (freshPostCard) {
+          freshPostCard.style.opacity = "0";
+          freshPostCard.style.transform = "translateY(-20px)";
+          freshPostCard.style.transition = "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
 
-            // Triggerujemy reflow i odpalamy sprzętową animację wejściową (GPU)
-            requestAnimationFrame(() => {
-              freshPostCard.style.opacity = "1";
-              freshPostCard.style.transform = "translateY(0)";
-            });
+          postsWrapper.insertBefore(freshPostCard, postsWrapper.firstChild);
 
-            // Re-inicjalizujemy słuchacze zdarzeń dla rozwijania nowo przybyłego akordeonu
-            if (typeof window.refreshAccordionListeners === "function") {
-              window.refreshAccordionListeners();
-            }
-          }
-        }
-      }
+          requestAnimationFrame(() => {
+            freshPostCard.style.opacity = "1";
+            freshPostCard.style.transform = "translateY(0)";
+          });
 
-      // =========================================================================
-      // 2. OBSŁUGA KOMENTARZY REDAKCYJNYCH W CZASIE RZECZYWISTYM (REAL-TIME CHAT)
-      // =========================================================================
-      if (data.type === "NEW_EDITOR_COMMENT" && data.html && data.postId) {
-        const postCard = document.getElementById(`post-${data.postId}`);
-        const targetCommentsList = document.getElementById(`comments-list-${data.postId}`);
-        
-        if (targetCommentsList && postCard) {
-          // POPRAWKA: Ukrywamy placeholder informacyjny "Brak komentarzy", jeśli istniał
-          const emptyNotice = document.getElementById(`no-comments-notice-${data.postId}`);
-          if (emptyNotice) emptyNotice.remove();
-
-          const tempParser = document.createElement("div");
-          tempParser.innerHTML = data.html;
-          const freshCommentCard = tempParser.querySelector(".comment-card");
-          
-          if (freshCommentCard) {
-            freshCommentCard.style.opacity = "0";
-            freshCommentCard.style.transition = "opacity 0.3s ease-out";
-            targetCommentsList.appendChild(freshCommentCard);
-            
-            requestAnimationFrame(() => {
-              freshCommentCard.style.opacity = "1";
-            });
-          }
-
-          // Dynamiczne przeliczanie liczników...
-          const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
-
-          // Dolny pasek statystyk stopki z walidacją gramatyczną liczebnika
-          const commentsCountEl = document.getElementById(`comments-text-${data.postId}`);
-          if (commentsCountEl && typeof liczebnik === "function") {
-            commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
-          }
-
-          // Nagłówek dyskusji wewnątrz rozwijanego akordeonu
-          const discussionHeadingEl = document.getElementById(`discussion-heading-${data.postId}`);
-          if (discussionHeadingEl) {
-            discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
-          }
-
-          // Re-inicjalizacja słuchaczy edycji i odpowiedzi dla nowo przybyłego komentarza
           if (typeof window.refreshAccordionListeners === "function") {
             window.refreshAccordionListeners();
           }
         }
       }
-
-    } catch (err) {
-      console.error("[WebSocket] Błąd przetwarzania pakietu danych czasu rzeczywistego:", err);
     }
-  };
+
+    // =========================================================================
+    // 2. SKORYGOWANA OBSŁUGA KOMENTARZY W CZASIE RZECZYWISTYM (ZGODNA Z RENDERPARTIAL)
+    // =========================================================================
+    if (data.type === "NEW_EDITOR_COMMENT" && data.html && data.postId) {
+      const postCard = document.getElementById(`post-${data.postId}`);
+      const commentsWrapper = document.getElementById(`comments-wrapper-${data.postId}`);
+      
+      if (commentsWrapper && postCard) {
+        const targetBlock = commentsWrapper.querySelector(".article-comments-block");
+        
+        if (targetBlock) {
+          // Zabezpieczenie: Sprawdzamy czy bieżący użytkownik aktualnie nie trzyma focusu na polu tekstowym
+          const activeInput = targetBlock.querySelector(`#comment-input-field-${data.postId}`);
+          const isUserTyping = activeInput === document.activeElement;
+          const currentTypingValue = activeInput ? activeInput.value : "";
+
+          // Podmieniamy zawartość bloku dyskusyjnego
+          targetBlock.innerHTML = data.html;
+
+          // Przywracamy stan pola tekstowego jeśli redaktor był w trakcie pisania
+          if (isUserTyping) {
+            const freshInput = targetBlock.querySelector(`#comment-input-field-${data.postId}`);
+            if (freshInput) {
+              freshInput.value = currentTypingValue;
+              freshInput.focus();
+            }
+          }
+        }
+
+        const freshCommentsCount = commentsWrapper.querySelectorAll(".comment-card").length;
+
+        const commentsCountEl = document.getElementById(`comments-text-${data.postId}`);
+        if (commentsCountEl && typeof liczebnik === "function") {
+          commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+        }
+
+        const discussionHeadingEl = document.getElementById(`discussion-heading-${data.postId}`);
+        if (discussionHeadingEl) {
+          discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
+        }
+
+        if (typeof window.refreshAccordionListeners === "function") {
+          window.refreshAccordionListeners();
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[WebSocket] Błąd przetwarzania pakietu danych czasu rzeczywistego:", err);
+  }
+};
 
   socket.onclose = () => {
     console.warn("[WebSocket] Połączenie zamknięte. Próba ponownego nawiązania za 5 sekund...");

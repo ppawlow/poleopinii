@@ -5,7 +5,7 @@ const sanitizeHtml = require("sanitize-html");
 const { POST_VISIBILITY, PASSWORD_REGEX, ADMINS } = require("../config");
 // const { isAliasReserved } = require("./security");
 const { verifyBufferSignature } = require("./db");
-
+const { renderMessage } = require("./pug2html");
 const tools = { validationResult };
 module.exports = tools;
 
@@ -169,6 +169,7 @@ tools.checkContentFacts = async function (ai, title, content) {
 /**
  * Centralny Koordynator Walidacji Publicznej (Zostaje TYLKO Etap 1: Bezpieczeństwo)
  */
+
 tools.validatePublicContent = async function (req, title, content, res = null) {
   try {
     const { GoogleGenAI } = require("@google/genai");
@@ -190,9 +191,16 @@ tools.validatePublicContent = async function (req, title, content, res = null) {
       if (dbUser && typeof dbUser.updateOne === "function") {
         await dbUser.updateOne({ $inc: { aiBlockedSafetyCount: 1 } });
       }
+
+      // NOWOŚĆ: Generujemy dynamiczny kod HTML z szablonu wiadomości przed odesłaniem
+      const compiledHtmlHtml = renderMessage("aiRejection", {
+        reason: safetyData.result.reason || "Treść odrzucona przez filtry bezpieczeństwa.",
+        report: safetyData.result.report || null // Przekazujemy raport, o ile istnieje
+      });
+
       return {
         approved: false,
-        reason: safetyData.result.reason || "Treść odrzucona przez filtry bezpieczeństwa."
+        reason: compiledHtmlHtml // <--- Zwracamy skompilowany szablon HTML
       };
     }
 
@@ -210,9 +218,16 @@ tools.validatePublicContent = async function (req, title, content, res = null) {
 
   } catch (err) {
     console.error("Krytyczny błąd modułu walidacji AI:", err);
+    
+    // Zapewniamy ładny fallback dla błędu serwera również w formacie Pug
+    const errorHtml = renderMessage("aiRejection", {
+      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści.",
+      report: null
+    });
+
     return {
       approved: false,
-      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści."
+      reason: errorHtml
     };
   }
 };

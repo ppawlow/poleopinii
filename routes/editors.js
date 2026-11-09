@@ -5,6 +5,7 @@ const { User, getScopedPosts, TopicOfTheDay, createLog } = require("../tools/db"
 const { accessControl } = require("../tools/security");
 const { AI_CONFIG } = require("../config");
 const {validateId} = require("../tools/validation");
+const { renderMessage } = require("../tools/pug2html"); 
 
 module.exports = express.Router()
   .use(accessControl)
@@ -183,7 +184,7 @@ async function postGenerateArticle(req, res){
 
 // routes/editors.js -> Nowy asynchroniczny endpoint asysty dziennikarskiej
 
-async function postCheck(req, res){
+async function postCheck(req, res) {
   try {
     const { postId } = req.params;
     const { GoogleGenAI } = require("@google/genai");
@@ -194,7 +195,7 @@ async function postCheck(req, res){
     }
 
     // Bezpieczeństwo: Pobieramy post przez getScopedPosts, aby upewnić się,
-    // że redaktor ma prawo go widzieć w swojej bieżącej sesji (public/restricted/editors/własny prywatny)
+    // że redaktor ma prawo go widzieć w swojej bieżącej sesji
     const { posts } = await getScopedPosts(req, {
       scope: "single",
       targetPostId: postId,
@@ -207,10 +208,10 @@ async function postCheck(req, res){
 
     const post = posts[0];
 
-    // Inicjalizacja instancji AI
+    // Inicjalizacja instancji AI Gemini
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: "v1beta" });
     
-    // Uruchamiamy odizolowany moduł fact-checkingu z groundingiem w wyszukiwarce Google
+    // Uruchamiamy odizolowany moduł fact-checkingu z groundingem w wyszukiwarce Google
     const factCheckAnalysis = await checkContentFacts(ai, post.title, post.content);
 
     // Rejestrujemy zapytanie w logu systemowym
@@ -219,10 +220,18 @@ async function postCheck(req, res){
       `[ASYSTA REDAKTORSKA AI] Redaktor ${req.dbUser.name} wywołał fact-checking dla posta o ID: ${post._id} (autor: ${post.author})`
     );
 
+    // =========================================================================
+    // DYNAMICZNA INTEGRACJA Z SILNIKIEM WIDOKÓW (renderMessage)
+    // =========================================================================
+    const compiledReportHtml = renderMessage("factCheckReport", {
+      hasErrors: factCheckAnalysis.result.hasErrors,
+      report: factCheckAnalysis.result.report
+    });
+
     return res.json({
       success: true,
       hasErrors: factCheckAnalysis.result.hasErrors,
-      report: factCheckAnalysis.result.report
+      report: compiledReportHtml // <--- Przesyłamy w pełni ustrukturyzowany, gotowy kod HTML
     });
 
   } catch (err) {

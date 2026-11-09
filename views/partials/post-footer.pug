@@ -10,9 +10,9 @@
         
 .post-actions(style="display: flex; padding: 4px 0; border-bottom: 1px solid #e4e6eb; gap: 8px; flex-wrap: wrap;")
     if user
-        if hasPermission(user, post.visibility, 'LIKE') && (!userBlocks || !userBlocks.includes(String(post.authorId))) && String(user.id) !== String(post.authorId)
+        if hasPermission(user, post.visibility, 'LIKE') && (!userBlocks || !userBlocks.includes(String(post.authorId))) && !user.isOwnerOf(post)
             //- ... (formularz like)
-        else if String(user.id) !== String(post.authorId)
+        else if !user.isOwnerOf(post)
             //- ... (button like restricted)
                 
         button.action-btn.comment-trigger-btn(type="button" onclick=`toggleCommentsVisibility('${post._id}')` title="Napisz komentarz")

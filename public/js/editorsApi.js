@@ -103,28 +103,9 @@ window.executeEditorFactCheck = async function (postId, buttonElement) {
       const data = await response.json();
       if (loadingModal) loadingModal.style.display = "none";
 
-      // Konstruujemy estetyczny układ raportu w zależności od wyniku
-      const statusIcon = data.hasErrors ? "⚠️ Wykryto potencjalne rozbieżności" : "🟢 Dane zweryfikowane pomyślnie";
-      const borderColor = data.hasErrors ? "#bc2525" : "#146c43";
-      const statusColor = data.hasErrors ? "#bc2525" : "#146c43";
-
-      // Budujemy responsywny HTML dla długich raportów
-      const formattedReportHtml = `
-        <div style="text-align: left; font-family: sans-serif; line-height: 1.5; max-width: 100%;">
-          <p style="font-weight: bold; font-size: 15px; margin-bottom: 12px; color: ${statusColor}; display: flex; align-items: center; gap: 6px;">
-            ${statusIcon}
-          </p>
-          <div style="background: #f8f9fa; padding: 14px 16px; border-radius: 6px; border-left: 4px solid ${borderColor}; font-size: 13.5px; white-space: pre-wrap; max-height: 380px; overflow-y: auto; color: #1c1e21; box-sizing: border-box; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);">
-            ${data.report}
-          </div>
-          <p style="font-size: 11.5px; color: #65676b; margin-top: 12px; font-style: italic; line-height: 1.4; border-top: 1px solid #e4e6eb; padding-top: 8px;">
-            *Uwaga: Ten raport ma charakter doradczy i pomocniczy. Artykuł nie został zablokowany ani oznaczony w bazie danych.
-          </p>
-        </div>
-      `;
-
-      // Wyświetlamy gotowy raport w naszym uniwersalnym oknie Alert
-      await window.Alert(formattedReportHtml, "📋 Raport Fact-Checking AI");
+      // NOWOŚĆ: Ponieważ data.report zawiera skompilowany i ustrukturyzowany HTML, 
+      // wstrzykujemy go bezpośrednio bez operacji string-buildera na froncie.
+      await window.Alert(data.report, "📋 Raport Fact-Checking AI");
     } else {
       if (loadingModal) loadingModal.style.display = "none";
       const errText = await response.text();

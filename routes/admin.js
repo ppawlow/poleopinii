@@ -7,11 +7,12 @@ const { User, Post, SystemLog, createLog } = require("../tools/db");
 const { adminControl } = require("../tools/security");
 const { adminApprovalValidationRules } = require("../tools/validation");
 
+const { renderPartial } = require("../tools/pug2html");
 module.exports = express
   .Router()
   .use(adminControl)
   .get("/", main)
-  .get("/logs/api", getLogsApi) // Nowy endpoint dla asynchronicznego selektora daty
+  .get("/logs/api", getLogsApi)
   .post("/:reportId/accept", postAcceptAbuseReport)
   .post("/:reportId/reject", postRejectAbuseReport)
   .post("/posts/:postId/unlock", postUnlockModeratorFlag)
@@ -172,19 +173,16 @@ async function getLogsApi(req, res) {
     const formattedLogs = logs.map(mapLogDocument);
 
     // Renderujemy partial i odsyłamy czysty kod HTML w formacie JSON
-    req.app.render(
-      "partials/admin-logs-rows",
-      { logs: formattedLogs },
-      (err, html) => {
-        if (err)
-          return res.status(500).send("Błąd generowania wierszy tabeli.");
-        res.json({ success: true, count: formattedLogs.length, html });
-      },
-    );
+    try {
+      const html = renderPartial("admin-logs-rows", { logs: formattedLogs });
+      return res.json({ success: true, count: formattedLogs.length, html });
+    } catch (err) {
+      return res.status(500).send("Błąd generowania wierszy tabeli.");
+    }
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "Błąd serwera API logów." });
-  }
+        console.error(err);
+        res.status(500).json({ error: "Błąd serwera API logów." });
+      }
 }
 
 async function postAcceptAbuseReport(req, res) {

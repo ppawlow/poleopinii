@@ -445,8 +445,10 @@ window.executeAccountErasure = async function (event) {
     return;
   }
   if (errorBlock) errorBlock.style.display = "none";
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
   const serializedBody = new URLSearchParams();
   serializedBody.set("confirmEmail", inputField.value.trim());
+  serializedBody.set("_csrf", csrfToken);
   try {
     const response = await fetch("/profile/settings/request-delete", {
       method: "POST",

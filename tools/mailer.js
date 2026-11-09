@@ -1,11 +1,11 @@
 // tools/mailer.js
 const nodemailer = require("nodemailer");
 const { SERVICE_NAME, MAIN_ADMIN_EMAIL } = require("../config");
-const mailTemplates = require("./mailTemplates");
+const { renderMail } = require("./pug2html");
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || "localhost",
-  port: process.env.SMTP_PORT || 1025, // Mailpit / Mailhog dla developmentu
+  port: process.env.SMTP_PORT || 1025,
   auth: {
     user: process.env.SMTP_USER || "user",
     pass: process.env.SMTP_PASS || "password",
@@ -47,22 +47,18 @@ async function startNotification() {
 }
 
 /**
- * 1. Wyślij link aktywacyjny (Rejestracja oraz Ponowna prośba o aktywację)
- */
-/**
  * 1. Wyślij link aktywacyjny (Rejestracja oraz Zmiana adresu e-mail)
  */
 async function sendVerificationEmail(user, req) {
   const targetEmail = user.newEmailPending || user.email;
-
-  // Jeśli użytkownik ma ustawione newEmailPending, to znaczy, że tylko zmienia maila w settings
   const baseRoute = user.newEmailPending ? "verify/email" : "auth/set-password";
   const verificationLink = `${req.protocol}://${req.get("host")}/${baseRoute}/${user.token}`;
 
-  const mailContent = mailTemplates.getVerificationEmail(
-    user.name,
+  const mailContent = renderMail("verificationEmail", {
+    userName: user.name,
     verificationLink,
-  );
+  });
+
   await sendMail(
     targetEmail,
     "Weryfikacja adresu e-mail i aktywacja konta",
@@ -74,15 +70,15 @@ async function sendVerificationEmail(user, req) {
  * 2. Wyślij link resetujący hasło (Zapomniane hasło z ekranu logowania)
  */
 async function sendPasswordResetEmail(user, req) {
-  // POPRAWKA: Łączymy mechanizmy - link kieruje na zunifikowaną trasę /auth/set-password
   const resetLink = `${req.protocol}://${req.get("host")}/auth/set-password/${user.token}`;
-  const mailContent = mailTemplates.getPasswordResetEmail(
-    SERVICE_NAME,
+  const mailContent = renderMail("passwordResetEmail", {
+    serviceName: SERVICE_NAME,
     resetLink,
-  );
+  });
 
   await sendMail(user.email, "Resetowanie/zmiana hasła dostępu", mailContent);
 }
+
 /**
  * 3. Wyślij powiadomienie o nowej polemice (Odpowiedź nowym artykułem)
  */
@@ -92,22 +88,36 @@ async function sendReplyNotificationEmail(
   originalPost,
   savedPost,
 ) {
-  const reportUrl = `${req.protocol}://${req.get("host")}/posts/${savedPost._id}`;
-  const mailContent = mailTemplates.getReplyNotificationEmail(
-    originalPost.author,
-    dbUser.displayName,
-    originalPost.title || "Wpis bez tytułu",
-    savedPost.title,
-    reportUrl,
-    SERVICE_NAME,
-  );
+  const { User } = require("./db");
+  const postUrl = `${req.protocol}://${req.get("host")}/posts/${savedPost._id}`;
+  
+  // Bezpieczne pobranie aktualnych danych adresata bezpośrednio z jego zweryfikowanego profilu
+  const originalAuthorDoc = await User.findById(originalPost.authorId).select("name");
+  const realAuthorName = originalAuthorDoc ? originalAuthorDoc.name : originalPost.author;
 
-  await sendMail(
-    originalPost.authorEmail,
-    `Nowa odpowiedź na Twój wpis "${originalPost.title}"`,
-    mailContent,
-  );
+  const mailContent = renderMail("replyNotificationEmail", {
+    authorName: realAuthorName,
+    senderDisplayName: dbUser.displayName || dbUser.name,
+    originalTitle: originalPost.title || "Wpis bez tytułu",
+    decodedTitle: savedPost.title,
+    postUrl,
+    serviceName: SERVICE_NAME,
+  });
+
+  // Dynamiczne ustalenie adresu e-mail odbiorcy
+  const recipientEmail = originalPost.authorEmail || (originalAuthorDoc ? originalAuthorDoc.email : null);
+
+  if (recipientEmail) {
+    await sendMail(
+      recipientEmail,
+      `Nowa odpowiedź na Twój wpis "${originalPost.title}"`,
+      mailContent,
+    );
+  } else {
+    console.warn(`[SYSTEM MAIL] Przerwano sendReplyNotificationEmail: brak adresu e-mail dla posta o ID: ${originalPost._id}`);
+  }
 }
+
 
 /**
  * 4. Wyślij zgłoszenie nadużycia (Do autora oraz Alert dla Administratora)
@@ -116,74 +126,71 @@ async function sendAbuseReportEmail(originalPost, savedPost, req) {
   const { User } = require("./db");
   const reportUrl = `${req.protocol}://${req.get("host")}/posts/${savedPost._id}`;
 
-  // Dynamiczne pobranie najświeższych danych autora zaskarżonego posta z kolekcji Users
   const targetAuthorDoc = await User.findById(originalPost.authorId);
   if (!targetAuthorDoc || !targetAuthorDoc.email) {
     console.warn(
-      `[SYSTEM MAIL] Przerwano: Nie odnaleziono poprawnego adresu e-mail dla autora o ID: ${originalPost.authorId}`,
+      `[SYSTEM MAIL] Przerwano: Nie odnaleziono adresu e-mail dla autora o ID: ${originalPost.authorId}`,
     );
     return;
   }
 
   const isCopyrightInfringement = savedPost.abuseCategory === "copyright";
-
-  // Wyznaczamy dedykowany temat wiadomości w zależności od stopnia ryzyka
   const authorMailSubject = isCopyrightInfringement
     ? "🚨 PILNE: Zgłoszenie naruszenia praw autorskich Twojego wpisu"
     : "Pilne: Twój wpis został zakwestionowany (Zgłoszenie nadużycia)";
 
-  const authorMailContent = mailTemplates.getAbuseReportEmail(
-    targetAuthorDoc.name,
-    originalPost.title || "Wpis bez tytułu",
-    savedPost.content +
-      (isCopyrightInfringement
-        ? "<br><br><strong>⚠️ ZGŁOSZENIE DOTYCZY ŁAMANIA PRAW AUTORSKICH. Treść może zostać tymczasowo zablokowana prewencyjnie przez Administratora.</strong>"
-        : ""),
+  let appendedContent = savedPost.content;
+  if (isCopyrightInfringement) {
+    appendedContent +=
+      "<br><br><strong>⚠️ ZGŁOSZENIE DOTYCZY ŁAMANIA PRAW AUTORSKICH. Treść może zostać tymczasowo zablokowana prewencyjnie przez Administratora.</strong>";
+  }
+
+  const authorMailContent = renderMail("abuseReportEmail", {
+    authorName: targetAuthorDoc.name,
+    originalTitle: originalPost.title || "Wpis bez tytułu",
+    reportContent: appendedContent,
     reportUrl,
-    SERVICE_NAME,
-  );
+    serviceName: SERVICE_NAME,
+  });
 
   await sendMail(targetAuthorDoc.email, authorMailSubject, authorMailContent);
 
-  // --- POWIADOMIENIE ALARMOWE DLA GŁÓWNEGO ADMINISTRATORA (NOTICE AND TAKEDOWN) ---
-  const adminMailSubject = isCopyrightInfringement
-    ? "🔥 [ROZSTRZYGNIĘCIE RZECZOWE - PRAWA AUTORSKIE] Żądanie usunięcia grafiki / treści (Takedown Request)"
-    : "🚨 ALARM: Zgłoszono nowe nadużycie";
+  // System powiadomień dla administratora platformy
+  let adminMailContent;
+  let adminMailSubject;
 
-  const adminMailContent = `
-    <div style="font-family: sans-serif; padding: 20px; border: 2px solid #bc2525; border-radius: 8px; max-width: 600px; background: #fffdfd;">
-      <h2 style="color: #bc2525; margin-top: 0;">${isCopyrightInfringement ? "🔥 PILNE ŻĄDANIE TAKEDOWN (RODO/COPYRIGHT)" : "🚨 Nowe zgłoszenie nadużycia"}</h2>
-      <p>Administratorze,</p>
-      <p>Odnotowano zgłoszenie nadużycia wobec wpisu pt. <strong>"${originalPost.title || "Wpis bez tytułu"}"</strong>.</p>
-      <p><strong>Typ zgłoszenia:</strong> ${isCopyrightInfringement ? "<span style='color:red; font-weight:bold;'>NARUSZENIE WŁASNOŚCI INTELEKTUALNEJ / PRAW AUTORSKICH</span>" : "Ogólne naruszenie zasad"}</p>
-      <hr style="border:0; border-top:1px solid #e4e6eb; margin: 16px 0;">
-      <p><strong>Uzasadnienie zgłoszenia:</strong></p>
-      <div style="background: #fff3f3; padding: 12px; border-radius: 6px; border-left: 4px solid #bc2525; color: #050505; font-style: italic;">
-        ${savedPost.content}
-      </div>
-      <p style="font-size: 13px; color: #65676b; margin-top: 12px;">
-        ${isCopyrightInfringement ? "⚠️ Zgodnie z doktryną <em>Safe Harbor</em>, jako Administrator powinieneś bezzwłocznie przeanalizować zgłoszenie i zabezpieczyć system przed zarzutem współudziału w naruszeniu." : "Sprawa podlega standardowej procedurze 3 dni wyczekiwania na obronę autora."}
-      </p>
-      <p style="margin-top: 20px; text-align: center;">
-        <a href="${req.protocol}://${req.get("host")}/admin" style="display: inline-block; background: #bc2525; color: white; padding: 10px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Przejdź do Centrum Zarządzania</a>
-      </p>
-    </div>
-  `;
+  if (isCopyrightInfringement) {
+    adminMailSubject =
+      "🔥 [ROZSTRZYGNIĘCIE RZECZOWE - PRAWA AUTORSKIE] Żądanie usunięcia grafiki / treści (Takedown Request)";
+    adminMailContent = renderMail("adminAbuseCopyrightAlertEmail", {
+      originalTitle: originalPost.title || "Wpis bez tytułu",
+      reportContent: savedPost.content,
+      adminUrl: `${req.protocol}://${req.get("host")}/admin`,
+    });
+  } else {
+    adminMailSubject = "🚨 ALARM: Zgłoszono nowe nadużycie";
+    adminMailContent = renderMail("adminAbuseAlertEmail", {
+      authorName: targetAuthorDoc.name,
+      originalTitle: originalPost.title || "Wpis bez tytułu",
+      reportContent: savedPost.content,
+      reportUrl: `${req.protocol}://${req.get("host")}/admin`,
+    });
+  }
 
   await sendMail(MAIN_ADMIN_EMAIL, adminMailSubject, adminMailContent);
 }
 
 /**
- * 5. Wyślij wiadomość prywatną (Komunikacja między użytkownikami typu Peer-to-Peer)
+ * 5. Wyślij wiadomość prywatną (Komunikacja Peer-to-Peer)
  */
 async function sendPrivatePeerEmail(sender, recipient, subject, message, req) {
   const senderProfileUrl = `${req.protocol}://${req.get("host")}/profile/${sender._id}`;
-  const mailContent = mailTemplates.getPrivateMessageEmail(
-    sender.displayName,
-    sender.email,
-    message,
+  const mailContent = renderMail("privateMessageEmail", {
+    senderDisplayName: sender.displayName,
+    senderEmail: sender.email,
+    messageText: message,
     senderProfileUrl,
-  );
+  });
 
   await sendMail(
     recipient.email,
@@ -198,18 +205,15 @@ async function sendPrivatePeerEmail(sender, recipient, subject, message, req) {
  */
 async function sendAbuseReportAcceptedEmails(originalPost, reportPost) {
   const { User } = require("./db");
-
-  // Pobieramy aktualny e-mail autora oryginalnego wpisu
   const originalAuthor = await User.findById(originalPost.authorId);
 
-  // A. Ostrzeżenie i powiadomienie o restrykcjach dla autora naruszenia
   if (originalAuthor && originalAuthor.email) {
-    const authorMailContent = mailTemplates.getAuthorLockedNotificationEmail(
-      originalAuthor.name,
-      originalPost.title || "Wpis bez tytułu",
-      reportPost.content,
-      SERVICE_NAME,
-    );
+    const authorMailContent = renderMail("authorLockedNotificationEmail", {
+      authorName: originalAuthor.name,
+      originalTitle: originalPost.title || "Wpis bez tytułu",
+      reportContent: reportPost.content,
+      serviceName: SERVICE_NAME,
+    });
     await sendMail(
       originalAuthor.email,
       "⚠️ Ważne: Twój wpis został ograniczony przez moderatora",
@@ -217,12 +221,11 @@ async function sendAbuseReportAcceptedEmails(originalPost, reportPost) {
     );
   }
 
-  // B. Informacja zwrotna dla sygnalisty (osoby zgłaszającej)
   if (reportPost.authorEmail) {
-    const reporterMailContent = mailTemplates.getReporterResolutionEmail(
-      originalPost ? originalPost.title : "Zakwestionowany wpis",
-      SERVICE_NAME,
-    );
+    const reporterMailContent = renderMail("reporterResolutionEmail", {
+      originalTitle: originalPost ? originalPost.title : "Zakwestionowany wpis",
+      serviceName: SERVICE_NAME,
+    });
     await sendMail(
       reportPost.authorEmail,
       "Twój raport został rozpatrzony (Interwencja Moderatora)",
@@ -236,16 +239,13 @@ async function sendAbuseReportAcceptedEmails(originalPost, reportPost) {
  */
 async function sendAbuseReportRejectedEmails(originalPost, reportPost) {
   const { User } = require("./db");
-
-  // Pobieramy aktualny e-mail autora oryginalnego wpisu
   const originalAuthor = await User.findById(originalPost.authorId);
 
-  // A. Informacja dla zgłaszającego (sygnalisty) o odrzuceniu raportu
   if (reportPost.authorEmail) {
-    const rejectMailContent = mailTemplates.getAbuseReportRejectedEmail(
-      originalPost ? originalPost.title : "Zakwestionowany wpis",
-      SERVICE_NAME,
-    );
+    const rejectMailContent = renderMail("abuseReportRejectedEmail", {
+      originalTitle: originalPost ? originalPost.title : "Zakwestionowany wpis",
+      serviceName: SERVICE_NAME,
+    });
     await sendMail(
       reportPost.authorEmail,
       "Status zgłoszenia: Odrzucone (Brak nadużycia)",
@@ -253,13 +253,12 @@ async function sendAbuseReportRejectedEmails(originalPost, reportPost) {
     );
   }
 
-  // B. Informacja dla autora, że sprawa została zamknięta na jego korzyść
   if (originalAuthor && originalAuthor.email) {
-    const clearedMailContent = mailTemplates.getAuthorClearedEmail(
-      originalAuthor.name,
-      originalPost.title || "Wpis bez tytułu",
-      SERVICE_NAME,
-    );
+    const clearedMailContent = renderMail("authorClearedEmail", {
+      authorName: originalAuthor.name,
+      originalTitle: originalPost.title || "Wpis bez tytułu",
+      serviceName: SERVICE_NAME,
+    });
     await sendMail(
       originalAuthor.email,
       "Status zgłoszenia: Zarzuty oddalone",
@@ -273,11 +272,11 @@ async function sendAbuseReportRejectedEmails(originalPost, reportPost) {
  */
 async function sendPostUnlockedNotificationEmail(post) {
   if (post.authorEmail) {
-    const unlockMailContent = mailTemplates.getAuthorUnlockNotificationEmail(
-      post.author,
-      post.title || "Wpis bez tytułu",
-      SERVICE_NAME,
-    );
+    const unlockMailContent = renderMail("authorUnlockNotificationEmail", {
+      authorName: post.author,
+      originalTitle: post.title || "Wpis bez tytułu",
+      serviceName: SERVICE_NAME,
+    });
     await sendMail(
       post.authorEmail,
       "🔓 Odblokowanie profilu: Możesz ponownie upublicznić post",
@@ -287,10 +286,10 @@ async function sendPostUnlockedNotificationEmail(post) {
 }
 
 async function sendVerificationSuccessEmail(user) {
-  const mailContent = mailTemplates.getVerificationSuccessEmail(
-    user.name,
-    SERVICE_NAME,
-  );
+  const mailContent = renderMail("verificationSuccessEmail", {
+    userName: user.name,
+    serviceName: SERVICE_NAME,
+  });
   await sendMail(
     user.email,
     "Twój profil został pomyślnie zweryfikowany! 🎉",
@@ -299,11 +298,11 @@ async function sendVerificationSuccessEmail(user) {
 }
 
 async function sendVerificationRejectedEmail(user, adminComment) {
-  const mailContent = mailTemplates.getVerificationRejectedEmail(
-    user.name,
+  const mailContent = renderMail("verificationRejectedEmail", {
+    userName: user.name,
     adminComment,
-    SERVICE_NAME,
-  );
+    serviceName: SERVICE_NAME,
+  });
   await sendMail(
     user.email,
     "Ważne: Decyzja w sprawie weryfikacji Twojego profilu",
@@ -311,16 +310,13 @@ async function sendVerificationRejectedEmail(user, adminComment) {
   );
 }
 
-/**
- * Wysyła 24-godzinny link bezpieczeństwa autoryzujący usunięcie profilu
- */
 async function sendAccountDeletionRequestEmail(user, req) {
   const deletionLink = `${req.protocol}://${req.get("host")}/profile/settings/confirm-delete/${user.token}`;
-  const mailContent = mailTemplates.getAccountDeletionRequestEmail(
-    user.name,
+  const mailContent = renderMail("accountDeletionRequestEmail", {
+    userName: user.name,
     deletionLink,
-    SERVICE_NAME,
-  );
+    serviceName: SERVICE_NAME,
+  });
 
   await sendMail(
     user.email,
@@ -329,14 +325,11 @@ async function sendAccountDeletionRequestEmail(user, req) {
   );
 }
 
-/**
- * Wysyła ostateczny certyfikat wymazania danych z bazy platformy
- */
 async function sendAccountDeletionSuccessNotification(userName, userEmail) {
-  const mailContent = mailTemplates.getAccountDeletionSuccessNotification(
+  const mailContent = renderMail("accountDeletionSuccessNotification", {
     userName,
-    SERVICE_NAME,
-  );
+    serviceName: SERVICE_NAME,
+  });
 
   await sendMail(
     userEmail,
@@ -345,101 +338,64 @@ async function sendAccountDeletionSuccessNotification(userName, userEmail) {
   );
 }
 
-/**
- * Wysyła powiadomienie o nadaniu roli Redaktora przez Administratora
- * 
-async function sendEditorPromotedEmail(user) {
-  const mailContent = mailTemplates.getEditorPromotedEmail(user.name, SERVICE_NAME);
-  await sendMail(
-    user.email,
-    "Gratulacje! Zostałeś oficjalnie mianowany Redaktorem Serwisu 🌟",
-    mailContent
-  );
-}
- */
-
-/**
- * Wysyła powiadomienie o organicznym zdobyciu rangi Redaktora (100 gwiazdek)
-
-async function sendEditorEarnedEmail(user, totalLikes) {
-  const mailContent = mailTemplates.getEditorEarnedEmail(user.name, SERVICE_NAME, totalLikes);
-  await sendMail(
-    user.email,
-    "Niesamowite osiągnięcie! Społeczność przyznała Ci status Redaktora 🎉",
-    mailContent
-  );
-}
- */
-
-/**
- * Wysyła powiadomienie o uzyskaniu statusu Kandydata na redaktora (100 gwiazdek)
- */
 async function sendEditorCandidateEmail(user, totalLikes) {
-  const mailContent = mailTemplates.getEditorCandidateEmail(user.name, SERVICE_NAME, totalLikes);
+  const mailContent = renderMail("editorCandidateEmail", {
+    userName: user.name,
+    serviceName: SERVICE_NAME,
+    totalLikes,
+  });
   await sendMail(
     user.email,
     "Spełniłeś warunki formalne: Jesteś Kandydatem na Redaktora! ⏳",
-    mailContent
+    mailContent,
   );
 }
 
-/**
- * Wysyła powiadomienie o pomyślnym przegłosowaniu kandydatury przez Kolegium
- */
 async function sendEditorApprovedByBoardEmail(user) {
-  const mailContent = mailTemplates.getEditorApprovedByBoardEmail(user.name, SERVICE_NAME);
+  const mailContent = renderMail("editorApprovedByBoardEmail", {
+    userName: user.name,
+    serviceName: SERVICE_NAME,
+  });
   await sendMail(
     user.email,
     "Oficjalna decyzja Kolegium: Zostałeś mianowany Redaktorem Serwisu! 🌟",
-    mailContent
+    mailContent,
   );
 }
-
-// tools/mailer.js -> na samym dole pliku
-
-/**
- * Rozsyła mailing informacyjny o nowym wpisie w strefie editors do całego Kolegium
- */
 async function sendNewEditorPostNotification(senderUser, savedPost, req) {
   const { User } = require("./db");
-  
   try {
-    // 1. Pobieramy e-maile wszystkich zarejestrowanych redaktorów, wykluczając autora wpisu
     const activeEditors = await User.find({
       role: "editor",
-      _id: { $ne: senderUser._id }
-    }).select("email").lean();
-
+      _id: { $ne: senderUser._id },
+    })
+      .select("email")
+      .lean();
     if (!activeEditors || activeEditors.length === 0) return;
-
-    // 2. Budujemy pełny URL odnośnika bezpośredniego do Pokoju Narad
     const postUrl = `${req.protocol}://${req.get("host")}/editors`;
-    
-    const mailContent = mailTemplates.getNewEditorPostEmail(
-      senderUser.displayName,
-      savedPost.title || "Wpis bez tytułu",
+    const mailContent = renderMail("newEditorPostEmail", {
+      editorName: senderUser.displayName,
+      postTitle: savedPost.title || "Wpis bez tytułu",
       postUrl,
-      SERVICE_NAME
-    );
-
-    // 3. Wysyłamy wiadomości w pętli (wykorzystujemy Promise.all dla wydajności asynchronicznej)
-    const emailPromises = activeEditors.map(editor => {
+      serviceName: SERVICE_NAME,
+    });
+    const emailPromises = activeEditors.map((editor) => {
       if (editor.email) {
         return sendMail(
           editor.email,
           `[KOLEGIUM] Nowy temat narad redakcji: "${savedPost.title}"`,
-          mailContent
+          mailContent,
         );
       }
     });
-
     await Promise.all(emailPromises);
-    console.log(`[SYSTEM MAIL] Rozesłano powiadomienie o nowym wpisie redakcyjnym do ${activeEditors.length} odbiorców.`);
+    console.log(
+      `[SYSTEM MAIL] Rozesłano powiadomienie do ${activeEditors.length} redaktorów.`,
+    );
   } catch (err) {
     console.error("Krytyczny błąd rozsyłania mailingu do redaktorów:", err);
   }
 }
-
 module.exports = {
   startNotification,
   sendVerificationEmail,

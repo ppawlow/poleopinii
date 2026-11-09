@@ -1,0 +1,9 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#9360f7'
+
+block email-body
+  h2(style="color: #9360f7; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Decyzja Kolegium: Nominacja Redaktorska
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{userName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 16px 0;") Mamy zaszczyt poinformować, że Kolegium Redakcyjne podjęło jednogłośną decyzję o oficjalnym przyjęciu Cię do zespołu redakcyjnego. Twój profil uzyskał pełne prawa i przywileje redaktorskie: status stałej odznaki wyróżniającej oraz zwolnienie z prewencyjnego audytu bezpieczeństwa sztucznej inteligencji (Bypass AI). Witamy w zespole.

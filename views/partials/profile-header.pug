@@ -25,7 +25,7 @@
                     span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
                         i.fa-solid.fa-circle-xmark
 
-        if user && String(user.id) === String(profileUser._id)
+        if user && user._id.equals(profileUser._id)
             div.update-photos-container.profile-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
                 form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0; display: inline-flex;")
                     label.upload-action-btn(for="avatar-file-input" title="Zmień awatar" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")

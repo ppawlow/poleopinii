@@ -1,0 +1,9 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#146c43'
+
+block email-body
+  h2(style="color: #146c43; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Zarzuty nadużycia zostały oddalone
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{authorName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 0 0;") Mamy dobrą wiadomość. Zespół moderacji zakończył formalną weryfikację zgłoszenia nadużycia, które wpłynęło wobec Twojego wpisu: #[strong "#{originalTitle}"]. Zarzuty uznano za całkowicie bezzasadne, a sprawa została trwale zamknięta. Twój wpis pozostaje nienaruszony i w pełni widoczny na osi czasu.

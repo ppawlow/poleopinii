@@ -2,6 +2,25 @@
 const mongoose = require("mongoose");
 const { POST_VISIBILITY, DEFAULT_ASSETS } = require("../config");
 
+// 1. Definiujemy dedykowany schemat dla komentarza
+const commentSchema = new mongoose.Schema({
+  author: { type: String, required: true },
+  authorEmail: { type: String, required: true },
+  authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  authorAvatar: { type: String, default: DEFAULT_ASSETS.avatar },
+  content: { type: String, required: true },
+  likedBy: [{ type: String }],
+  createdAt: { type: Date, default: Date.now },
+});
+
+// 2. Dodajemy metodę instancji do komentarza
+commentSchema.methods.isOwnedBy = function (user) {
+  if (!user) return false;
+  const userId = user._id || user.id;
+  return this.authorId && this.authorId.equals(userId);
+};
+
+// 3. W głównym postSchema podmieniamy tablicę obiektów na tablicę poddokumentów opartych o commentSchema
 const postSchema = new mongoose.Schema({
   title: { type: String, required: true },
   author: { type: String, required: true },
@@ -28,19 +47,28 @@ const postSchema = new mongoose.Schema({
     default: null,
   },
   likedBy: [{ type: String }],
-  comments: [
-    {
-      author: { type: String, required: true },
-      authorEmail: { type: String, required: true },
-      authorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      authorAvatar: { type: String, default: DEFAULT_ASSETS.avatar },
-      content: { type: String, required: true },
-      likedBy: [{ type: String }],
-      createdAt: { type: Date, default: Date.now },
-    },
-  ],
+  comments: [commentSchema],
   createdAt: { type: Date, default: Date.now },
 });
+
+postSchema.methods.isOwnedBy = function (user) {
+  if (!user) return false;
+  const userId = user._id || user.id; 
+  return this.authorId && this.authorId.equals(userId);
+};
+
+// 1. Indeks złożony (Compound Index) dla etapu $match i $sort na osi czasu
+// Pokrywa filtrowanie blokad, zgłoszeń, widoczności oraz natychmiastowe sortowanie po dacie (bez użycia pamięci RAM serwera)
+postSchema.index({ isAbuseReport: 1, visibility: 1, authorId: 1, createdAt: -1 });
+
+// 2. Indeks relacyjny dla operacji $lookup (złączenia polemik i debat)
+// Przyspiesza namierzanie postów nadrzędnych oraz generowanie drzewa dyskusji
+postSchema.index({ parentPostId: 1, isAbuseReport: 1 });
+
+// 3. Indeks relacyjny dla tablic poddokumentów (komentarze)
+// Niezbędny do szybkiego mapowania autorów komentarzy w etapie $lookup
+postSchema.index({ "comments.authorId": 1 });
+
 const Post = mongoose.model("Post", postSchema);
 
 async function countAuthorPublicLikes(authorId) {
