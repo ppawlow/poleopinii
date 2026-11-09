@@ -541,69 +541,75 @@
     position: relative;
   }
 
-  /* ... pozostaw ukrywanie .nav-center, .user-visitcard itp. ... */
+  /* Kontener główny, który będziemy przesuwać razem z zawartością */
+  .page-main-content {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform;
+    width: 100vw;
+  }
 
-  /* PANEL LEWY: Pełnoekranowy panel wysuwany z lewej */
+  /* Efekt przesunięcia całej strony w prawo (odsłaniamy lewy panel) */
+  body.has-left-sidebar .page-main-content {
+    transform: translateX(100vw);
+  }
+
+  /* Efekt przesunięcia całej strony w lewo (odsłaniamy prawy panel) */
+  body.has-right-sidebar .page-main-content {
+    transform: translateX(-100vw);
+  }
+
+  /* PANEL LEWY: Umieszczony na stałe za lewą krawędzią, przesuwa się razem z body */
   .left-sidebar {
     display: block !important;
     position: fixed !important;
     top: 56px;
-    left: 0;
-    width: 100vw; /* Zmiana na pełną szerokość okna */
+    left: -100vw; /* Ukryty idealnie po lewej stronie */
+    width: 100vw;
     height: calc(100vh - 56px);
-    max-height: 100vh;
     background-color: #ffffff;
-    box-shadow: none; /* Na pełnym ekranie cień boczny jest zbędny */
     z-index: 9999;
-    padding: 20px 16px; /* Spójny padding z kartami mobilnymi */
-    /* Całkowite ukrycie poza lewą krawędzią ekranu */
-    transform: translateX(-100%);
+    padding: 20px 16px;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
   }
 
-  /* PANEL PRAWY: Pełnoekranowy panel wysuwany z prawej */
+  /* PANEL PRAWY: Umieszczony na stałe za prawą krawędzią */
   .right-sidebar {
     display: block !important;
     position: fixed !important;
     top: 56px;
-    right: 0;
-    width: 100vw; /* Zmiana na pełną szerokość okna */
+    right: -100vw; /* Ukryty idealnie po prawej stronie */
+    width: 100vw;
     height: calc(100vh - 56px);
-    max-height: 100vh;
     background-color: #ffffff;
-    box-shadow: none;
     z-index: 9999;
     padding: 20px 16px;
-    /* Całkowite ukrycie poza prawą krawędzią ekranu */
-    transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
   }
 
-  /* Klasy aktywacyjne pozostają bez zmian - przesuwają panel do pozycji 0 */
-  .left-sidebar.sidebar-open,
-  .right-sidebar.sidebar-open {
-    transform: translateX(0);
+  /* Gdy body ma odpowiednią klasę, wsuwamy panel na ekran w tym samym tempie, w którym ucieka strona */
+  body.has-left-sidebar .left-sidebar {
+    transform: translateX(100vw);
   }
 
-  /* Modyfikacja nakładki: przy 100% szerokości paneli overlay staje się 
-     głównie technicznym elementem zamykającym lub głębszym zaciemnieniem */
+  body.has-right-sidebar .right-sidebar {
+    transform: translateX(-100vw);
+  }
+
+  /* Techniczna nakładka blokująca kliknięcia na uciekającej stronie */
   .sidebar-overlay {
     position: fixed;
     top: 56px;
     left: 0;
     width: 100vw;
     height: calc(100vh - 56px);
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
+    z-index: 10000; /* Wyżej niż panele, aby kliknięcie gdziekolwiek zamknęło widok */
+    display: none;
   }
   
-  .sidebar-overlay.active {
-    opacity: 1;
-    pointer-events: auto;
+  body.has-left-sidebar .sidebar-overlay,
+  body.has-right-sidebar .sidebar-overlay {
+    display: block;
   }
 }

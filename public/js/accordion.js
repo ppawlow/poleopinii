@@ -548,18 +548,16 @@ window.acceptCookieLaw = function () {
 };
 
 // =========================================================================
-// MOBILNA OBSŁUGA GESTÓW (SWIPE) DO WYSUWANIA PANELÓW BOCZNYCH
+// MOBILNA OBSŁUGA GESTÓW (SWIPE) - EFEKT SYNCHRONICZNEGO PRZESUWANIA CAŁOŚCI
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
-  // Sprawdzamy, czy jesteśmy na urządzeniu mobilnym (szerokość okna mniejsza lub równa 900px)
   if (window.innerWidth > 900) return;
 
   const leftSidebar = document.querySelector(".left-sidebar");
   const rightSidebar = document.querySelector(".right-sidebar");
-  
   if (!leftSidebar || !rightSidebar) return;
 
-  // Tworzymy i wstrzykujemy dynamiczną nakładkę przyciemniającą tło pod navbar
+  // Tworzymy przezroczystą nakładkę łapiącą kliknięcia powrotne
   const overlay = document.createElement("div");
   overlay.className = "sidebar-overlay";
   document.body.appendChild(overlay);
@@ -569,77 +567,59 @@ document.addEventListener("DOMContentLoaded", () => {
   let touchEndX = 0;
   let touchEndY = 0;
 
-  // Minimalna odległość w pikselach, którą musi przebyć palec, aby gest został uznany za swipe
   const minSwipeDistance = 60; 
-  // Maksymalny kąt odchylenia w pionie (zapobiega wyzwalaniu paneli podczas zwykłego skrolowania feedu góra/dół)
   const maxVerticalDeviatedDistance = 40;
 
   function handleSwipeGesture() {
     const distanceX = touchEndX - touchStartX;
     const distanceY = Math.abs(touchEndY - touchStartY);
 
-    // Ignoruj gest, jeśli użytkownik wyraźnie przewijał stronę w pionie
     if (distanceY > maxVerticalDeviatedDistance) return;
 
-    // Sprawdź, czy któryś z paneli jest już otwarty
-    const isLeftOpen = leftSidebar.classList.contains("sidebar-open");
-    const isRightOpen = rightSidebar.classList.contains("sidebar-open");
+    const isLeftOpen = document.body.classList.contains("has-left-sidebar");
+    const isRightOpen = document.body.classList.contains("has-right-sidebar");
 
-    // GEST: Przesunięcie palcem w PRAWO (Swipe Right)
+    // GEST: Przesunięcie palcem w PRAWO (Odsłaniamy lewą kolumnę)
     if (distanceX > minSwipeDistance) {
       if (isRightOpen) {
-        // Jeśli prawy panel był otwarty -> zamknij go
         closeAllSidebars();
       } else if (!isLeftOpen) {
-        // Jeśli panele były zamknięte -> otwórz lewy panel
-        leftSidebar.classList.add("sidebar-open");
-        overlay.classList.add("active");
-        document.body.style.overflow = "hidden"; // Blokada skrolowania feedu w tle
+        document.body.classList.add("has-left-sidebar");
+        document.body.style.overflow = "hidden";
       }
     }
 
-    // GEST: Przesunięcie palcem w LEWO (Swipe Left)
+    // GEST: Przesunięcie palcem w LEWO (Odsłaniamy prawą kolumnę)
     if (distanceX < -minSwipeDistance) {
       if (isLeftOpen) {
-        // Jeśli lewy panel był otwarty -> zamknij go
         closeAllSidebars();
       } else if (!isRightOpen) {
-        // Jeśli panele były zamknięte -> otwórz prawy panel
-        rightSidebar.classList.add("sidebar-open");
-        overlay.classList.add("active");
-        document.body.style.overflow = "hidden"; // Blokada skrolowania feedu w tle
+        document.body.classList.add("has-right-sidebar");
+        document.body.style.overflow = "hidden";
       }
     }
   }
 
   function closeAllSidebars() {
-    leftSidebar.classList.remove("sidebar-open");
-    rightSidebar.classList.remove("sidebar-open");
-    overlay.classList.remove("active");
-    document.body.style.overflow = ""; // Przywrócenie skrolowania strony
+    document.body.classList.remove("has-left-sidebar", "has-right-sidebar");
+    document.body.style.overflow = "";
   }
 
-  // Rejestracja natywnych zdarzeń dotykowych na poziomie całego dokumentu
   document.addEventListener("touchstart", (e) => {
-    // Zapobiegaj przerwaniu gestu w polach Quill lub elementach interaktywnych
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-    
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
+    touchStartX = e.changedTouches.screenX;
+    touchStartY = e.changedTouches.screenY;
   }, { passive: true });
 
   document.addEventListener("touchend", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
+    touchEndX = e.changedTouches.screenX;
+    touchEndY = e.changedTouches.screenY;
     handleSwipeGesture();
   }, { passive: true });
 
-  // Zamknij panele po kliknięciu w zmatowioną nakładkę tła lub element menu
   overlay.addEventListener("click", closeAllSidebars);
   
-  // Opcjonalnie: zamknięcie paneli przy kliknięciu w sidebar-item (nawigację)
   document.querySelectorAll(".sidebar-item, .dropdown-item").forEach(item => {
     item.addEventListener("click", closeAllSidebars);
   });
