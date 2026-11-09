@@ -1,7 +1,6 @@
 /* =========================================================================
-   TRYBY MOBILNE (Ekran < 992px oraz < 900px / RWD)
+   TRYBY MOBILNE (Ekran < 992px)
    ========================================================================= */
-
 @media (max-width: 992px) {
   .profile-container {
     max-width: 100%;
@@ -64,14 +63,18 @@
   }
 }
 
+/* =========================================================================
+   ZINTEGROWANY UKŁAD GESTÓW MOBILNYCH (Ekran < 900px)
+   ========================================================================= */
 @media (max-width: 900px) {
   body {
     max-width: 100vw;
     overflow-x: hidden;
-    background-color: #ffffff; /* Zmiana tła z szarego na biały */
+    position: relative;
+    background-color: #ffffff;
   }
 
-  /* Ukrywanie zbędnych elementów na telefonach */
+  /* Ukrywanie zbędnych elementów nawigacji */
   .left-sidebar,
   .right-sidebar,
   .nav-center,
@@ -81,542 +84,7 @@
     display: none !important;
   }
 
-  /* Główny kontener w trybie pełnoekranowym na mobile */
-  .main-container {
-    display: block;
-    padding: 0;
-    margin: 0;
-    gap: 0;
-    width: 100vw;
-    max-width: 100%;
-  }
-
-  .fb-navbar {
-    left: 0;
-    right: 0;
-    width: 100vw;
-    max-width: 100%;
-    padding: 0 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .nav-left {
-    flex: 1;
-    min-width: 0;
-    gap: 8px;
-  }
-
-  .nav-left form {
-    display: flex;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .fb-navbar .search-bar {
-    width: 200px;
-    max-width: 200px;
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-
-  .nav-right {
-    flex: 0 0 auto;
-    min-width: 40px;
-  }
-
-  /* Likwidacja przerw między postami w strumieniu */
-  main.feed,
-  .accordion-container,
-  #accordion-posts-wrapper,
-  .profile-feed,
-  .profile-body-layout {
-    gap: 0;
-    margin: 0;
-    padding: 0;
-    display: block;
-  }
-
-  /* Płaskie posty (krawędź do krawędzi) */
-  .post-card,
-  .accordion-item,
-  .login-prompt,
-  .info-box,
-  .comment-card {
-    width: 100%;
-    max-width: 100%;
-    border-radius: 0;
-    border: none;
-    box-shadow: none;
-    padding: 16px;
-    margin: 0;
-  }
-
-  .post-card:not(:last-child),
-  .accordion-item:not(:last-child) {
-    border-bottom: 1px solid #e4e6eb;
-  }
-
-  /* Formularze tworzenia i edycji jako odrębne sekcje */
-  .create-post:has(form),
-  .login-box {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
-    padding: 16px;
-    border-radius: 0;
-    border: none;
-    border-bottom: 2px solid #e4e6eb;
-  }
-
-  /* Optymalizacja samego formularza i edytora tekstu */
-  .create-post form,
-  .post-inline-edit-mode form {
-    padding: 0;
-    margin: 0;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-
-  .create-post form > div:first-child,
-  .post-inline-edit-mode form > div:first-child {
-    margin-bottom: 4px;
-    padding: 0 4px;
-  }
-
-  .edit-title-field {
-    width: 100%;
-    padding: 8px 10px;
-    margin-bottom: 2px;
-    font-size: 15px;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-
-  /* Kompaktowy pasek narzędzi edytora */
-  .create-post .ql-toolbar.ql-snow,
-  .post-inline-edit-mode .ql-toolbar.ql-snow {
-    padding: 4px 6px;
-    margin: 0;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .create-post .ql-toolbar .ql-formats,
-  .post-inline-edit-mode .ql-toolbar .ql-formats {
-    margin-right: 6px;
-  }
-
-  /* Wyższy kontener tekstowy Quill na mobile */
-  .create-post .ql-container.ql-snow,
-  .post-inline-edit-mode .ql-container.ql-snow {
-    min-height: 220px;
-    margin: 0;
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    font-size: 16px; /* Blokuje auto-zoom w urządzeniach iOS */
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .create-post .ql-editor,
-  .post-inline-edit-mode .ql-editor {
-    padding: 8px 10px;
-  }
-
-  .create-post form > div:last-child,
-  .post-inline-edit-mode form > div:last-child {
-    padding: 4px 8px 0 8px;
-    margin: 0;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .post-image-container {
-    margin: 12px -16px;
-    width: calc(100% + 32px);
-  }
-
-  #visibility-select-node {
-    width: 100%;
-  }
-
-  /* Centrowanie kontenera logowania w widoku dedykowanym */
-  .login-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 16px auto;
-    padding: 0 16px;
-    width: 100%;
-  }
-
-  .login-box {
-    width: 100%;
-    max-width: 400px;
-    padding: 24px 20px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-    border: 1px solid #e4e6eb;
-    border-radius: 8px;
-  }
-
-  .login-box input {
-    padding: 11px 14px;
-    margin-bottom: 10px;
-  }
-
-  .login-box hr {
-    margin: 14px 0;
-  }
-}
-
-@media (max-width: 768px) {
-  .profile-avatar-row {
-    justify-content: center;
-    text-align: center;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  footer .footer-container {
-    flex-direction: column;
-    text-align: center;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  .article-featured-image {
-    float: none;
-    max-width: 100%;
-    margin: 0 0 20px 0;
-  }
-
-  .editorial-article {
-    padding: 20px;
-  }
-
-  .editorial-article .article-header h1 {
-    font-size: 30px;
-  }
-
-  .lightbox-content {
-    max-width: 95%;
-    max-height: 75%;
-  }
-}
-/* =========================================================================
-   OPTYMALIZACJA PRZYCISKÓW AKCJI PROFILU DLA SMARTFONÓW
-   ========================================================================= */
-/* =========================================================================
-   OPTYMALIZACJA PRZYCISKÓW AKCJI PROFILU (WŁASNY ORAZ CUDZY) DLA SMARTFONÓW
-   ========================================================================= */
-@media (max-width: 600px) {
-  /* Blok akcji własnych ORAZ blok akcji na cudzym profilu */
-  .profile-actions-mobile,
-  .profile-guest-actions-mobile {
-    flex-wrap: nowrap !important;
-    gap: 8px !important;
-    margin-left: 0 !important;
-    width: 100% !important;
-    justify-content: center !important;
-  }
-
-  /* Ukrywanie etykiet tekstowych w obu widokach */
-  .profile-actions-mobile .btn-text,
-  .profile-guest-actions-mobile .btn-text {
-    display: none !important;
-  }
-
-  /* Transformacja wszystkich przycisków w okrągłe bąbelki dotykowe */
-  .profile-actions-mobile .upload-action-btn,
-  .profile-guest-actions-mobile button,
-  .profile-guest-actions-mobile .profile-block-main-btn,
-  .profile-guest-actions-mobile .restricted-feature-trigger {
-    width: 44px !important;
-    height: 44px !important;
-    padding: 0 !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 50% !important;
-    font-size: 18px !important;
-    box-sizing: border-box !important;
-  }
-
-  /* Zachowanie unikalnych kolorów ułatwiających identyfikację akcji dyskusyjnych */
-  .profile-guest-actions-mobile .profile-follow-btn {
-    background-color: #1877f2 !important;
-    color: white !important;
-  }
-
-  .profile-guest-actions-mobile .profile-block-main-btn {
-    background-color: #bc2525 !important;
-    color: white !important;
-  }
-
-  .profile-guest-actions-mobile button[style*="background-color: #42b72a"] {
-    background-color: #42b72a !important;
-    color: white !important;
-  }
-}
-
-@media (max-width: 600px) {
-  /* Zapewnienie, że ukrywamy tekst w bąbelkach dotykowych */
-  .profile-actions-mobile .btn-text,
-  .profile-guest-actions-mobile .btn-text {
-    display: none !important;
-  }
-}
-
-@media (max-width: 600px) {
-  /* 1. Reset i centrowanie kontenera na mobile */
-  .profile-guest-actions-mobile {
-    display: flex !important;
-    flex-wrap: nowrap !important;
-    gap: 10px !important;
-    margin: 16px auto !important;
-    width: 100% !important;
-    justify-content: center !important;
-    margin-left: 0 !important;
-  }
-
-  /* 2. Bezwzględne ukrycie etykiet tekstowych */
-  .profile-guest-actions-mobile .btn-text {
-    display: none !important;
-  }
-
-  /* 3. Wymuszenie okrągłego kształtu klocków dotykowych (44px standard Google UX) */
-  .profile-guest-actions-mobile .profile-follow-btn,
-  .profile-guest-actions-mobile .profile-block-main-btn,
-  .profile-guest-actions-mobile .profile-mail-main-btn,
-  .profile-guest-actions-mobile .restricted-feature-trigger {
-    width: 44px !important;
-    height: 44px !important;
-    min-width: 44px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-  }
-
-  /* 4. Środkowanie samych ikon w okręgach */
-  .profile-guest-actions-mobile i {
-    font-size: 16px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    display: inline-block !important;
-  }
-}
-@media (max-width: 768px) {
-  footer .footer-container div:last-child {
-    text-align: center !important;
-    margin-top: 4px !important;
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-}
-
-@media (max-width: 900px) {
-  /* FIX DLA WIDOKU SINGLE-POST: Spłaszczenie marginesów i kompaktowy padding na mobile */
-  .main-container:has(.editorial-article) {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100vw !important;
-  }
-
-  .editorial-article {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 16px !important; /* Taki sam padding jak w .post-card na mobile */
-    border-radius: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .article-header {
-    padding-bottom: 16px !important;
-    margin-bottom: 20px !important;
-  }
-}
-
-@media (max-width: 600px) {
-  /* ... istniejące style dla profilu ... */
-
-  /* OPTYMALIZACJA MOBILNA PRZYCISKÓW POD POSTAMI */
-  .post-actions {
-    display: flex !important;
-    flex-wrap: nowrap !important; /* Blokada zawijania przycisków do nowej linii */
-    justify-content: flex-start !important;
-    gap: 8px !important;
-    padding: 8px 0 !important;
-  }
-
-  /* Całkowite ukrycie napisów w stopce posta */
-  .post-actions .action-btn .btn-text {
-    display: none !important;
-  }
-
-  /* Przekształcenie przycisków w okrągłe bąbelki dotykowe (identycznie jak na profilu) */
-  .post-actions .action-btn {
-    width: 40px !important;
-    height: 40px !important;
-    min-width: 40px !important;
-    padding: 0 !important;
-    border-radius: 50% !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-    margin: 0 !important;
-  }
-
-  /* Wyśrodkowanie ikon i delikatne powiększenie dla lepszego UX na mobile */
-  .post-actions .action-btn i {
-    font-size: 16px !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-}
-
-/* =========================================================================
-   FIX DLA STRON INFORMACYJNYCH: REGULAMIN I POLITYKA PRYWATNOŚCI NA MOBILE
-   ========================================================================= */
-@media (max-width: 900px) {
-  /* Usunięcie twardych marginesów kontenera nadrzędnego podstron prawnych */
-  .main-container:has(.create-post:has(h2)) {
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100vw !important;
-  }
-
-  /* Spłaszczenie ramki tekstowej dokumentów do krawędzi (efekt edge-to-edge) */
-  .feed > .create-post:has(h2) {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    padding: 20px 16px !important; /* Padding dopasowany do kart .post-card na mobile */
-    border-radius: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-bottom: 1px solid #e4e6eb; /* Subtelna linia odcinająca stopkę */
-  }
-
-  /* Wyśrodkowanie i delikatne zmniejszenie nagłówków h2 na mniejszych ekranach */
-  .feed > .create-post:has(h2) h2 {
-    font-size: 22px !important;
-    line-height: 1.3 !important;
-    margin-bottom: 12px !important;
-  }
-
-  /* Optymalizacja czytelności justowanego tekstu na ekranach smartfonów */
-  .feed > .create-post:has(h2) .article-text-content {
-    text-align: left !important; /* Wyłączenie męczącego na mobile justowania */
-    font-size: 14.5px !important; /* Kompaktowa i czytelna czcionka */
-    line-height: 1.6 !important;
-  }
-
-  /* Dopasowanie wcięć dla list numerowanych (ol/ul) wewnątrz regulaminów */
-  .feed > .create-post:has(h2) .article-text-content ol,
-  .feed > .create-post:has(h2) .article-text-content ul {
-    margin-left: 20px !important;
-    padding: 4px 0 !important;
-  }
-}
-
-/* =========================================================================
-   TRYBY MOBILNE (Ekran < 992px oraz < 900px / RWD)
-   ========================================================================= */
-
-@media (max-width: 992px) {
-  .profile-container {
-    max-width: 100%;
-    width: 100%;
-    padding: 0;
-  }
-
-  .profile-header-card,
-  .cover-photo-wrapper,
-  .cover-photo {
-    border-radius: 0;
-  }
-
-  .profile-header-card {
-    margin-bottom: 12px;
-  }
-
-  .cover-photo-wrapper {
-    height: 260px;
-  }
-
-  .profile-avatar-row {
-    padding: 0 16px;
-    margin-top: -40px;
-  }
-
-  .avatar-wrapper {
-    width: 130px;
-    height: 130px;
-  }
-
-  .profile-body-layout,
-  main.profile-feed {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-
-  .profile-info-sidebar {
-    width: 100%;
-    max-width: 100%;
-    margin-bottom: 12px;
-    padding: 0 8px;
-  }
-
-  main.profile-feed .accordion-container,
-  main.profile-feed #accordion-posts-wrapper {
-    width: 100%;
-    max-width: 100%;
-    padding: 0;
-    margin: 0;
-  }
-
-  .main-container,
-  .editorial-article {
-    margin-top: 0;
-    margin-bottom: 0;
-  }
-}
-
-@media (max-width: 900px) {
-  body {
-    max-width: 100vw;
-    overflow-x: hidden;
-    position: relative;
-    background-color: #ffffff; /* Zmiana tła z szarego na biały */
-  }
-
-  /* Ukrywanie zbędnych elementów na telefonach - BEZ PANELÓW BOCZNYCH */
-  .nav-center,
-  .login-branding,
-  .fb-navbar .nav-right .user-nav-link,
-  .user-visitcard {
-    display: none !important;
-  }
-
-  /* Gwarantujemy, że nagłówek ma stałą pozycję i nigdy nie podlega transformacji */
+  /* Gwarantujemy, że nagłówek ma stałą pozycję i NIGDY nie podlega transformacji */
   .fb-navbar {
     position: fixed !important;
     top: 0;
@@ -624,10 +92,10 @@
     right: 0;
     width: 100vw !important;
     transform: none !important;
-    z-index: 10001; /* Wyżej niż wysuwane panele i treść */
+    z-index: 10001;
   }
 
-  /* Główny kontener w trybie pełnoekranowym na mobile - spłaszczony Grid */
+  /* Główny kontener siatki - spłaszczony Grid */
   .main-container {
     display: block !important;
     padding: 0;
@@ -637,7 +105,7 @@
     max-width: 100%;
   }
 
-  /* Główny kontener zawartości (środkowy feed) - tylko on ucieka z ekranu */
+  /* Główny kontener zawartości pod nagłówkiem - tylko on ulega przesunięciom */
   .page-main-content {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
@@ -645,18 +113,17 @@
     display: block;
   }
 
-  /* Stan: Otwarty LEWY panel (Feed ucieka w prawo) */
+  /* Efekt przesuwania feedu w zależności od stanu klasy body */
   body.has-left-sidebar .page-main-content {
     transform: translateX(100vw);
   }
 
-  /* Stan: Otwarty PRAWY panel (Feed ucieka w lewo) */
   body.has-right-sidebar .page-main-content {
     transform: translateX(-100vw);
   }
 
-  /* PANEL LEWY: Schowany dokładnie po lewej stronie ekranu (translateX(-100%)) */
-  .left-sidebar {
+  /* RE-DEFINICJA PANELU LEWEGO: Pełny ekran ukryty z lewej strony */
+  body .left-sidebar {
     display: block !important;
     position: fixed !important;
     top: 56px;
@@ -673,8 +140,8 @@
     will-change: transform;
   }
 
-  /* PANEL PRAWY: Schowany dokładnie po prawej stronie ekranu (translateX(100%)) */
-  .right-sidebar {
+  /* RE-DEFINICJA PANELU PRAWYGO: Pełny ekran ukryty z prawej strony */
+  body .right-sidebar {
     display: block !important;
     position: fixed !important;
     top: 56px;
@@ -691,7 +158,7 @@
     will-change: transform;
   }
 
-  /* Gdy body dostaje odpowiednią klasę, przesuwamy panele synchronicznie do pozycji 0 */
+  /* Pokazywanie paneli po wpięciu klas systemowych */
   body.has-left-sidebar .left-sidebar {
     transform: translateX(0);
   }
@@ -700,18 +167,18 @@
     transform: translateX(0);
   }
 
-  /* Przezroczysta nakładka przechwytująca kliknięcia zamykające */
+  /* Przezroczysta nakładka łapiąca kliknięcie powrotu */
   .sidebar-overlay {
     position: fixed;
     top: 56px;
     left: 0;
     width: 100vw;
     height: calc(100vh - 56px);
-    z-index: 10000; /* Bezpiecznie pod navbarem, ale nad panelami */
+    z-index: 10000;
     display: none;
     background: transparent;
   }
-  
+
   body.has-left-sidebar .sidebar-overlay,
   body.has-right-sidebar .sidebar-overlay {
     display: block;
@@ -741,7 +208,7 @@
     min-width: 40px;
   }
 
-  /* Likwidacja przerw między postami w strumieniu */
+  /* Spłaszczenie feedu, kart i komentarzy edge-to-edge */
   main.feed,
   .accordion-container,
   #accordion-posts-wrapper,
@@ -753,7 +220,6 @@
     display: block;
   }
 
-  /* Płaskie posty (krawędź do krawędzi) */
   .post-card,
   .accordion-item,
   .login-prompt,
@@ -773,7 +239,6 @@
     border-bottom: 1px solid #e4e6eb;
   }
 
-  /* Formularze tworzenia i edycji jako odrębne sekcje */
   .create-post:has(form),
   .login-box {
     width: 100%;
@@ -785,7 +250,6 @@
     border-bottom: 2px solid #e4e6eb;
   }
 
-  /* Optymalizacja samego formularza i edytora tekstu */
   .create-post form,
   .post-inline-edit-mode form {
     padding: 0;
@@ -811,7 +275,6 @@
     box-sizing: border-box;
   }
 
-  /* Kompaktowy pasek narzędzi edytora */
   .create-post .ql-toolbar.ql-snow,
   .post-inline-edit-mode .ql-toolbar.ql-snow {
     padding: 4px 6px;
@@ -823,12 +286,6 @@
     box-sizing: border-box;
   }
 
-  .create-post .ql-toolbar .ql-formats,
-  .post-inline-edit-mode .ql-toolbar .ql-formats {
-    margin-right: 6px;
-  }
-
-  /* Wyższy kontener tekstowy Quill na mobile */
   .create-post .ql-container.ql-snow,
   .post-inline-edit-mode .ql-container.ql-snow {
     min-height: 220px;
@@ -836,20 +293,7 @@
     border-radius: 0;
     border-left: none;
     border-right: none;
-    font-size: 16px; /* Blokuje auto-zoom w urządzeniach iOS */
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .create-post .ql-editor,
-  .post-inline-edit-mode .ql-editor {
-    padding: 8px 10px;
-  }
-
-  .create-post form > div:last-child,
-  .post-inline-edit-mode form > div:last-child {
-    padding: 4px 8px 0 8px;
-    margin: 0;
+    font-size: 16px;
     width: 100%;
     box-sizing: border-box;
   }
@@ -863,7 +307,6 @@
     width: 100%;
   }
 
-  /* Centrowanie kontenera logowania w widoku dedykowanym */
   .login-container {
     display: flex;
     flex-direction: column;
@@ -893,43 +336,10 @@
   }
 }
 
-@media (max-width: 768px) {
-  .profile-avatar-row {
-    justify-content: center;
-    text-align: center;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  footer .footer-container {
-    flex-direction: column;
-    text-align: center;
-    justify-content: center;
-    gap: 16px;
-  }
-
-  .article-featured-image {
-    float: none;
-    max-width: 100%;
-    margin: 0 0 20px 0;
-  }
-
-  .editorial-article {
-    padding: 20px;
-  }
-
-  .editorial-article .article-header h1 {
-    font-size: 30px;
-  }
-
-  .lightbox-content {
-    max-width: 95%;
-    max-height: 75%;
-  }
-}
-
+/* =========================================================================
+   OPTYMALIZACJE MOBILNE ELEMENTÓW DOTYKOWYCH (Ekran < 600px)
+   ========================================================================= */
 @media (max-width: 600px) {
-  /* Blok akcji własnych ORAZ blok akcji na cudzym profilu */
   .profile-actions-mobile,
   .profile-guest-actions-mobile {
     flex-wrap: nowrap !important;
@@ -937,21 +347,23 @@
     margin-left: 0 !important;
     width: 100% !important;
     justify-content: center !important;
+    margin: 16px auto !important;
   }
 
-  /* Ukrywanie etykiet tekstowych w obu widokach */
   .profile-actions-mobile .btn-text,
   .profile-guest-actions-mobile .btn-text {
     display: none !important;
   }
 
-  /* Transformacja wszystkich przycisków w okrągłe bąbelki dotykowe */
   .profile-actions-mobile .upload-action-btn,
   .profile-guest-actions-mobile button,
   .profile-guest-actions-mobile .profile-block-main-btn,
-  .profile-guest-actions-mobile .restricted-feature-trigger {
+  .profile-guest-actions-mobile .restricted-feature-trigger,
+  .profile-guest-actions-mobile .profile-follow-btn,
+  .profile-guest-actions-mobile .profile-mail-main-btn {
     width: 44px !important;
     height: 44px !important;
+    min-width: 44px !important;
     padding: 0 !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -961,193 +373,94 @@
     box-sizing: border-box !important;
   }
 
-  /* Zachowanie unikalnych kolorów ułatwiających identyfikację akcji dyskusyjnych */
+  .profile-guest-actions-mobile i {
+    font-size: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: inline-block !important;
+    color: #ffffff !important;
+  }
+
   .profile-guest-actions-mobile .profile-follow-btn {
     background-color: #1877f2 !important;
-    color: white !important;
   }
 
   .profile-guest-actions-mobile .profile-block-main-btn {
     background-color: #bc2525 !important;
-    color: white !important;
   }
 
-  .profile-guest-actions-mobile button[style*="background-color: #42b72a"] {
-    background-color: #42b72a !important;
-    color: white !important;
+  /* OPTYMALIZACJA PRZYCISKÓW INTERAKCJI POD POSTAMI */
+  .post-actions {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 8px 0 !important;
+  }
+
+  .post-actions .action-btn .btn-text {
+    display: none !important;
+  }
+
+  .post-actions .action-btn {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    padding: 0 !important;
+    border-radius: 50% !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+  }
+
+  .post-actions .action-btn i {
+    font-size: 16px !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
 }
 
-@media (max-width: 600px) {
-  /* Zapewnienie, że ukrywamy tekst w bąbelkach dotykowych */
-  .profile-actions-mobile .btn-text,
-  .profile-guest-actions-mobile .btn-text {
-@media (max-width: 600px) {
-/* 1. Reset i centrowanie kontenera na mobile */
-.profile-guest-actions-mobile {
-display: flex !important;
-flex-wrap: nowrap !important;
-gap: 10px !important;
-margin: 16px auto !important;
-width: 100% !important;
-justify-content: center !important;
-margin-left: 0 !important;
-}
-/* 2. Bezwzględne ukrycie etykiet tekstowych */
-.profile-guest-actions-mobile .btn-text {
-display: none !important;
-}
-/* 3. Wymuszenie okrągłego kształtu klocków dotykowych (44px standard Google UX) */
-.profile-guest-actions-mobile .profile-follow-btn,
-.profile-guest-actions-mobile .profile-block-main-btn,
-.profile-guest-actions-mobile .profile-mail-main-btn,
-.profile-guest-actions-mobile .restricted-feature-trigger {
-width: 44px !important;
-height: 44px !important;
-min-width: 44px !important;
-padding: 0 !important;
-border-radius: 50% !important;
-display: inline-flex !important;
-align-items: center !important;
-justify-content: center !important;
-box-sizing: border-box !important;
-}
-/* 4. Środkowanie samych ikon w okręgach */
-.profile-guest-actions-mobile i {
-font-size: 16px !important;
-margin: 0 !important;
-padding: 0 !important;
-display: inline-block !important;
-}
-}
-@media (max-width: 768px) {
-footer .footer-container div:last-child {
-text-align: center !important;
-margin-top: 4px !important;
-width: 100% !important;
-max-width: 100% !important;
-}
-}
-@media (max-width: 900px) {
-/* FIX DLA WIDOKU SINGLE-POST: Spłaszczenie marginesów i kompaktowy padding na mobile */
-.main-container:has(.editorial-article) {
-padding: 0 !important;
-margin: 0 !important;
-width: 100vw !important;
-}
-.editorial-article {
-width: 100% !important;
-max-width: 100% !important;
-margin: 0 !important;
-padding: 16px !important; /* Taki sam padding jak w .post-card na mobile */
-border-radius: 0 !important;
-border: none !important;
-box-shadow: none !important;
-}
-.article-header {
-padding-bottom: 16px !important;
-margin-bottom: 20px !important;
-}
-}
-@media (max-width: 600px) {
-/* OPTYMALIZACJA MOBILNA PRZYCISKÓW POD POSTAMI /
-.post-actions {
-display: flex !important;
-flex-wrap: nowrap !important; / Blokada zawijania przycisków do nowej linii */
-justify-content: flex-start !important;
-gap: 8px !important;
-padding: 8px 0 !important;
-}
-/* Całkowite ukrycie napisów w stopce posta */
-.post-actions .action-btn .btn-text {
-display: none !important;
-}
-/* Przekształcenie przycisków w okrągłe bąbelki dotykowe (identycznie jak na profilu) */
-.post-actions .action-btn {
-width: 40px !important;
-height: 40px !important;
-min-width: 40px !important;
-padding: 0 !important;
-border-radius: 50% !important;
-display: inline-flex !important;
-align-items: center !important;
-justify-content: center !important;
-box-sizing: border-box !important;
-margin: 0 !important;
-}
-/* Wyśrodkowanie ikon i delikatne powiększenie dla lepszego UX na mobile */
-.post-actions .action-btn i {
-font-size: 16px !important;
-margin: 0 !important;
-padding: 0 !important;
-}
-}
 /* =========================================================================
-FIX DLA STRON INFORMACYJNYCH: REGULAMIN I POLITYKA PRYWATNOŚCI NA MOBILE
-========================================================================= /
+   WIDOKI JEDNOKOLUMNOWE I STRONY INFORMACYJNE
+   ========================================================================= */
 @media (max-width: 900px) {
-/ Usunięcie twardych marginesów kontenera nadrzędnego podstron prawnych */
-.main-container:has(.create-post:has(h2)) {
-padding: 0 !important;
-margin: 0 !important;
-width: 100vw !important;
-}
-/* Spłaszczenie ramki tekstowej dokumentów do krawędzi (efekt edge-to-edge) /
-.feed > .create-post:has(h2) {
-width: 100% !important;
-max-width: 100% !important;
-margin: 0 !important;
-padding: 20px 16px !important; / Padding dopasowany do kart .post-card na mobile /
-border-radius: 0 !important;
-border: none !important;
-box-shadow: none !important;
-border-bottom: 1px solid #e4e6eb; / Subtelna linia odcinająca stopkę */
-}
-/* Wyśrodkowanie i delikatne zmniejszenie nagłówków h2 na mniejszych ekranach */
-.feed > .create-post:has(h2) h2 {
-font-size: 22px !important;
-line-height: 1.3 !important;
-margin-bottom: 12px !important;
-}
-/* Optymalizacja czytelności justowanego tekstu na ekranach smartfonów /
-.feed > .create-post:has(h2) .article-text-content {
-text-align: left !important; / Wyłączenie męczącego na mobile justowania /
-font-size: 14.5px !important; / Kompaktowa i czytelna czcionka */
-line-height: 1.6 !important;
-}
-/* Dopasowanie wcięć dla list numerowanych (ol/ul) wewnątrz regulaminów */
-.feed > .create-post:has(h2) .article-text-content ol,
-.feed > .create-post:has(h2) .article-text-content ul {
-margin-left: 20px !important;
-padding: 4px 0 !important;
-}
-}
-@media (max-width: 768px) {
-footer .footer-container div:last-child {
-text-align: center !important;
-margin-top: 4px !important;
-width: 100% !important;
-max-width: 100% !important;
-}
-}
-@media (max-width: 900px) {
-/* FIX DLA WIDOKU SINGLE-POST: Spłaszczenie marginesów i kompaktowy padding na mobile */
-.main-container:has(.editorial-article) {
-padding: 0 !important;
-margin: 0 !important;
-width: 100vw !important;
-}
-.editorial-article {
-width: 100% !important;
-max-width: 100% !important;
-margin: 0 !important;
-padding: 16px !important;
-border-radius: 0 !important;
-border: none !important;
-box-shadow: none !important;
-}
-.article-header {
-padding-bottom: 16px !important;
-margin-bottom: 20px !important;
-}
+  .main-container:has(.create-post:has(h2)) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100vw !important;
+  }
+
+  .feed > .create-post:has(h2) {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px 16px !important;
+    border-radius: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-bottom: 1px solid #e4e6eb;
+  }
+  .feed > .create-post:has(h2) h2 {
+    font-size: 22px !important;
+    line-height: 1.3 !important;
+    margin-bottom: 12px !important;
+  }
+  .feed > .create-post:has(h2) .article-text-content {
+    text-align: left !important;
+    font-size: 14.5px !important;
+    line-height: 1.6 !important;
+  }
+  .feed > .create-post:has(h2) .article-text-content ol,
+  .feed > .create-post:has(h2) .article-text-content ul {
+    margin-left: 20px !important;
+    padding: 4px 0 !important;
+  }
+  footer .footer-container div:last-child {
+    text-align: center !important;
+    margin-top: 4px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
 }
