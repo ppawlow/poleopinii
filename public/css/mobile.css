@@ -102,7 +102,8 @@
     will-change: transform;
     width: 100vw !important;
     display: block !important;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    /* Płynne animacje powrotne z poziomu klas CSS */
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   /* WYSUWANY PANEL LEWY (Obserwowani) */
@@ -121,7 +122,7 @@
     transform: translateX(-100%);
     will-change: transform;
     box-shadow: 4px 0 12px rgba(0,0,0,0.08) !important;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
   /* WYSUWANY PANEL PRAWY (Przegląd dnia) */
@@ -140,10 +141,10 @@
     transform: translateX(100%);
     will-change: transform;
     box-shadow: -4px 0 12px rgba(0,0,0,0.08) !important;
-    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
   }
 
-  /* KRYTYCZNE RESTREKCJE KLAS POZAKOŃCZENIOWYCH - Wymuszenie !important chroniące stany po puszczeniu palca */
+  /* KRYTYCZNE MARŻE STANÓW KOŃCOWYCH: Płynne domykanie z priorytetem w przeglądarce */
   body.has-left-sidebar .left-sidebar {
     transform: translateX(0) !important;
   }
