@@ -136,8 +136,8 @@ async function sendAbuseReportEmail(originalPost, savedPost, req) {
 
   const isCopyrightInfringement = savedPost.abuseCategory === "copyright";
   const authorMailSubject = isCopyrightInfringement
-    ? "🚨 PILNE: Zgłoszenie naruszenia praw autorskich Twojego wpisu"
-    : "Pilne: Twój wpis został zakwestionowany (Zgłoszenie nadużycia)";
+    ? "Zgłoszenie naruszenia praw autorskich Twojego wpisu"
+    : "Twój wpis został zakwestionowany (Zgłoszenie nadużycia)";
 
   let appendedContent = savedPost.content;
   if (isCopyrightInfringement) {
@@ -161,14 +161,14 @@ async function sendAbuseReportEmail(originalPost, savedPost, req) {
 
   if (isCopyrightInfringement) {
     adminMailSubject =
-      "🔥 [ROZSTRZYGNIĘCIE RZECZOWE - PRAWA AUTORSKIE] Żądanie usunięcia grafiki / treści (Takedown Request)";
+      "Żądanie usunięcia grafiki / treści (Takedown Request)";
     adminMailContent = renderMail("adminAbuseCopyrightAlertEmail", {
       originalTitle: originalPost.title || "Wpis bez tytułu",
       reportContent: savedPost.content,
       adminUrl: `${req.protocol}://${req.get("host")}/admin`,
     });
   } else {
-    adminMailSubject = "🚨 ALARM: Zgłoszono nowe nadużycie";
+    adminMailSubject = "Zgłoszono nowe nadużycie";
     adminMailContent = renderMail("adminAbuseAlertEmail", {
       authorName: targetAuthorDoc.name,
       originalTitle: originalPost.title || "Wpis bez tytułu",
@@ -216,7 +216,7 @@ async function sendAbuseReportAcceptedEmails(originalPost, reportPost) {
     });
     await sendMail(
       originalAuthor.email,
-      "⚠️ Ważne: Twój wpis został ograniczony przez moderatora",
+      "Twój wpis został ograniczony przez moderatora",
       authorMailContent,
     );
   }
@@ -279,7 +279,7 @@ async function sendPostUnlockedNotificationEmail(post) {
     });
     await sendMail(
       post.authorEmail,
-      "🔓 Odblokowanie profilu: Możesz ponownie upublicznić post",
+      "Możesz ponownie upublicznić post",
       unlockMailContent,
     );
   }
@@ -305,7 +305,7 @@ async function sendVerificationRejectedEmail(user, adminComment) {
   });
   await sendMail(
     user.email,
-    "Ważne: Decyzja w sprawie weryfikacji Twojego profilu",
+    "Decyzja w sprawie weryfikacji Twojego profilu",
     mailContent,
   );
 }
@@ -320,7 +320,7 @@ async function sendAccountDeletionRequestEmail(user, req) {
 
   await sendMail(
     user.email,
-    "Ważne: Potwierdzenie usunięcia konta (Wniosek RODO)",
+    "Potwierdzenie usunięcia konta",
     mailContent,
   );
 }
@@ -333,7 +333,7 @@ async function sendAccountDeletionSuccessNotification(userName, userEmail) {
 
   await sendMail(
     userEmail,
-    "Potwierdzenie usunięcia danych z systemu 🎉",
+    "Potwierdzenie usunięcia danych z systemu",
     mailContent,
   );
 }
@@ -346,7 +346,7 @@ async function sendEditorCandidateEmail(user, totalLikes) {
   });
   await sendMail(
     user.email,
-    "Spełniłeś warunki formalne: Jesteś Kandydatem na Redaktora! ⏳",
+    "Jesteś Kandydatem na Redaktora!",
     mailContent,
   );
 }
@@ -358,7 +358,7 @@ async function sendEditorApprovedByBoardEmail(user) {
   });
   await sendMail(
     user.email,
-    "Oficjalna decyzja Kolegium: Zostałeś mianowany Redaktorem Serwisu! 🌟",
+    "Zostałeś mianowany Redaktorem Serwisu!",
     mailContent,
   );
 }
