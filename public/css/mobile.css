@@ -55,7 +55,7 @@
 }
 
 /* =========================================================================
-   2. REWOLUCJA GESTÓW I STRUMIENIA (Ekran < 900px) - POPRAWIONA STRUKTURA
+   2. REWOLUCJA GESTÓW I STRUMIENIA (Ekran < 900px) - PEŁNA SZEROKOŚĆ 100%
    ========================================================================= */
 @media (max-width: 900px) {
   body {
@@ -65,6 +65,7 @@
     background-color: #ffffff;
   }
 
+  /* Stabilny pasek menu stojący na samym szczycie */
   .fb-navbar {
     position: fixed !important;
     top: 0 !important;
@@ -75,6 +76,7 @@
     z-index: 10005 !important;
   }
 
+  /* Ukrywanie zbędnych ikon na mobile */
   .nav-center,
   .login-branding,
   .fb-navbar .nav-right .user-nav-link,
@@ -91,6 +93,7 @@
     max-width: 100% !important;
   }
 
+  /* Kontener główny aplikacji */
   .page-main-content {
     transform: none !important;
     width: 100vw;
@@ -98,7 +101,7 @@
     padding-top: 56px !important;
   }
 
-  /* Kontener główny - płynne przejście transformacji */
+  /* Główny kontener zawartości (środkowy feed) */
   main.feed {
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     will-change: transform;
@@ -106,22 +109,22 @@
     display: block !important;
   }
 
-  /* Przesunięcie feedu centralnego w bok przy aktywnych panelach */
+  /* POPRAWKA: Przesunięcie feedu centralnego o pełne 100% szerokości ekranu */
   body.has-left-sidebar main.feed {
-    transform: translateX(85vw) !important;
+    transform: translateX(100vw) !important;
   }
 
   body.has-right-sidebar main.feed {
-    transform: translateX(-85vw) !important;
+    transform: translateX(-100vw) !important;
   }
 
-  /* WYSUWANY PANEL LEWY (Obserwowani) */
+  /* WYSUWANY PANEL LEWY (Obserwowani) - Teraz na pełne 100% szerokości */
   body .left-sidebar {
     display: block !important;
     position: fixed !important;
     top: 56px !important;
     left: 0 !important;
-    width: 85vw !important;
+    width: 100vw !important; /* Zmieniono z 85vw */
     height: calc(100vh - 56px) !important;
     max-height: calc(100vh - 56px) !important;
     overflow-y: auto !important;
@@ -134,13 +137,13 @@
     box-shadow: 4px 0 12px rgba(0,0,0,0.08) !important;
   }
 
-  /* WYSUWANY PANEL PRAWY (Przegląd dnia) */
+  /* WYSUWANY PANEL PRAWY (Przegląd dnia) - Teraz na pełne 100% szerokości */
   body .right-sidebar {
     display: block !important;
     position: fixed !important;
     top: 56px !important;
     right: 0 !important;
-    width: 85vw !important;
+    width: 100vw !important; /* Zmieniono z 85vw */
     height: calc(100vh - 56px) !important;
     max-height: calc(100vh - 56px) !important;
     overflow-y: auto !important;
@@ -153,7 +156,7 @@
     box-shadow: -4px 0 12px rgba(0,0,0,0.08) !important;
   }
 
-  /* KRYTYCZNE POPRAWKI: Wymuszenie powrotu paneli na ekran przy obecności klas aktywnych */
+  /* Odpalenie wjazdu paneli na ekran */
   body.has-left-sidebar .left-sidebar {
     transform: translateX(0) !important;
   }
@@ -162,7 +165,7 @@
     transform: translateX(0) !important;
   }
 
-  /* Warstwa blokująca tło */
+  /* Przezroczysta warstwa blokująco-zamykająca nad feedem */
   body.has-left-sidebar .sidebar-overlay,
   body.has-right-sidebar .sidebar-overlay {
     display: block !important;
@@ -175,7 +178,7 @@
     background: rgba(0, 0, 0, 0.25) !important;
   }
 
-  /* Pozostałe elementy struktury mobilnej */
+  /* Elementy kaskadowe i formularze edge-to-edge */
   .nav-left { flex: 1; min-width: 0; gap: 8px; }
   .nav-left form { display: flex; flex: 1; min-width: 0; }
   .fb-navbar .search-bar { width: 200px; max-width: 200px; font-size: 13px; padding: 8px 12px; }
@@ -190,6 +193,9 @@
   .post-card:not(:last-child), .accordion-item:not(:last-child) { border-bottom: 1px solid #e4e6eb; }
   .create-post:has(form), .login-box {
     width: 100%; max-width: 100%; margin: 0; padding: 16px; border-radius: 0; border: none; border-bottom: 2px solid #e4e6eb;
+  }
+  .create-post form, .post-inline-edit-mode form {
+    padding: 0; margin: 0; width: 100%; display: flex; flex-direction: column; gap: 6px;
   }
 }
 

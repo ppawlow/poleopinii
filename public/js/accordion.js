@@ -275,38 +275,31 @@ window.Confirm = function (message, title = "Potwierdź") {
     const messageEl = document.getElementById("custom-confirm-message");
     const successBtn = document.getElementById("custom-confirm-success-btn");
     const cancelBtn = document.getElementById("custom-confirm-cancel-btn");
-
     if (!modal || !titleEl || !messageEl || !successBtn || !cancelBtn) {
       const res = confirm(message);
       return resolve(res);
     }
-
     titleEl.innerText = title;
     messageEl.innerText = message;
     modal.style.display = "flex";
-
     function cleanupListeners() {
       successBtn.removeEventListener("click", handleSuccess);
       cancelBtn.removeEventListener("click", handleCancel);
     }
-
     function handleSuccess() {
       modal.style.display = "none";
       cleanupListeners();
       resolve(true);
     }
-
     function handleCancel() {
       modal.style.display = "none";
       cleanupListeners();
       resolve(false);
     }
-
     successBtn.addEventListener("click", handleSuccess);
     cancelBtn.addEventListener("click", handleCancel);
   });
 };
-
 document.addEventListener("click", function (e) {
   // Jeśli użytkownik kliknął w link wewnątrz naszego customowego okna alertu
   if (
@@ -320,18 +313,14 @@ document.addEventListener("click", function (e) {
     }
   }
 });
-
 window.toggleCommentsVisibility = function (postId) {
   const commentsContainer = document.getElementById(
     `comments-wrapper-${postId}`,
   );
   if (!commentsContainer) return;
-
   const currentDisplay = window.getComputedStyle(commentsContainer).display;
-
   if (currentDisplay === "none") {
     commentsContainer.style.display = "block";
-
     setTimeout(() => {
       const discussionHeading = document.getElementById(
         `discussion-heading-${postId}`,
@@ -343,12 +332,10 @@ window.toggleCommentsVisibility = function (postId) {
           discussionHeading.getBoundingClientRect().top +
           window.pageYOffset +
           yOffset;
-
         window.scrollTo({
           top: yPosition,
           behavior: "smooth",
         });
-
         const inputField = document.getElementById(
           `comment-input-field-${postId}`,
         );
@@ -359,24 +346,19 @@ window.toggleCommentsVisibility = function (postId) {
     commentsContainer.style.display = "none";
   }
 };
-
 // public/js/accordion.js
-
 // ==========================================
 // 5. OBSŁUGA GLOBALNEGO MODALU ZDJĘĆ (LIGHTBOX)
 // ==========================================
-
 window.openLightbox = function (imageSrc) {
   const modal = document.getElementById("custom-lightbox-modal");
   const targetImg = document.getElementById("lightbox-target-image");
-
   if (modal && targetImg) {
     targetImg.src = imageSrc;
     modal.style.display = "flex";
     document.body.style.overflow = "hidden"; // Blokada przewijania osi czasu w tle
   }
 };
-
 window.closeLightbox = function () {
   const modal = document.getElementById("custom-lightbox-modal");
   if (modal) {
@@ -384,7 +366,6 @@ window.closeLightbox = function () {
     document.body.style.overflow = ""; // Przywrócenie przewijania strony
   }
 };
-
 // Globalny nasłuchiwanie kliknięć z priorytetową blokadą mechanizmu akordeonu
 document.addEventListener("DOMContentLoaded", () => {
   document.body.addEventListener(
@@ -398,7 +379,6 @@ document.addEventListener("DOMContentLoaded", () => {
         window.openLightbox(e.target.src);
         return;
       }
-
       // Detekcja kliknięcia w zdjęcie w widoku pojedynczego artykułu
       const articleImg = e.target.closest(".article-featured-image img");
       if (articleImg) {
@@ -409,7 +389,6 @@ document.addEventListener("DOMContentLoaded", () => {
     },
     true,
   ); // Użycie fazy przechwytywania (capture) dla gwarancji pierwszeństwa przed akordeonem
-
   // Obsługa zamknięcia klawiszem Escape
   document.addEventListener("keydown", function (e) {
     if (e.key === "Escape") {
@@ -417,9 +396,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
 // public/js/accordion.js -> Dodaj na końcu pliku
-
 document.addEventListener("DOMContentLoaded", () => {
   // Globalny mechanizm przechwytywania kliknięć w zablokowane funkcje (Edukacja użytkownika)
   document.body.addEventListener(
@@ -427,62 +404,30 @@ document.addEventListener("DOMContentLoaded", () => {
     function (e) {
       const trigger = e.target.closest(".restricted-feature-trigger");
       if (!trigger) return;
-
       // Blokujemy domyślne akcje i propagację akordeonów
       e.preventDefault();
       e.stopPropagation();
-
       const reason = trigger.getAttribute("data-reason");
       let title = "🛡️ Funkcja Ograniczona";
       let message =
         "Dostęp do tej funkcjonalności został tymczasowo wstrzymany.";
-
       // Centralny słownik komunikatów edukacyjnych dla użytkownika
       if (reason === "like_public") {
         title = "🔐 Wymagana Pełna Weryfikacja Konta";
-        message = `
-                <div style="text-align: left; line-height: 1.5;">
-                    <p style="margin-bottom: 10px;">Chcesz polubić ten post publiczny? W trosce o autentyczność dyskusji i ochronę przed farmami botów, <b>polubienia postów i komentarzy publicznych wymagają pełnego statusu konta</b>.</p>
-                    <p style="margin-bottom: 12px;">Aktualnie Twój profil nie przeszedł drugiego etapu weryfikacji tożsamości (przelew uwierzytelniający).</p>
-                    <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;">
-                    <p style="font-size: 13px; color: #65676b;">💡 <b>Rozwiązanie:</b> Przejdź do Centrum Weryfikacji, aby zrealizować zwrotny przelew na kwotę 1.00 PLN i odblokować pełne możliwości platformy.</p>
-                    <p style="margin-top: 14px; text-align: center;"><a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Ukończ weryfikację konta</a></p>
-                </div>
-            `;
+        message = `<div style="text-align: left; line-height: 1.5;"> <p style="margin-bottom: 10px;">Chcesz polubić ten post publiczny? W trosce o autentyczność dyskusji i ochronę przed farmami botów, <b>polubienia postów i komentarzy publicznych wymagają pełnego statusu konta</b>.</p> <p style="margin-bottom: 12px;">Aktualnie Twój profil nie przeszedł drugiego etapu weryfikacji tożsamości (przelew uwierzytelniający).</p> <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;"> <p style="font-size: 13px; color: #65676b;">💡 <b>Rozwiązanie:</b> Przejdź do Centrum Weryfikacji, aby zrealizować zwrotny przelew na kwotę 1.00 PLN i odblokować pełne możliwości platformy.</p> <p style="margin-top: 14px; text-align: center;"><a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Ukończ weryfikację konta</a></p> </div>`;
       } else if (reason === "comment_public") {
         title = "💬 Zablokowane Komentowanie Publiczne";
-        message = `
-                <div style="text-align: left; line-height: 1.5;">
-                    <p style="margin-bottom: 10px;">Dodawanie komentarzy pod wpisami oznaczonymi jako <b>🌐 Publiczne</b> zostało ograniczone ze względów bezpieczeństwa społeczności.</p>
-                    <p style="margin-bottom: 12px;">Aby dołączyć do tej dyskusji i publikować komentarze widoczne dla wszystkich, Twój profil musi posiadać zweryfikowaną tożsamość fizyczną.</p>
-                    <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;">
-                    <p style="font-size: 13px; color: #65676b;">🔒 Środki te minimalizują zjawisko spamu, mowy nienawiści oraz nieautoryzowanych reklam na platformie.</p>
-                    <p style="margin-top: 14px; text-align: center;"><a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Przejdź do weryfikacji konta</a></p>
-                </div>
-            `;
+        message = `<div style="text-align: left; line-height: 1.5;"> <p style="margin-bottom: 10px;">Dodawanie komentarzy pod wpisami oznaczonymi jako <b>🌐 Publiczne</b> zostało ograniczone ze względów bezpieczeństwa społeczności.</p> <p style="margin-bottom: 12px;">Aby dołączyć do tej dyskusji i publikować komentarze widoczne dla wszystkich, Twój profil musi posiadać zweryfikowaną tożsamość fizyczną.</p> <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;"> <p style="font-size: 13px; color: #65676b;">🔒 Środki te minimalizują zjawisko spamu, mowy nienawiści oraz nieautoryzowanych reklam na platformie.</p> <p style="margin-top: 14px; text-align: center;"><a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Przejdź do weryfikacji konta</a></p> </div>`;
       } else if (reason === "like_comment") {
         title = "🔐 Wymagana Weryfikacja Interakcji";
-        message = `
-                <div style="text-align: left; line-height: 1.5;">
-                    <p style="margin-bottom: 10px;">Reagowanie i przyznawanie punktów polubień dla wypowiedzi w sekcjach publicznych zostało zablokowane.</p>
-                    <p style="margin-bottom: 12px;">Aby zapobiegać sztucznemu manipulowaniu pozycją komentarzy przez boty, <b>oddawanie głosów pod wpisami publicznymi wymaga pełnego statusu konta</b>.</p>
-                    <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;">
-                    <p style="font-size: 13px; color: #65676b;">💡 Wykonaj jednorazowy przelew uwierzytelniający (1.00 PLN) w panelu weryfikacji, aby trwale odblokować pełną aktywność społecznościową.</p>
-                    <p style="margin-top: 14px; text-align: center;"><a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Przejdź do Centrum Weryfikacji</a></p>
-                </div>
-            `;
+        message = `<div style="text-align: left; line-height: 1.5;"> <p style="margin-bottom: 10px;">Reagowanie i przyznawanie punktów polubień dla wypowiedzi w sekcjach publicznych zostało zablokowane.</p> <p style="margin-bottom: 12px;">Aby zapobiegać sztucznemu manipulowaniu pozycją komentarzy przez boty, <b>oddawanie głosów pod wpisami publicznymi wymaga pełnego statusu konta</b>.</p> <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;"> <p style="font-size: 13px; color: #65676b;">💡 Wykonaj jednorazowy przelew uwierzytelniający (1.00 PLN) w panelu weryfikacji, aby trwale odblokować pełną aktywność społecznościową.</p> <p style="margin-top: 14px; text-align: center;"><a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Przejdź do Centrum Weryfikacji</a></p> </div>`;
       }
       // Wywołujemy zintegrowane w aplikację estetyczne okno Alert Modal
-      if (typeof window.Alert === "function") {
-        window.Alert(message, title);
-      } else {
-        alert(title + "\n\n" + message.replace(/<\/?[^>]+(>|\$)/g, ""));
-      }
+      window.Alert(message, title);
     },
     true,
   ); // Używamy fazy przechwytywania (capture), by mieć absolutne pierwszeństwo przed mechanizmami akordeonu
 });
-
 document.addEventListener("DOMContentLoaded", () => {
   const bindPasswordToggle = (iconId, inputId) => {
     const icon = document.getElementById(iconId);
@@ -504,18 +449,14 @@ document.addEventListener("DOMContentLoaded", () => {
   bindPasswordToggle("toggleConfirmPassword", "confirmPasswordField");
 });
 // public/js/accordion.js -> Obsługa zwijanego panelu zgłoszeń nadużyć na stronie artykułu
-
 window.toggleAbuseReportsVisibility = function () {
   const wrapper = document.getElementById("abuse-reports-wrapper");
   const icon = document.getElementById("abuse-accordion-icon");
-
   if (!wrapper || !icon) return;
-
   // Sprawdzamy obecny stan widoczności wyliczony przez przeglądarkę
   const isHidden =
     window.getComputedStyle(wrapper).display === "none" ||
     wrapper.style.display === "none";
-
   if (isHidden) {
     wrapper.style.display = "block";
     icon.style.transform = "rotate(180deg)"; // Obrót strzałki do góry
@@ -524,7 +465,6 @@ window.toggleAbuseReportsVisibility = function () {
     icon.style.transform = "rotate(0deg)"; // Powrót strzałki do pozycji wyjściowej
   }
 };
-
 // =========================================================================
 // OBSŁUGA BANNERU COOKIES (ePRIVACY DIRECTIVE)
 // =========================================================================
@@ -538,7 +478,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 });
-
 window.acceptCookieLaw = function () {
   const cookieBanner = document.getElementById("cookie-law-banner");
   if (cookieBanner) {
@@ -546,18 +485,12 @@ window.acceptCookieLaw = function () {
     localStorage.setItem("cookie_law_accepted", "true"); // Zapamiętujemy decyzję
   }
 };
-
-
 // =========================================================================
-// INTEGRALNA MOBILNA OBSŁUGA GESTÓW (SWIPE) - ZSYNCHRONIZOWANE PRZESUWANIE
+// INTEGRALNA MOBILNA OBSŁUGA GESTÓW (SWIPE) - UTWARDZONA WERSJA EMULACJI
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
   // Aktywacja automatyzacji gestów wyłącznie dla urządzeń komórkowych (szerokość <= 900px)
   if (window.innerWidth > 900) return;
-
-  const leftSidebar = document.querySelector(".left-sidebar");
-  const rightSidebar = document.querySelector(".right-sidebar");
-  if (!leftSidebar || !rightSidebar) return;
 
   // Tworzymy techniczną, przezroczystą nakładkę przechwytującą dotyk powrotny
   const overlay = document.createElement("div");
@@ -569,14 +502,14 @@ document.addEventListener("DOMContentLoaded", () => {
   let touchEndX = 0;
   let touchEndY = 0;
 
-  const minSwipeDistance = 60; // Minimalny próg pikseli dla interpretacji gestu jako swipe
-  const maxVerticalDeviatedDistance = 45; // Maksymalny dopuszczalny ruch w pionie (zapobiega konfliktom ze skrolowaniem feedu)
+  const minSwipeDistance = 50; // Subtelnie obniżony próg dla lepszej czułości na telefonach
+  const maxVerticalDeviatedDistance = 40; // Maksymalny dopuszczalny ruch w pionie
 
   function handleSwipeGesture() {
     const distanceX = touchEndX - touchStartX;
     const distanceY = Math.abs(touchEndY - touchStartY);
 
-    // Odrzucenie gestu, jeśli użytkownik skroluje tablicę w pionie
+    // Odrzucenie gestu, jeśli użytkownik wyraźnie skroluje tablicę w pionie
     if (distanceY > maxVerticalDeviatedDistance) return;
 
     const isLeftOpen = document.body.classList.contains("has-left-sidebar");
@@ -610,26 +543,43 @@ document.addEventListener("DOMContentLoaded", () => {
     document.body.style.overflow = ""; // Przywrócenie domyślnego skrolowania feedu
   }
 
-  // Monitorowanie współrzędnych startowych dotyku (pomijamy edytory oraz pola formularzy)
+  // Monitorowanie współrzędnych startowych dotyku
   document.addEventListener("touchstart", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-    touchStartX = e.changedTouches.screenX;
-    touchStartY = e.changedTouches.screenY;
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
   }, { passive: true });
 
-  // Monitorowanie współrzędnych końcowych dotyku i uruchomienie przeliczenia odległości wektorowej
+  // KRYTYCZNA POPRAWKA: Blokowanie domyślnego przewijania strony TYLKO podczas poziomego swipe'a
+  document.addEventListener("touchmove", (e) => {
+    if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
+    
+    let currentX = e.changedTouches[0].screenX;
+    let currentY = e.changedTouches[0].screenY;
+    
+    let currentDistanceX = Math.abs(currentX - touchStartX);
+    let currentDistanceY = Math.abs(currentY - touchStartY);
+
+    // Jeśli ruch w poziomie jest większy niż w pionie, traktujemy to jako intencjonalny swipe boczny
+    // i odcinamy domyślny skrol przeglądarki flagą { passive: false }
+    if (currentDistanceX > currentDistanceY && currentDistanceX > 10) {
+      if (e.cancelable) e.preventDefault();
+    }
+  }, { passive: false }); // Wymuszone aktywne nasłuchiwanie ruchu
+
+  // Monitorowanie współrzędnych końcowych dotyku i uruchomienie logiki gestu
   document.addEventListener("touchend", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
-    touchEndX = e.changedTouches.screenX;
-    touchEndY = e.changedTouches.screenY;
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
     handleSwipeGesture();
   }, { passive: true });
 
   // Obsługa kliknięcia w obszar zamykający
   overlay.addEventListener("click", closeAllSidebars);
-  
+
   // Automatyczne zamknięcie struktury pulpitów przy przejściu na podstrony z poziomu menu
-  document.querySelectorAll(".sidebar-item, .dropdown-item").forEach(item => {
+  document.querySelectorAll(".sidebar-item, .dropdown-item").forEach((item) => {
     item.addEventListener("click", closeAllSidebars);
   });
 });
