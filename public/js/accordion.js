@@ -509,32 +509,33 @@ document.addEventListener("DOMContentLoaded", () => {
   const screenWidth = window.innerWidth;
 
   function setInteractiveStyles(deltaX, useTransition = false) {
+    // Wymuszamy brak animacji (transition) podczas ruchu palca, aby zapobiec opóźnieniom
     const transitionStyle = useTransition ? "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : "none";
     
-    leftSidebar.style.transition = transitionStyle;
-    rightSidebar.style.transition = transitionStyle;
-    mainFeed.style.transition = transitionStyle;
+    leftSidebar.style.setProperty("transition", transitionStyle, "important");
+    rightSidebar.style.setProperty("transition", transitionStyle, "important");
+    mainFeed.style.setProperty("transition", transitionStyle, "important");
 
     if (deltaX > 0) {
       if (initialActiveSidebar === "right") {
         const percent = Math.min(100, (deltaX / screenWidth) * 100);
-        rightSidebar.style.transform = `translateX(${percent}%)`;
-        mainFeed.style.transform = `translateX(${-100 + percent}vw)`;
+        rightSidebar.style.setProperty("transform", `translateX(${percent}%)`, "important");
+        mainFeed.style.setProperty("transform", `translateX(${-100 + percent}vw)`, "important");
       } else if (initialActiveSidebar === "none") {
         const percent = Math.min(100, (deltaX / screenWidth) * 100);
-        leftSidebar.style.transform = `translateX(${-100 + percent}%)`;
-        mainFeed.style.transform = `translateX(${percent}vw)`;
+        leftSidebar.style.setProperty("transform", `translateX(${-100 + percent}%)`, "important");
+        mainFeed.style.setProperty("transform", `translateX(${percent}vw)`, "important");
       }
     } else if (deltaX < 0) {
       const absDeltaX = Math.abs(deltaX);
       if (initialActiveSidebar === "left") {
         const percent = Math.min(100, (absDeltaX / screenWidth) * 100);
-        leftSidebar.style.transform = `translateX(${-percent}%)`;
-        mainFeed.style.transform = `translateX(${100 - percent}vw)`;
+        leftSidebar.style.setProperty("transform", `translateX(${-percent}%)`, "important");
+        mainFeed.style.setProperty("transform", `translateX(${100 - percent}vw)`, "important");
       } else if (initialActiveSidebar === "none") {
         const percent = Math.min(100, (absDeltaX / screenWidth) * 100);
-        rightSidebar.style.transform = `translateX(${100 - percent}%)`;
-        mainFeed.style.transform = `translateX(${-percent}vw)`;
+        rightSidebar.style.setProperty("transform", `translateX(${100 - percent}%)`, "important");
+        mainFeed.style.setProperty("transform", `translateX(${-percent}vw)`, "important");
       }
     }
   }
