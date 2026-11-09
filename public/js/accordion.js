@@ -576,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const distanceX = touchEndX - touchStartX;
     const distanceY = Math.abs(touchEndY - touchStartY);
 
-    // Odrzucenie gestu, jeśli intencją użytkownika było skrolowanie tablicy w pionie
+    // Odrzucenie gestu, jeśli użytkownik skroluje tablicę w pionie
     if (distanceY > maxVerticalDeviatedDistance) return;
 
     const isLeftOpen = document.body.classList.contains("has-left-sidebar");
@@ -587,6 +587,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isRightOpen) {
         closeAllSidebars();
       } else if (!isLeftOpen) {
+        document.body.classList.remove("has-right-sidebar");
         document.body.classList.add("has-left-sidebar");
         document.body.style.overflow = "hidden";
       }
@@ -597,6 +598,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (isLeftOpen) {
         closeAllSidebars();
       } else if (!isRightOpen) {
+        document.body.classList.remove("has-left-sidebar");
         document.body.classList.add("has-right-sidebar");
         document.body.style.overflow = "hidden";
       }
