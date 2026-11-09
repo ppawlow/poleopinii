@@ -464,3 +464,102 @@
     max-width: 100% !important;
   }
 }
+/* =========================================================================
+   POPRAWKA: PRZESUWAMY WYŁĄCZNIE ŚRODKOWY FEED, NAVBAR I PANELE SĄ STABILNE
+   ========================================================================= */
+@media (max-width: 900px) {
+
+  /* ... Zachowaj bez zmian górną część bloku @media (max-width: 900px) ... */
+
+  /* Gwarantujemy, że nagłówek ma stałą pozycję i NIGDY nie podlega transformacji */
+  .fb-navbar {
+    position: fixed !important;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100vw !important;
+    transform: none !important;
+    z-index: 10002; /* Wyższy z-index, aby stał na samym szczycie */
+  }
+
+  /* Kontener główny aplikacji - neutralny */
+  .page-main-content {
+    transform: none !important;
+    width: 100vw;
+    display: block;
+  }
+
+  /* Główny kontener zawartości (środkowy feed) - TYLKO ON ulega przesunięciom */
+  main.feed {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    will-change: transform;
+    width: 100vw !important;
+    display: block !important;
+  }
+
+  /* EFEKT PRZESUWANIA SAMODZIELNEGO FEEDU (Pulpit środkowy ucieka, odsłaniając boki) */
+  body.has-left-sidebar main.feed {
+    transform: translateX(100vw) !important;
+  }
+
+  body.has-right-sidebar main.feed {
+    transform: translateX(-100vw) !important;
+  }
+
+  /* PANEL LEWY: Schowany za lewą krawędzią okna mobilnego */
+  body .left-sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 56px !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 56px) !important;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    background-color: #ffffff !important;
+    z-index: 10000 !important; /* Bezpiecznie pod navbarem */
+    transform: translateX(-100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    will-change: transform;
+  }
+
+  /* PANEL PRAWY: Schowany za prawą krawędzią okna mobilnego */
+  body .right-sidebar {
+    display: block !important;
+    position: fixed !important;
+    top: 56px !important;
+    right: 0 !important;
+    width: 100vw !important;
+    height: calc(100vh - 56px) !important;
+    max-height: calc(100vh - 56px) !important;
+    overflow-y: auto !important;
+    background-color: #ffffff !important;
+    z-index: 10000 !important; /* Bezpiecznie pod navbarem */
+    transform: translateX(100%) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    will-change: transform;
+  }
+
+  /* Dynamiczny wjazd paneli bocznych na środek ekranu po wykonaniu gestu */
+  body.has-left-sidebar .left-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  body.has-right-sidebar .right-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  /* Przezroczysta nakładka łapiąca kliknięcie powrotu */
+  .sidebar-overlay {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 100vw;
+    height: calc(100vh - 56px);
+    z-index: 10001; /* Między panelami a navbarem */
+    display: none;
+    background: transparent;
+  }
+
+  /* ... Reszta Twojego pliku: optymalizacje dotykowe < 600px pozostają nienaruszone ... */
+}
