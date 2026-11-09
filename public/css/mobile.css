@@ -102,6 +102,7 @@
     will-change: transform;
     width: 100vw !important;
     display: block !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* WYSUWANY PANEL LEWY (Obserwowani) */
@@ -120,6 +121,7 @@
     transform: translateX(-100%);
     will-change: transform;
     box-shadow: 4px 0 12px rgba(0,0,0,0.08) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
   /* WYSUWANY PANEL PRAWY (Przegląd dnia) */
@@ -138,20 +140,21 @@
     transform: translateX(100%);
     will-change: transform;
     box-shadow: -4px 0 12px rgba(0,0,0,0.08) !important;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* KRYTYCZNE STANOWISKO FALLBACK: Zabezpiecza pozycję końcową po zakończeniu gestu */
+  /* KRYTYCZNE RESTREKCJE KLAS POZAKOŃCZENIOWYCH - Wymuszenie !important chroniące stany po puszczeniu palca */
   body.has-left-sidebar .left-sidebar {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
   body.has-left-sidebar main.feed {
-    transform: translateX(100vw);
+    transform: translateX(100vw) !important;
   }
   body.has-right-sidebar .right-sidebar {
-    transform: translateX(0);
+    transform: translateX(0) !important;
   }
   body.has-right-sidebar main.feed {
-    transform: translateX(-100vw);
+    transform: translateX(-100vw) !important;
   }
 
   body.has-left-sidebar .sidebar-overlay,

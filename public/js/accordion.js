@@ -486,7 +486,7 @@ window.acceptCookieLaw = function () {
   }
 };
 // =========================================================================
-// ZAAWANSOWANA EMULACJA DOTYKU 1:1 - EFEKT PRZYKLEJENIA PALCA DO EKRANU
+// ZAAWANSOWANA EMULACJA DOTYKU 1:1 - POPRAWKA CZYSZCZENIA STYLÓW INLINE
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
   if (window.innerWidth > 900) return;
@@ -505,41 +505,33 @@ document.addEventListener("DOMContentLoaded", () => {
   let touchStartY = 0;
   let currentDeltaX = 0;
   let isDragging = false;
-  let initialActiveSidebar = "none"; // "none", "left", "right"
+  let initialActiveSidebar = "none"; 
   const screenWidth = window.innerWidth;
 
   function setInteractiveStyles(deltaX, useTransition = false) {
     const transitionStyle = useTransition ? "transform 0.3s cubic-bezier(0.16, 1, 0.3, 1)" : "none";
     
-    // Nadanie płynności lub jej wyłączenie na czas przeciągania
     leftSidebar.style.transition = transitionStyle;
     rightSidebar.style.transition = transitionStyle;
     mainFeed.style.transition = transitionStyle;
 
-    // SCENARIUSZ A: Ruch w prawo (Wysuwamy LEWY panel lub chowamy PRAWY)
     if (deltaX > 0) {
       if (initialActiveSidebar === "right") {
-        // Chowamy prawy panel (od 0 do 100% szerokości)
         const percent = Math.min(100, (deltaX / screenWidth) * 100);
         rightSidebar.style.transform = `translateX(${percent}%)`;
         mainFeed.style.transform = `translateX(${-100 + percent}vw)`;
       } else if (initialActiveSidebar === "none") {
-        // Wysuwamy lewy panel (od -100% do 0)
         const percent = Math.min(100, (deltaX / screenWidth) * 100);
         leftSidebar.style.transform = `translateX(${-100 + percent}%)`;
         mainFeed.style.transform = `translateX(${percent}vw)`;
       }
-    } 
-    // SCENARIUSZ B: Ruch w lewo (Wysuwamy PRAWY panel lub chowamy LEWY)
-    else if (deltaX < 0) {
+    } else if (deltaX < 0) {
       const absDeltaX = Math.abs(deltaX);
       if (initialActiveSidebar === "left") {
-        // Chowamy lewy panel
         const percent = Math.min(100, (absDeltaX / screenWidth) * 100);
         leftSidebar.style.transform = `translateX(${-percent}%)`;
         mainFeed.style.transform = `translateX(${100 - percent}vw)`;
       } else if (initialActiveSidebar === "none") {
-        // Wysuwamy prawy panel
         const percent = Math.min(100, (absDeltaX / screenWidth) * 100);
         rightSidebar.style.transform = `translateX(${100 - percent}%)`;
         mainFeed.style.transform = `translateX(${-percent}vw)`;
@@ -547,36 +539,36 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // KRYTYCZNA POPRAWKA: Czyszczenie śmieci inline i pełne przekazanie sterowania do CSS
+  function clearInlineTransforms() {
+    leftSidebar.style.transform = "";
+    rightSidebar.style.transform = "";
+    mainFeed.style.transform = "";
+    leftSidebar.style.transition = "";
+    rightSidebar.style.transition = "";
+    mainFeed.style.transition = "";
+  }
+
   function openLeft() {
+    clearInlineTransforms();
     document.body.classList.remove("has-right-sidebar");
     document.body.classList.add("has-left-sidebar");
     document.body.style.overflow = "hidden";
-    
-    leftSidebar.style.transform = "translateX(0)";
-    rightSidebar.style.transform = "translateX(100%)";
-    mainFeed.style.transform = "translateX(100vw)";
   }
 
   function openRight() {
+    clearInlineTransforms();
     document.body.classList.remove("has-left-sidebar");
     document.body.classList.add("has-right-sidebar");
     document.body.style.overflow = "hidden";
-    
-    leftSidebar.style.transform = "translateX(-100%)";
-    rightSidebar.style.transform = "translateX(0)";
-    mainFeed.style.transform = "translateX(-100vw)";
   }
 
   function closeAllSidebars() {
+    clearInlineTransforms();
     document.body.classList.remove("has-left-sidebar", "has-right-sidebar");
     document.body.style.overflow = "";
-    
-    leftSidebar.style.transform = "translateX(-100%)";
-    rightSidebar.style.transform = "translateX(100%)";
-    mainFeed.style.transform = "translateX(0)";
   }
 
-  // REJESTRACJA DOTYKU: Start
   document.addEventListener("touchstart", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
     
@@ -594,7 +586,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }, { passive: true });
 
-  // REJESTRACJA DOTYKU: Ruch (Śledzenie pozycji palca 1:1)
   document.addEventListener("touchmove", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
 
@@ -604,26 +595,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const diffX = currentX - touchStartX;
     const diffY = Math.abs(currentY - touchStartY);
 
-    // Detekcja intencji: ruch poziomy musi dominować nad skrolowaniem pionowym
     if (!isDragging && Math.abs(diffX) > diffY && Math.abs(diffX) > 10) {
       isDragging = true;
     }
 
     if (isDragging) {
-      if (e.cancelable) e.preventDefault(); // Blokujemy pionowy skrol feedu
+      if (e.cancelable) e.preventDefault();
       currentDeltaX = diffX;
-      setInteractiveStyles(currentDeltaX, false); // Ruch 1:1 bez animacji opóźniającej
+      setInteractiveStyles(currentDeltaX, false);
     }
   }, { passive: false });
 
-  // REJESTRACJA DOTYKU: Koniec (Decyzja na podstawie progu procentowego)
   document.addEventListener("touchend", (e) => {
     if (!isDragging) return;
     isDragging = false;
 
-    const dragThreshold = screenWidth * 0.3; // 30% ekranu wystarczy do zatwierdzenia akcji
+    const dragThreshold = screenWidth * 0.25; // próg 25% szerokości ekranu
 
-    // Aktywacja płynnych przejść dla wykończenia animacji puszczenia palca
     setInteractiveStyles(currentDeltaX, true);
 
     setTimeout(() => {
@@ -648,18 +636,16 @@ document.addEventListener("DOMContentLoaded", () => {
           openRight();
         }
       }
-    }, 10);
+    }, 200); // Czas zsynchronizowany z animacją puszczenia palca
   }, { passive: true });
 
   overlay.addEventListener("click", () => {
-    setInteractiveStyles(0, true);
-    setTimeout(closeAllSidebars, 10);
+    closeAllSidebars();
   });
 
   document.querySelectorAll(".sidebar-item, .dropdown-item").forEach((item) => {
     item.addEventListener("click", () => {
-      setInteractiveStyles(0, true);
-      setTimeout(closeAllSidebars, 10);
+      closeAllSidebars();
     });
   });
 });
