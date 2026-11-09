@@ -486,7 +486,7 @@ window.acceptCookieLaw = function () {
   }
 };
 // =========================================================================
-// ZAAWANSOWANA EMULACJA DOTYKU 1:1 - POPRAWKA CZYSZCZENIA STYLÓW INLINE
+// ZAAWANSOWANA EMULACJA DOTYKU 1:1 - POPRAWIONA SYNCHRONIZACJA WARSTW
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
   if (window.innerWidth > 900) return;
@@ -539,7 +539,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // KRYTYCZNA POPRAWKA: Czyszczenie śmieci inline i pełne przekazanie sterowania do CSS
   function clearInlineTransforms() {
     leftSidebar.style.transform = "";
     rightSidebar.style.transform = "";
@@ -610,33 +609,30 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!isDragging) return;
     isDragging = false;
 
-    const dragThreshold = screenWidth * 0.25; // próg 25% szerokości ekranu
+    const dragThreshold = screenWidth * 0.25;
 
-    setInteractiveStyles(currentDeltaX, true);
-
-    setTimeout(() => {
-      if (initialActiveSidebar === "none") {
-        if (currentDeltaX > dragThreshold) {
-          openLeft();
-        } else if (currentDeltaX < -dragThreshold) {
-          openRight();
-        } else {
-          closeAllSidebars();
-        }
-      } else if (initialActiveSidebar === "left") {
-        if (currentDeltaX < -dragThreshold) {
-          closeAllSidebars();
-        } else {
-          openLeft();
-        }
-      } else if (initialActiveSidebar === "right") {
-        if (currentDeltaX > dragThreshold) {
-          closeAllSidebars();
-        } else {
-          openRight();
-        }
+    // Usunięto problematyczny setTimeout opóźniający czyszczenie stylów inline
+    if (initialActiveSidebar === "none") {
+      if (currentDeltaX > dragThreshold) {
+        openLeft();
+      } else if (currentDeltaX < -dragThreshold) {
+        openRight();
+      } else {
+        closeAllSidebars();
       }
-    }, 200); // Czas zsynchronizowany z animacją puszczenia palca
+    } else if (initialActiveSidebar === "left") {
+      if (currentDeltaX < -dragThreshold) {
+        closeAllSidebars();
+      } else {
+        openLeft();
+      }
+    } else if (initialActiveSidebar === "right") {
+      if (currentDeltaX > dragThreshold) {
+        closeAllSidebars();
+      } else {
+        openRight();
+      }
+    }
   }, { passive: true });
 
   overlay.addEventListener("click", () => {
