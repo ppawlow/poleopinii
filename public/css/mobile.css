@@ -537,73 +537,65 @@
 @media (max-width: 900px) {
   body {
     max-width: 100vw;
-    overflow-x: hidden; /* Zapobiega przypadkowemu przewijaniu strony na boki */
+    overflow-x: hidden;
     position: relative;
   }
 
-  /* Ukrywanie tylko zbędnych elementów nawigacji, panele boczne redefiniujemy poniżej */
-  .nav-center,
-  .login-branding,
-  .fb-navbar .nav-right .user-nav-link,
-  .user-visitcard {
-    display: none !important;
-  }
+  /* ... pozostaw ukrywanie .nav-center, .user-visitcard itp. ... */
 
-  /* PANEL LEWY: Transformacja w wysuwaną szufladę z lewej strony */
+  /* PANEL LEWY: Pełnoekranowy panel wysuwany z lewej */
   .left-sidebar {
-    display: block !important; /* Nadpisujemy display:none */
+    display: block !important;
     position: fixed !important;
     top: 56px;
     left: 0;
-    width: 280px;
+    width: 100vw; /* Zmiana na pełną szerokość okna */
     height: calc(100vh - 56px);
     max-height: 100vh;
     background-color: #ffffff;
-    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.15);
+    box-shadow: none; /* Na pełnym ekranie cień boczny jest zbędny */
     z-index: 9999;
-    padding: 16px;
-    /* Ukrycie poza lewą krawędzią ekranu */
+    padding: 20px 16px; /* Spójny padding z kartami mobilnymi */
+    /* Całkowite ukrycie poza lewą krawędzią ekranu */
     transform: translateX(-100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
   }
 
-  /* PANEL PRAWY: Transformacja w wysuwaną szufladę z prawej strony */
+  /* PANEL PRAWY: Pełnoekranowy panel wysuwany z prawej */
   .right-sidebar {
-    display: block !important; /* Nadpisujemy display:none */
+    display: block !important;
     position: fixed !important;
     top: 56px;
     right: 0;
-    width: 280px;
+    width: 100vw; /* Zmiana na pełną szerokość okna */
     height: calc(100vh - 56px);
     max-height: 100vh;
     background-color: #ffffff;
-    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    box-shadow: none;
     z-index: 9999;
-    padding: 16px;
-    /* Ukrycie poza prawą krawędzią ekranu */
+    padding: 20px 16px;
+    /* Całkowite ukrycie poza prawą krawędzią ekranu */
     transform: translateX(100%);
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     will-change: transform;
   }
 
-  /* Klasy aktywacyjne akcelerowane sprzętowo, sterowane przez JS */
-  .left-sidebar.sidebar-open {
-    transform: translateX(0);
-  }
-
+  /* Klasy aktywacyjne pozostają bez zmian - przesuwają panel do pozycji 0 */
+  .left-sidebar.sidebar-open,
   .right-sidebar.sidebar-open {
     transform: translateX(0);
   }
 
-  /* Dynamicznie doklejana przez JS przyciemniająca tło nakładka (backdrop) */
+  /* Modyfikacja nakładki: przy 100% szerokości paneli overlay staje się 
+     głównie technicznym elementem zamykającym lub głębszym zaciemnieniem */
   .sidebar-overlay {
     position: fixed;
     top: 56px;
     left: 0;
     width: 100vw;
     height: calc(100vh - 56px);
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
     z-index: 9998;
     opacity: 0;
     pointer-events: none;
