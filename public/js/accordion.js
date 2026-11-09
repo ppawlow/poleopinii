@@ -547,16 +547,19 @@ window.acceptCookieLaw = function () {
   }
 };
 
+
 // =========================================================================
-// MOBILNA OBSŁUGA GESTÓW (SWIPE) - SYMERYCZNY EFEKT DLA PANELLI I FEEDU
+// INTEGRALNA MOBILNA OBSŁUGA GESTÓW (SWIPE) - ZSYNCHRONIZOWANE PRZESUWANIE
 // =========================================================================
 document.addEventListener("DOMContentLoaded", () => {
+  // Aktywacja automatyzacji gestów wyłącznie dla urządzeń komórkowych (szerokość <= 900px)
   if (window.innerWidth > 900) return;
 
   const leftSidebar = document.querySelector(".left-sidebar");
   const rightSidebar = document.querySelector(".right-sidebar");
   if (!leftSidebar || !rightSidebar) return;
 
+  // Tworzymy techniczną, przezroczystą nakładkę przechwytującą dotyk powrotny
   const overlay = document.createElement("div");
   overlay.className = "sidebar-overlay";
   document.body.appendChild(overlay);
@@ -566,51 +569,53 @@ document.addEventListener("DOMContentLoaded", () => {
   let touchEndX = 0;
   let touchEndY = 0;
 
-  const minSwipeDistance = 60; 
-  const maxVerticalDeviatedDistance = 45; // Subtelnie podniesiony margines dla wygody gestu
+  const minSwipeDistance = 60; // Minimalny próg pikseli dla interpretacji gestu jako swipe
+  const maxVerticalDeviatedDistance = 45; // Maksymalny dopuszczalny ruch w pionie (zapobiega konfliktom ze skrolowaniem feedu)
 
   function handleSwipeGesture() {
     const distanceX = touchEndX - touchStartX;
     const distanceY = Math.abs(touchEndY - touchStartY);
 
-    // Jeśli ruch pionowy dominował, ignorujemy akcję (zwykłe przewijanie postów)
+    // Odrzucenie gestu, jeśli intencją użytkownika było skrolowanie tablicy w pionie
     if (distanceY > maxVerticalDeviatedDistance) return;
 
     const isLeftOpen = document.body.classList.contains("has-left-sidebar");
     const isRightOpen = document.body.classList.contains("has-right-sidebar");
 
-    // GEST: Przesunięcie palcem od lewej do prawej (Odsłaniamy lewą kolumnę lub zamykamy prawą)
+    // GEST: Ruch palca od lewej do prawej (Odsłaniamy lewą szufladę lub zamykamy prawą)
     if (distanceX > minSwipeDistance) {
       if (isRightOpen) {
         closeAllSidebars();
       } else if (!isLeftOpen) {
         document.body.classList.add("has-left-sidebar");
-        document.body.style.overflow = "hidden";
+        document.body.style.overflow = "hidden"; // Blokada skrolowania tła
       }
     }
 
-    // GEST: Przesunięcie palcem od prawej do lewej (Odsłaniamy prawą kolumnę lub zamykamy lewą)
+    // GEST: Ruch palca od prawej do lewej (Odsłaniamy prawą szufladę lub zamykamy lewą)
     if (distanceX < -minSwipeDistance) {
       if (isLeftOpen) {
         closeAllSidebars();
       } else if (!isRightOpen) {
         document.body.classList.add("has-right-sidebar");
-        document.body.style.overflow = "hidden";
+        document.body.style.overflow = "hidden"; // Blokada skrolowania tła
       }
     }
   }
 
   function closeAllSidebars() {
     document.body.classList.remove("has-left-sidebar", "has-right-sidebar");
-    document.body.style.overflow = "";
+    document.body.style.overflow = ""; // Przywrócenie domyślnego skrolowania feedu
   }
 
+  // Monitorowanie współrzędnych startowych dotyku (pomijamy edytory oraz pola formularzy)
   document.addEventListener("touchstart", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
     touchStartX = e.changedTouches.screenX;
     touchStartY = e.changedTouches.screenY;
   }, { passive: true });
 
+  // Monitorowanie współrzędnych końcowych dotyku i uruchomienie przeliczenia odległości wektorowej
   document.addEventListener("touchend", (e) => {
     if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select")) return;
     touchEndX = e.changedTouches.screenX;
@@ -618,8 +623,10 @@ document.addEventListener("DOMContentLoaded", () => {
     handleSwipeGesture();
   }, { passive: true });
 
+  // Obsługa kliknięcia w obszar zamykający
   overlay.addEventListener("click", closeAllSidebars);
   
+  // Automatyczne zamknięcie struktury pulpitów przy przejściu na podstrony z poziomu menu
   document.querySelectorAll(".sidebar-item, .dropdown-item").forEach(item => {
     item.addEventListener("click", closeAllSidebars);
   });
