@@ -7,6 +7,12 @@
         .profile-user-details
             h2(style="display: inline-flex; align-items: center; gap: 8px; margin: 0;") 
                 | #{profileUser.displayName}
+                if profileUser.isFullyVerified || profileUser.role === 'editor'
+                    span(title="Profil Zweryfikowany / Zaufany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
+                        i.fa-solid.fa-circle-check
+                else
+                    span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
+                        i.fa-solid.fa-circle-xmark
 
             div(style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;")
                 if profileUser.role === 'editor'
@@ -18,13 +24,6 @@
                     div.profile-rank-badge(style=`display: inline-flex; align-items: center; background: ${currentRank.bg}; color: ${currentRank.color}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid ${currentRank.color};` title=`Próg punktowy poziomu wynosi: ${currentRank.minLikes} lajków`)
                         span #{currentRank.name}
                         
-                if profileUser.isFullyVerified || profileUser.role === 'editor'
-                    span(title="Profil Zweryfikowany / Zaufany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
-                        i.fa-solid.fa-circle-check
-                else
-                    span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
-                        i.fa-solid.fa-circle-xmark
-
         if user && user._id.equals(profileUser._id)
             div.update-photos-container.profile-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
                 form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0; display: inline-flex;")
