@@ -92,7 +92,7 @@
 
   /* PAS TRZECH PANELU POŁĄCZONYCH KRAWĘDZIAMI W LINII */
   /* PAS TRZECH PANELU POŁĄCZONYCH KRAWĘDZIAMI W LINII */
-  .main-container {
+  .main-container:not(:has(.editorial-article)) {
     display: flex !important;
     flex-direction: row !important;
     flex-wrap: nowrap !important;
@@ -239,5 +239,19 @@
     padding: 0 !important;
     display: inline-block !important;
     color: #ffffff !important;
+  }
+  
+    /* SKORYGOWANIE MARGINESÓW DLA JEDNOSZPAŁTOWEGO ARTYKUŁU */
+  .main-container:has(.editorial-article) {
+    padding: 0 !important;
+    margin: 0 auto !important;
+    width: 100vw !important;
+    max-width: 100% !important;
+  }
+
+  .main-container .editorial-article {
+    padding: 20px 16px !important; /* Zmniejszenie wewnętrznego odpychania tekstu od krawędzi ekranu */
+    border-radius: 0 !important;   /* Likwidacja zaokrągleń kantów na pełnym ekranie smartfona */
+    box-shadow: none !important;    /* Usunięcie zbędnego cienia na urządzeniach mobilnych */
   }
 }
