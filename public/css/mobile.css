@@ -295,4 +295,26 @@
     border-radius: 0 !important;
     box-shadow: none !important;
   }
+    /* WYŚRODKOWANIE ZAWARTOSCI STOPKI NA URZĄDZENIACH MOBILNYCH */
+  footer.site-footer .footer-container {
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    text-align: center !important;
+    gap: 14px !important;
+    padding: 8px 16px !important;
+  }
+
+  footer.site-footer .footer-container div,
+  footer.site-footer .footer-container div a {
+    text-align: center !important;
+    width: 100% !important;
+  }
+
+  /* Wyśrodkowanie i delikatne odseparowanie grupy linków prawnych */
+  footer.site-footer .footer-container div:nth-child(2) {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 24px !important;
+  }
 }
