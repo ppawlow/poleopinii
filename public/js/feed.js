@@ -842,7 +842,19 @@ window.initAiTopicDiscussion = function (title, summary) {
     return;
   }
 
-  // 2. Wymuszamy otwarcie akordeonu tworzenia posta, jeśli był zwinięty
+  // 2. WIDOK MOBILNY: Przeskakujemy z prawego panelu ("Przegląd dnia") do panelu głównego
+  const isMobileCarousel = window.innerWidth <= 900 && document.querySelector(".main-container:not(:has(.editorial-article))");
+  if (isMobileCarousel) {
+    const mainContainer = document.querySelector(".main-container");
+    if (mainContainer) {
+      mainContainer.style.transform = "";
+      mainContainer.style.transition = "";
+    }
+    document.body.classList.remove("has-left-sidebar", "has-right-sidebar");
+    document.body.style.overflow = "";
+  }
+
+  // 3. Wymuszamy otwarcie akordeonu tworzenia posta, jeśli był zwinięty
   const accordionContent = createPostBlock.querySelector(
     ".create-accordion-content",
   );
@@ -850,30 +862,30 @@ window.initAiTopicDiscussion = function (title, summary) {
     window.toggleCreatePostAccordion();
   }
 
-  // 3. Wstrzykujemy tytuł polemiki do standardowego pola input
+  // 4. Wstrzykujemy tytuł polemiki do standardowego pola input
   const titleField = document.getElementById("edit-title-new");
   if (titleField) {
     titleField.value = title.trim();
   }
 
-  // 4. Bezpiecznie wstrzykujemy treść newsa w formie eleganckiego cytatu blokowego (blockquote) do instancji Quill
+  // 5. Bezpiecznie wstrzykujemy treść newsa w formie eleganckiego cytatu blokowego do instancji Quill
   const quillInstance = activeQuillInstances["new"];
   if (quillInstance) {
-    // Konstruujemy sformatowaną strukturę HTML z cytatem źródłowym AI na początku
-    const formattedHtml = `<blockquote><strong>${summary.trim()}</strong></blockquote>`;
-
-    // DangerouslyPasteHTML bezpiecznie parsuje strukturę i umieszcza ją w edytorze
+    const formattedHtml = `<blockquote><strong>${summary.trim()}</strong></blockquote><p><br></p>`;
     quillInstance.clipboard.dangerouslyPasteHTML(formattedHtml);
-
-    // Przenosimy kursor na sam koniec dokumentu, dając użytkownikowi natychmiastową gotowość do pisania
-    setTimeout(() => {
-      quillInstance.focus();
-      quillInstance.setSelection(quillInstance.getLength(), 0);
-    }, 100);
   }
 
-  // 5. Płynne przewijanie ekranu do góry/wyśrodkowanie na edytorze posta
-  createPostBlock.scrollIntoView({ behavior: "smooth", block: "center" });
+  // 6. Przewijamy stronę do kreatora i ustawiamy fokus po zakończeniu animacji przesuwania panelu (300ms)
+  const delay = isMobileCarousel ? 320 : 100;
+  setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    createPostBlock.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    if (quillInstance) {
+      quillInstance.focus();
+      quillInstance.setSelection(quillInstance.getLength(), 0);
+    }
+  }, delay);
 };
 
 /**
