@@ -927,122 +927,177 @@ window.submitAiAppeal = async function (postId, buttonElement) {
   }
 };
 
-/**
- * Inicjalizacja asynchronicznego klienta WebSocket dla Pokoju Narad Redakcji (Real-Time UX)
- */
-function initEditorsRoomWebSocket() {
-  // Nawiązujemy połączenie tylko wtedy, gdy redaktor fizycznie znajduje się w Pokoju Narad
-  if (window.location.pathname !== "/editors") return;
+function initGlobalWebSocket() {
+  // Łączymy się tylko dla zalogowanych użytkowników
+  if (!window.appUser) return;
 
   const protocol = window.location.protocol === "https:" ? "wss://" : "ws://";
-  const wsUrl = `${protocol}${window.location.host}`;
+  const currentPath = encodeURIComponent(window.location.pathname);
+  const wsUrl = `${protocol}${window.location.host}/?path=${currentPath}`;
   const socket = new WebSocket(wsUrl);
 
-  socket.onopen = () => {
-    console.log("[WebSocket] Połączono ze strumieniem dyskusji krytycznych Kolegium Redakcyjnego.");
-  };
+  // Pomocnik aktualizujący token CSRF wewnątrz kodu HTML otrzymanego z serwera
+  function syncCsrfTokens(containerElement) {
+    const myCsrf = document
+      .querySelector('meta[name="csrf-token"]')
+      ?.getAttribute("content");
+    if (!myCsrf || !containerElement) return;
+    containerElement
+      .querySelectorAll('input[name="_csrf"]')
+      .forEach((input) => {
+        input.value = myCsrf;
+      });
+  }
 
-// public/js/feed.js -> Fragment wewnątrz funkcji initEditorsRoomWebSocket()
+  socket.onmessage = function (event) {
+    try {
+      const data = JSON.parse(event.data);
 
-socket.onmessage = function (event) {
-  try {
-    const data = JSON.parse(event.data);
+      // ===========================================================
+      // 1. NOWY POST NA ŻYWO (Strona główna, Obserwowani, Redakcja)
+      // ===========================================================
+      if (data.type === "NEW_POST" && data.html) {
+        const path = window.location.pathname;
+        const isAllowedFeed =
+          path === "/" ||
+          path === "/following-feed" ||
+          (path === "/editors" && data.visibility === "editors");
 
-    // ===========================================================
-    // 1. OBSŁUGA NOWYCH POSTÓW REDAKCYJNYCH W CZASIE RZECZYWISTYM
-    // ===========================================================
-    if (data.type === "NEW_EDITOR_POST" && data.html) {
-      const postsWrapper = document.getElementById("accordion-posts-wrapper");
-      if (postsWrapper) {
-        const noPostsFallback = postsWrapper.querySelector(".no-posts");
-        if (noPostsFallback) noPostsFallback.remove();
+        const postsWrapper = document.getElementById("accordion-posts-wrapper");
+        if (isAllowedFeed && postsWrapper) {
+          const noPostsFallback = postsWrapper.querySelector(".no-posts");
+          if (noPostsFallback) noPostsFallback.remove();
 
-        const tempContainer = document.createElement("div");
-        tempContainer.innerHTML = data.html;
-        const freshPostCard = tempContainer.firstElementChild;
+          const tempContainer = document.createElement("div");
+          tempContainer.innerHTML = data.html;
+          syncCsrfTokens(tempContainer); // Krytyczne dla formularzy polubień i komentarzy
 
-        if (freshPostCard) {
-          freshPostCard.style.opacity = "0";
-          freshPostCard.style.transform = "translateY(-20px)";
-          freshPostCard.style.transition = "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+          const freshPostCard = tempContainer.firstElementChild;
+          if (freshPostCard) {
+            freshPostCard.style.opacity = "0";
+            freshPostCard.style.transform = "translateY(-15px)";
+            freshPostCard.style.transition = "all 0.35s ease";
 
-          postsWrapper.insertBefore(freshPostCard, postsWrapper.firstChild);
+            postsWrapper.insertBefore(freshPostCard, postsWrapper.firstChild);
 
-          requestAnimationFrame(() => {
-            freshPostCard.style.opacity = "1";
-            freshPostCard.style.transform = "translateY(0)";
-          });
+            requestAnimationFrame(() => {
+              freshPostCard.style.opacity = "1";
+              freshPostCard.style.transform = "translateY(0)";
+            });
+
+            if (typeof window.refreshAccordionListeners === "function") {
+              window.refreshAccordionListeners();
+            }
+          }
+        }
+      }
+
+      // ===========================================================
+      // 2. NOWY KOMENTARZ NA ŻYWO (W dowolnym widoku z tym postem)
+      // ===========================================================
+      if (data.type === "NEW_COMMENT" && data.html && data.postId) {
+        const postCard = document.getElementById(`post-${data.postId}`);
+        const commentsWrapper = document.getElementById(
+          `comments-wrapper-${data.postId}`,
+        );
+
+        if (commentsWrapper && postCard) {
+          const targetBlock = commentsWrapper.querySelector(
+            ".article-comments-block",
+          );
+
+          if (targetBlock) {
+            const activeInput = targetBlock.querySelector(
+              `#comment-input-field-${data.postId}`,
+            );
+            const isUserTyping = activeInput === document.activeElement;
+            const currentTypingValue = activeInput ? activeInput.value : "";
+
+            targetBlock.innerHTML = data.html;
+            syncCsrfTokens(targetBlock); // Podmiana tokenu CSRF w nowych formularzach
+
+            if (isUserTyping) {
+              const freshInput = targetBlock.querySelector(
+                `#comment-input-field-${data.postId}`,
+              );
+              if (freshInput) {
+                freshInput.value = currentTypingValue;
+                freshInput.focus();
+              }
+            }
+          }
+
+          const freshCommentsCount =
+            commentsWrapper.querySelectorAll(".comment-card").length;
+
+          const commentsCountEl = document.getElementById(
+            `comments-text-${data.postId}`,
+          );
+          if (commentsCountEl && typeof liczebnik === "function") {
+            commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
+              "komentarz",
+              "komentarze",
+              "komentarzy",
+            ]);
+          }
+
+          const discussionHeadingEl = document.getElementById(
+            `discussion-heading-${data.postId}`,
+          );
+          if (discussionHeadingEl) {
+            discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
+          }
 
           if (typeof window.refreshAccordionListeners === "function") {
             window.refreshAccordionListeners();
           }
         }
       }
-    }
 
-    // =========================================================================
-    // 2. SKORYGOWANA OBSŁUGA KOMENTARZY W CZASIE RZECZYWISTYM (ZGODNA Z RENDERPARTIAL)
-    // =========================================================================
-    if (data.type === "NEW_EDITOR_COMMENT" && data.html && data.postId) {
-      const postCard = document.getElementById(`post-${data.postId}`);
-      const commentsWrapper = document.getElementById(`comments-wrapper-${data.postId}`);
-      
-      if (commentsWrapper && postCard) {
-        const targetBlock = commentsWrapper.querySelector(".article-comments-block");
-        
-        if (targetBlock) {
-          // Zabezpieczenie: Sprawdzamy czy bieżący użytkownik aktualnie nie trzyma focusu na polu tekstowym
-          const activeInput = targetBlock.querySelector(`#comment-input-field-${data.postId}`);
-          const isUserTyping = activeInput === document.activeElement;
-          const currentTypingValue = activeInput ? activeInput.value : "";
+      // ===========================================================
+      // 3. POWIADOMIENIE W CZASIE RZECZYWISTYM (Dzwoneczek + /events)
+      // ===========================================================
+      if (data.type === "NEW_NOTIFICATION") {
+        // Podświetlenie ikony dzwoneczka w górnym menu i dropdownie
+        document
+          .querySelectorAll('a[href="/events"] i.fa-bell')
+          .forEach((bellIcon) => {
+            bellIcon.style.color = "#bc2525";
+            bellIcon.classList.add("fa-shake");
+            setTimeout(() => bellIcon.classList.remove("fa-shake"), 1500);
+          });
 
-          // Podmieniamy zawartość bloku dyskusyjnego
-          targetBlock.innerHTML = data.html;
-
-          // Przywracamy stan pola tekstowego jeśli redaktor był w trakcie pisania
-          if (isUserTyping) {
-            const freshInput = targetBlock.querySelector(`#comment-input-field-${data.postId}`);
-            if (freshInput) {
-              freshInput.value = currentTypingValue;
-              freshInput.focus();
-            }
-          }
-        }
-
-        const freshCommentsCount = commentsWrapper.querySelectorAll(".comment-card").length;
-
-        const commentsCountEl = document.getElementById(`comments-text-${data.postId}`);
-        if (commentsCountEl && typeof liczebnik === "function") {
-          commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
-        }
-
-        const discussionHeadingEl = document.getElementById(`discussion-heading-${data.postId}`);
-        if (discussionHeadingEl) {
-          discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
-        }
-
-        if (typeof window.refreshAccordionListeners === "function") {
-          window.refreshAccordionListeners();
+        // Jeśli użytkownik ma akurat otwartą zakładkę /events, odśwież listę przez API
+        if (window.location.pathname === "/events") {
+          fetch("/events/api")
+            .then((res) => res.json())
+            .then((resData) => {
+              const eventsWrapper = document.getElementById(
+                "events-list-wrapper",
+              );
+              if (resData.success && eventsWrapper && Array.isArray(resData.events)) {
+                eventsWrapper.innerHTML = resData.events
+                  .map((ev) => ev.html)
+                  .join("");
+              }
+            })
+            .catch(() => {});
         }
       }
+    } catch (err) {
+      console.error("[WebSocket] Błąd przetwarzania pakietu danych:", err);
     }
-  } catch (err) {
-    console.error("[WebSocket] Błąd przetwarzania pakietu danych czasu rzeczywistego:", err);
-  }
-};
-
-  socket.onclose = () => {
-    console.warn("[WebSocket] Połączenie zamknięte. Próba ponownego nawiązania za 5 sekund...");
-    setTimeout(initEditorsRoomWebSocket, 5000); // Mechanizm Auto-Reconnect
   };
 
-  socket.onerror = (err) => {
-    console.error("[WebSocket] Błąd połączenia strumieniowego:", err);
+  socket.onclose = () => {
+    setTimeout(initGlobalWebSocket, 5000);
+  };
+
+  socket.onerror = () => {
     socket.close();
   };
 }
 
-// Rejestracja inicjalizatora WebSocket po pełnym załadowaniu drzewa DOM
 document.addEventListener("DOMContentLoaded", () => {
-  initEditorsRoomWebSocket();
+  initGlobalWebSocket();
 });

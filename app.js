@@ -146,6 +146,10 @@ app.set("views", path.join(__dirname, "views"));
  * MIDDLEWARES
  ******************/
 
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+app.use(cookieParser());
+
 app.use(globalLimiter);
 app.use("/admin", adminScannerLimiter);
 
@@ -154,10 +158,6 @@ app.use((req, res, next) => {
   if (req.params) sanitize(req.params, { allowDots: true });
   next();
 });
-
-app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
-app.use(cookieParser());
 
 app.use(
   session({

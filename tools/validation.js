@@ -522,8 +522,10 @@ tools.adminApprovalValidationRules = [
 ];
 
 tools.globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 200,
+  windowMs: 15 * 60 * 1000, // 15 minut
+  max: 1000, // Zwiększono z 200 na 1000 żądań na okno czasowe
+  standardHeaders: true,
+  legacyHeaders: false,
   message: "Zbyt wiele żądań z tego adresu IP, spróbuj ponownie później.",
 });
 

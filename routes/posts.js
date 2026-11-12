@@ -234,27 +234,30 @@ async function postCreate(req, res) {
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
       res.flushHeaders();
-      
+
       const bypassAI = hasPermission(dbUser, "public", "BYPASS_AI");
-      console.log("bypassAI: ", bypassAI);
-      
+
       if (bypassAI) {
-        // Redaktor pomija Etap 1 i Etap 2 weryfikacji AI
         res.write(
-          `data: ${JSON.stringify({ status: "stage1_success", message: "✨ Zweryfikowany Redaktor: Pominięto automatyczny audyt AI." })}\n\n`
+          `data: ${JSON.stringify({ status: "stage1_success", message: "✨ Zweryfikowany Redaktor: Pominięto automatyczny audyt AI." })}\n\n`,
         );
       } else {
-        const aiValidation = await validatePublicContent(req, title, cleanContent, res);
+        const aiValidation = await validatePublicContent(
+          req,
+          title,
+          cleanContent,
+          res,
+        );
 
         if (!aiValidation.approved) {
           res.write(
-            `data: ${JSON.stringify({ status: "error", error: aiValidation.reason, report: aiValidation.factCheckReport })}\n\n`
+            `data: ${JSON.stringify({ status: "error", error: aiValidation.reason, report: aiValidation.factCheckReport })}\n\n`,
           );
           return res.end();
         }
       }
     }
-    
+
     let finalImageName = null;
     if (req.file) {
       const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -295,9 +298,7 @@ async function postCreate(req, res) {
 
     const savedPost = await newPost.save();
     await createLog(req, `Utworzono post (${visibility}): ${title}`);
-    // ======================================================
-    // AUTOMATYCZNA DYSTRYBUCJA MAILINGU DLA GRONA REDAKTORÓW
-    // ======================================================
+
     if (savedPost.visibility === "editors") {
       mailer.sendNewEditorPostNotification(dbUser, savedPost, req);
     }
@@ -358,6 +359,7 @@ async function postCreate(req, res) {
         _id: dbUser._id,
         name: dbUser.displayName,
         avatarUrl: dbUser.avatarUrl || "/uploads/default-avatar.png",
+        role: dbUser.role,
         isFullyVerified:
           dbUser.isVerified === true &&
           dbUser.verificationTransferStatus === "approved",
@@ -365,11 +367,9 @@ async function postCreate(req, res) {
     };
 
     const { getProfileUrl, urlAliases } = res.locals;
-    const isUserAdmin = typeof isAdminId === "function" ? isAdminId(dbUser._id) : false;
+    const isUserAdmin =
+      typeof isAdminId === "function" ? isAdminId(dbUser._id) : false;
 
-    // ======================================================
-    // ZCENTRALIZOWANE RENDEROWANIE Z UŻYCIEM PUG2HTML
-    // ======================================================
     try {
       const htmlSnippet = renderPartial("post-card", {
         post: renderPost,
@@ -384,25 +384,38 @@ async function postCreate(req, res) {
         SERVICE_NAME,
       });
 
+      // GLOBALNA TRANSMISJA WEBSOCKET DLA POSTÓW NIEPRYWATNYCH
+      const authorBlocksStr = (dbUser.blocks || []).map((id) => id.toString());
+      const broadcastPostFn = req.app.get("wsBroadcastPost");
+      if (
+        typeof broadcastPostFn === "function" &&
+        savedPost.visibility !== "private" &&
+        !savedPost.isAbuseReport
+      ) {
+        broadcastPostFn({
+          html: htmlSnippet,
+          post: savedPost,
+          authorBlocks: authorBlocksStr,
+        });
+      }
+
       if (visibility === "public") {
-        res.write(`data: ${JSON.stringify({ status: "success", html: htmlSnippet })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ status: "success", html: htmlSnippet })}\n\n`,
+        );
         return res.end();
       }
 
-      // TRANSMISJA WEBSOCKET DLA POSTÓW REDAKCYJNYCH (EDITORS)
-      if (visibility === "editors") {
-        const broadcastFn = req.app.get("wsBroadcastEditorPost");
-        if (typeof broadcastFn === "function") {
-          broadcastFn(htmlSnippet, dbUser._id);
-        }
-      }
-
       return res.json({ success: true, html: htmlSnippet });
-
     } catch (renderErr) {
-      console.error("[PUG RENDER ERROR] Błąd kompilacji post-card w postCreate:", renderErr);
+      console.error(
+        "[PUG RENDER ERROR] Błąd kompilacji post-card w postCreate:",
+        renderErr,
+      );
       if (visibility === "public") {
-        res.write(`data: ${JSON.stringify({ status: "error", error: "Błąd kompilacji szablonu interfejsu." })}\n\n`);
+        res.write(
+          `data: ${JSON.stringify({ status: "error", error: "Błąd kompilacji szablonu interfejsu." })}\n\n`,
+        );
         return res.end();
       }
       return res.status(500).send("Błąd renderowania komponentu interfejsu.");
@@ -592,13 +605,13 @@ async function postComment(req, res) {
     const dbUser = req.dbUser;
 
     if (!hasPermission(dbUser, post.visibility, "COMMENT")) {
-      const fallbackMsg = post.visibility === 'editors'
-        ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
-        : "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konto. Dowiedz się więcej";
+      const fallbackMsg =
+        post.visibility === "editors"
+          ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
+          : "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
       return sendAccessDenied(req, res, fallbackMsg);
     }
 
-    // Blokady sprawdzamy tylko poza wewnętrznym gronem redaktorów
     if (post.visibility !== "editors") {
       const postAuthor = await User.findById(post.authorId);
       if (postAuthor) {
@@ -654,8 +667,6 @@ async function postComment(req, res) {
       }
     }
 
-    // Powiadomienia wewnątrz-systemowe generujemy tylko dla strefy ogólnej, 
-    // aby zachować pełną dyskrecję narad redakcji
     if (post.visibility !== "editors") {
       await createNotification({
         senderId: dbUser._id,
@@ -669,59 +680,87 @@ async function postComment(req, res) {
     await createLog(req, `Dodano komentarz do posta użytkownika ${post.author}`);
     const { getProfileUrl, urlAliases } = res.locals;
 
-    // Pobieramy i mapujemy całą historyczną oraz aktualną listę komentarzy z bazy danych
-    // Wstrzykujemy role oraz statusy pełnej weryfikacji dla każdego z autorów w locie
-    const mappedComments = await Promise.all(post.comments.map(async (c) => {
-      const commentAuthorDoc = await User.findById(c.authorId).select("role isVerified verificationTransferStatus");
-      return {
-        _id: c._id,
-        content: c.content,
-        likedBy: c.likedBy || [],
-        createdAt: c.createdAt,
-        authorId: c.authorId,
-        authorAvatar: c.authorAvatar,
-        author: c.author,
-        role: commentAuthorDoc ? commentAuthorDoc.role : "user",
-        isFullyVerified: commentAuthorDoc ? (commentAuthorDoc.isVerified === true && commentAuthorDoc.verificationTransferStatus === "approved") : false
-      };
-    }));
-    
-    post.comments = mappedComments; 
+    const mappedComments = await Promise.all(
+      post.comments.map(async (c) => {
+        const commentAuthorDoc = await User.findById(c.authorId).select(
+          "role isVerified verificationTransferStatus",
+        );
+        return {
+          _id: c._id,
+          content: c.content,
+          likedBy: c.likedBy || [],
+          createdAt: c.createdAt,
+          authorId: c.authorId,
+          authorAvatar: c.authorAvatar,
+          author: c.author,
+          role: commentAuthorDoc ? commentAuthorDoc.role : "user",
+          isFullyVerified: commentAuthorDoc
+            ? commentAuthorDoc.isVerified === true &&
+              commentAuthorDoc.verificationTransferStatus === "approved"
+            : false,
+        };
+      }),
+    );
+
+    post.comments = mappedComments;
     const renderContext = {
       post,
       csrfToken: req.csrfToken(),
       user: res.locals.user,
-      userBlocks: (dbUser.blocks || []).map((id) => id.toString()), // <--- DODATKOWO: Przekazujemy listę blokad dla widoku
+      userBlocks: (dbUser.blocks || []).map((id) => id.toString()),
       getProfileUrl,
       urlAliases,
       hasPermission,
       DEFAULT_ASSETS,
     };
-    
-  // ======================================================
-  // ZCENTRALIZOWANE RENDEROWANIE Z UŻYCIEM PUG2HTML
-  // ======================================================
-  try {
-    const htmlSnippet = renderPartial("post-comments", renderContext);
 
-    // TRANSMISJA WEBSOCKET DLA KOMENTARZY REDAKCYJNYCH (EDITORS)
-    if (post.visibility === "editors") {
-      const broadcastCommentFn = req.app.get("wsBroadcastEditorComment");
+    try {
+      const htmlSnippet = renderPartial("post-comments", renderContext);
+
+      // GLOBALNA TRANSMISJA WEBSOCKET DLA KOMENTARZY
+      const authorBlocksStr = (dbUser.blocks || []).map((id) => id.toString());
+      const broadcastCommentFn = req.app.get("wsBroadcastComment");
       if (typeof broadcastCommentFn === "function") {
-        broadcastCommentFn(htmlSnippet, post._id, dbUser._id);
+        broadcastCommentFn({
+          html: htmlSnippet,
+          postId: post._id,
+          visibility: post.visibility,
+          postAuthorId: post.authorId,
+          senderId: dbUser._id,
+          authorBlocks: authorBlocksStr,
+        });
       }
-    }
 
-    // POPRAWKA: Jawne sprawdzenie czy żądanie oczekuje odpowiedzi JSON (XHR / Fetch)
-    if (req.xhr || req.headers.accept?.includes("json") || req.headers["x-requested-with"] === "XMLHttpRequest") {
-      return res.json({ success: true, html: htmlSnippet });
-    }
+      // POWIADOMIENIE NA ŻYWO (DZWONECZEK) DLA ADRESATA KOMENTARZA / ODPOWIEDZI
+      if (
+        post.visibility !== "editors" &&
+        String(recipientId) !== String(dbUser._id)
+      ) {
+        const sendNotifFn = req.app.get("wsSendNotification");
+        if (typeof sendNotifFn === "function") {
+          sendNotifFn(recipientId, {
+            notificationType,
+            senderName: dbUser.displayName,
+            postId: post._id.toString(),
+            postTitle: post.title || "Twój wpis",
+          });
+        }
+      }
 
-    // Tradycyjny fallback w przypadku braku AJAXa (przekierowanie z kotwicą do dyskusji)
-    return res.redirect(`/posts/${post._id}#discussion-heading-${post._id}`);
+      if (
+        req.xhr ||
+        req.headers.accept?.includes("json") ||
+        req.headers["x-requested-with"] === "XMLHttpRequest"
+      ) {
+        return res.json({ success: true, html: htmlSnippet });
+      }
 
+      return res.redirect(`/posts/${post._id}#discussion-heading-${post._id}`);
     } catch (renderErr) {
-      console.error("[PUG RENDER ERROR] Błąd kompilacji post-comments w postComment:", renderErr);
+      console.error(
+        "[PUG RENDER ERROR] Błąd kompilacji post-comments w postComment:",
+        renderErr,
+      );
       return res.status(500).send("Błąd renderowania komentarza.");
     }
   } catch (err) {
@@ -729,6 +768,7 @@ async function postComment(req, res) {
     return res.status(500).send("Błąd serwera.");
   }
 }
+
 
 // ==========================================
 // LAJKOWANIE POSTA (Z INTEGRACJĄ MATRYCY UPRAWNIEŃ)
@@ -743,24 +783,24 @@ async function postLike(req, res) {
     const dbUser = req.dbUser;
 
     if (!hasPermission(dbUser, post.visibility, "LIKE")) {
-      const fallbackMsg = post.visibility === 'editors'
-        ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
-        : "Brak uprawnień: Polubienie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
+      const fallbackMsg =
+        post.visibility === "editors"
+          ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
+          : "Brak uprawnień: Polubienie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
       return sendAccessDenied(req, res, fallbackMsg);
     }
 
-    if (post.visibility !== "editors") {
-      const postAuthor = await User.findById(post.authorId);
-      if (postAuthor) {
-        const iBlockHim = dbUser.blocks.includes(postAuthor._id);
-        const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
-        if (iBlockHim || heBlocksMe) {
-          return res
-            .status(403)
-            .send(
-              "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego wpisu.",
-            );
-        }
+    const postAuthor = await User.findById(post.authorId);
+
+    if (post.visibility !== "editors" && postAuthor) {
+      const iBlockHim = dbUser.blocks.includes(postAuthor._id);
+      const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
+      if (iBlockHim || heBlocksMe) {
+        return res
+          .status(403)
+          .send(
+            "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego wpisu.",
+          );
       }
     }
 
@@ -772,13 +812,27 @@ async function postLike(req, res) {
       post.likedBy.push(userIdStr);
       actionText = `Polubiono post użytkownika ${post.author}`;
 
-      if (String(dbUser._id) !== String(post.authorId) && post.visibility !== "editors") {
+      if (
+        String(dbUser._id) !== String(post.authorId) &&
+        post.visibility !== "editors"
+      ) {
         await createNotification({
           senderId: dbUser._id,
           recipientId: post.authorId,
           type: "like_post",
           postId: post._id,
         });
+
+        // POWIADOMIENIE NA ŻYWO (DZWONECZEK) DLA AUTORA POSTA
+        const sendNotifFn = req.app.get("wsSendNotification");
+        if (typeof sendNotifFn === "function") {
+          sendNotifFn(post.authorId, {
+            notificationType: "like_post",
+            senderName: dbUser.displayName,
+            postId: post._id.toString(),
+            postTitle: post.title || "Twój wpis",
+          });
+        }
       }
     } else {
       post.likedBy.splice(index, 1);
@@ -787,16 +841,24 @@ async function postLike(req, res) {
 
     await post.save();
     await createLog(req, actionText, dbUser.email);
-    
+
     // System awansów na redaktora (100 gwiazdek) działa wyłącznie dla postów publicznych
-    if (post.visibility === "public" && postAuthor && !post.isOwnedBy(dbUser)) {
+    if (
+      post.visibility === "public" &&
+      postAuthor &&
+      !post.isOwnedBy(dbUser)
+    ) {
       const freshAuthorLikes = await countAuthorPublicLikes(postAuthor._id);
       if (freshAuthorLikes === 100 && postAuthor.role === "user") {
-        await createLog(req, `[KANDYDATURA NA REDAKTORA] Użytkownik ${postAuthor.name} osiągnął limit 100 lajków. Oczekuje na decyzję Kolegium.`, "System-Awansów");
+        await createLog(
+          req,
+          `[KANDYDATURA NA REDAKTORA] Użytkownik ${postAuthor.name} osiągnął limit 100 lajków. Oczekuje na decyzję Kolegium.`,
+          "System-Awansów",
+        );
         await mailer.sendEditorCandidateEmail(postAuthor, freshAuthorLikes);
       }
     }
-    
+
     return res.json({
       success: true,
       liked: index === -1,
@@ -813,9 +875,10 @@ async function getLoadMore(req, res) {
   try {
     const skip = parseInt(req.query.skip) || 0;
     const limit = 5;
-    const requestedScope = req.query.scope === "editors" && req.dbUser?.role === "editor"
-      ? "editors"
-      : "home";
+    const requestedScope =
+      req.query.scope === "editors" && req.dbUser?.role === "editor"
+        ? "editors"
+        : "home";
 
     const { posts, totalPosts } = await getScopedPosts(req, {
       scope: requestedScope,
