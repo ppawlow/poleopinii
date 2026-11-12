@@ -181,6 +181,13 @@ app.use(
 app.use(csurf({ cookie: true }));
 
 app.use(async (req, res, next) => {
+  const isUserAuthenticated = Boolean(req.session?.user?.id);
+  const feedView = !isUserAuthenticated
+    ? "portal"
+    : req.cookies?.feedView === "portal"
+      ? "portal"
+      : "accordion";
+
   res.locals = {
     csrfToken: req.csrfToken(),
     windowOrigin: req.protocol + "://" + req.get("host"),
@@ -193,6 +200,8 @@ app.use(async (req, res, next) => {
     RECAPTCHA_SITE_KEY,
     isDevelopment,
     useRecaptcha,
+    feedView,
+    // feedView: req.cookies?.feedView === "portal" ? "portal" : "accordion",
   };
   res.locals.getProfileUrl = function (userDetails) {
     if (!userDetails) return "/";

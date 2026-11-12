@@ -29,10 +29,22 @@ block content
 
                 include partials/create-post.pug
 
+                .feed-view-switcher(style="display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin-bottom: 12px;")
+                    span(style="font-size: 12px; color: #65676b; margin-right: 4px;") Widok:
+                    button.view-switch-btn(type="button" class=(feedView !== 'portal' ? 'active' : '') onclick="window.setFeedViewMode('accordion')" title="Widok listy rozwijanej")
+                        i.fa-solid.fa-list
+                        span  Strumień
+                    button.view-switch-btn(type="button" class=(feedView === 'portal' ? 'active' : '') onclick="window.setFeedViewMode('portal')" title="Widok portalu informacyjnego")
+                        i.fa-solid.fa-newspaper
+                        span  Portal
+
                 #accordion-posts-wrapper.accordion-container
                     if posts && posts.length > 0
                         each post in posts
-                            include partials/post-card.pug
+                            if feedView === 'portal'
+                                include partials/post-portal-card.pug
+                            else
+                                include partials/post-card.pug
                     else
                         .no-posts(style="text-align: center; padding: 20px; color: #65676b; background: #ffffff; border-radius: 8px; border: 1px solid var(--color-border);") Brak wpisów do wyświetlenia.
 
@@ -48,7 +60,7 @@ block content
                 include partials/news-feed.pug
         else
             //- ==========================================
-            //- WIDOK DLA GOŚCIA (Układ 3-kolumnowy)
+            //- WIDOK DLA GOŚCIA (Tylko układ portalowy)
             //- ==========================================
             aside.left-sidebar
                 a.sidebar-item(href="/search" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s;")
@@ -67,7 +79,7 @@ block content
                 #accordion-posts-wrapper.accordion-container
                     if posts && posts.length > 0
                         each post in posts
-                            include partials/post-card.pug
+                            include partials/post-portal-card.pug
                     else
                         .no-posts(style="text-align: center; padding: 20px; color: #65676b; background: #ffffff; border-radius: 8px; border: 1px solid var(--color-border);") Brak wpisów do wyświetlenia.
 

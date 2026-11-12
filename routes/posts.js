@@ -889,7 +889,10 @@ async function getLoadMore(req, res) {
     const hasMore = totalPosts > skip + posts.length;
     let htmlOutput = "";
 
-    const { getProfileUrl, urlAliases } = res.locals;
+    const { getProfileUrl, urlAliases, feedView } = res.locals;
+    const templateName =
+      feedView === "portal" ? "post-portal-card" : "post-card";
+
     const isUserAdmin =
       req.dbUser && typeof isAdminId === "function"
         ? isAdminId(req.dbUser._id)
@@ -912,7 +915,7 @@ async function getLoadMore(req, res) {
         SERVICE_NAME,
       };
 
-      const htmlSnippet = renderPartial("post-card", renderContext);
+      const htmlSnippet = renderPartial(templateName, renderContext);
       htmlOutput += htmlSnippet;
     }
 

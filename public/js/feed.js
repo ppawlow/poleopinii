@@ -1101,3 +1101,10 @@ function initGlobalWebSocket() {
 document.addEventListener("DOMContentLoaded", () => {
   initGlobalWebSocket();
 });
+
+window.setFeedViewMode = function (mode) {
+  const validMode = mode === "portal" ? "portal" : "accordion";
+  document.cookie = `feedView=${validMode}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
+  window.location.reload();
+};
+

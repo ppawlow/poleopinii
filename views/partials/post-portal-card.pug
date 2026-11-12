@@ -1,0 +1,61 @@
+- var isEditorPost = post.visibility === 'editors'
+- var rawContent = (post.content || '').trim()
+- var quoteMatch = rawContent.match(/^\s*<(?:blockquote|quote)[^>]*>([\s\S]*?)<\/(?:blockquote|quote)>/i)
+- var leadText = quoteMatch ? quoteMatch[1].replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim() : ''
+- if (!leadText) {
+-   var plainFallback = rawContent.replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim()
+-   leadText = plainFallback.length > 220 ? plainFallback.substring(0, 220) + '...' : plainFallback
+- }
+
+article.post-card.portal-news-card(
+    id=`post-${post._id}`
+    style=isEditorPost ? "background-color: #fffdf0; border-left: 4px solid #e5a93c;" : undefined
+)
+    if post.imageUrl
+        a.portal-card-image-link(href=`/posts/${post._id}`)
+            img.portal-card-image(src=post.imageUrl alt=(post.title || 'Zdjęcie wyróżniające') loading="lazy")
+
+    .portal-card-body
+        .portal-card-meta
+            a.portal-author-link(href=getProfileUrl(post.authorDetails))
+                img.portal-author-avatar(src=(post.authorDetails ? post.authorDetails.avatarUrl : DEFAULT_ASSETS.avatar) alt="")
+                span.portal-author-name #{post.authorDetails ? post.authorDetails.name : post.author}
+                if post.authorDetails && post.authorDetails.role === 'editor'
+                    span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-size: 12px;") 🌟
+                if post.authorDetails && (post.authorDetails.isFullyVerified || post.authorDetails.role === 'editor')
+                    i.fa-solid.fa-circle-check(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 12px;")
+
+            span.portal-meta-separator •
+            span.portal-date #{post.createdAt ? new Date(post.createdAt).toLocaleDateString('pl-PL') : 'Przed chwilą'}
+
+            if post.visibility === 'restricted'
+                span(title="Dla obserwujących" style="margin-left: 6px;") 👥
+            else if post.visibility === 'private'
+                span(title="Prywatny" style="margin-left: 6px;") 🔒
+            else if post.visibility === 'editors'
+                span(style="color: #e5a93c; font-weight: bold; font-size: 11px; background: #fff3d6; padding: 1px 6px; border-radius: 4px; margin-left: 6px;") [Kolegium]
+
+        h2.portal-card-title
+            a(href=`/posts/${post._id}`) #{post.title || 'Wpis bez tytułu'}
+
+        if post.parentPostId
+            .portal-reply-badge
+                i.fa-solid.fa-reply(style="transform: scaleX(-1); margin-right: 5px; color: #1877f2;")
+                | Polemika z: 
+                a(href=`/posts/${post.parentPostId}`) "#{post.parentPostTitle}"
+
+        if leadText
+            p.portal-card-lead #{leadText}
+
+        .portal-card-footer
+            .portal-card-stats
+                span(title="Liczba polubień")
+                    i.fa-solid.fa-star(style="color: #E5A93C; margin-right: 4px;")
+                    span.likes-count(id=`likes-text-${post._id}` data-count=(post.likesCount || 0))= `${post.likesCount || 0} polubień`
+                span(title="Liczba komentarzy")
+                    i.fa-solid.fa-comment(style="color: #42b72a; margin-right: 4px;")
+                    span.comments-total-count(id=`comments-text-${post._id}` data-count=(post.comments ? post.comments.length : 0))= `${post.comments ? post.comments.length : 0} komentarzy`
+
+            a.portal-read-more-btn(href=`/posts/${post._id}`)
+                | Więcej...
+                i.fa-solid.fa-arrow-right(style="font-size: 12px;")
