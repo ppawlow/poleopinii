@@ -84,6 +84,7 @@ else
                     i.fa-regular.fa-image(title="Dodaj lub zmień zdjęcie/grafikę")
                 input(id=`editPostImage-${activePost._id}` type="file" name="editPostImage" accept="image/*" style="display:none;")
             
-            div(style="display:flex; gap:8px;")
-                button(type="submit" style="background:#1877f2; color:white; border:none; padding:6px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;") Zapisz
-                button(type="button" onclick=`safeCancelInlineEdit('${activePost._id}')` style="background:#e4e6eb; color:#050505; border:none; padding:6px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;") Anuluj
+            if !isNew
+                div(style="display:flex; gap:8px;")
+                    button(type="submit" style="background:#1877f2; color:white; border:none; padding:6px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;") Zapisz
+                    button(type="button" onclick=`safeCancelInlineEdit('${activePost._id}')` style="background:#e4e6eb; color:#050505; border:none; padding:6px 16px; border-radius:6px; font-weight:600; cursor:pointer; font-size:13px;") Anuluj

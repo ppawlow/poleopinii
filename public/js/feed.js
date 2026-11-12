@@ -213,13 +213,20 @@ window.previewEditImage = function (input, postId) {
   }
 };
 
-// public/js/feed.js -> Kompletna i zintegrowana funkcja window.prepareEditSubmit
-
 window.prepareEditSubmit = async function (event, postId) {
   event.preventDefault();
 
   const form = document.getElementById(`editForm-${postId}`);
   if (!form) return;
+
+  // Wyszukanie przycisku zarówno wewnątrz formularza, jak i w nagłówku modalu (form="editForm-new")
+  const submitBtn =
+    form.querySelector('button[type="submit"]') ||
+    document.querySelector(`button[type="submit"][form="${form.id}"]`);
+
+  if (submitBtn && submitBtn.disabled) return; // Dodatkowa osłona przed podwójnym kliknięciem
+
+  const originalBtnText = submitBtn ? submitBtn.innerText : "";
 
   const instance = activeQuillInstances[postId];
   const formData = new FormData(form);
@@ -227,7 +234,9 @@ window.prepareEditSubmit = async function (event, postId) {
   if (instance) {
     formData.set("content", instance.getSemanticHTML());
   } else {
-    const hiddenContent = document.getElementById(`edit-hidden-content-${postId}`);
+    const hiddenContent = document.getElementById(
+      `edit-hidden-content-${postId}`,
+    );
     if (hiddenContent) formData.set("content", hiddenContent.value);
   }
 
@@ -254,6 +263,12 @@ window.prepareEditSubmit = async function (event, postId) {
   const loadingModal = document.getElementById("custom-loading-modal");
   const loaderHeading = document.getElementById("loader-status-heading");
   const loaderText = document.getElementById("loader-status-text");
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Zapisywanie...";
+    submitBtn.style.opacity = "0.7";
+  }
 
   if (loadingModal && isPublicVerificationTriggered) {
     if (loaderHeading) loaderHeading.innerText = "Trwa weryfikacja artykułu";
@@ -295,7 +310,8 @@ window.prepareEditSubmit = async function (event, postId) {
             }
 
             if (data.status === "stage1_success") {
-              if (loaderHeading) loaderHeading.innerHTML = "🟢 Etap 1 zakończony";
+              if (loaderHeading)
+                loaderHeading.innerHTML = "🟢 Etap 1 zakończony";
               if (loaderText) loaderText.innerText = data.message;
             }
 
@@ -326,7 +342,9 @@ window.prepareEditSubmit = async function (event, postId) {
         const responseData = await response.json();
 
         if (postId === "new" && responseData.html) {
-          const postsWrapper = document.getElementById("accordion-posts-wrapper");
+          const postsWrapper = document.getElementById(
+            "accordion-posts-wrapper",
+          );
 
           if (postsWrapper) {
             const noPostsFallback = postsWrapper.querySelector(".no-posts");
@@ -363,8 +381,15 @@ window.prepareEditSubmit = async function (event, postId) {
   } catch (err) {
     if (loadingModal) loadingModal.style.display = "none";
     console.error("Błąd potoku operacyjnego:", err);
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerText = originalBtnText;
+      submitBtn.style.opacity = "";
+    }
   }
 };
+
 
 // ==========================================
 // 3. ASYNCHRONICZNE STRONICOWANIE POSTÓW (AJAX)
