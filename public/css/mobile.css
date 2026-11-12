@@ -291,6 +291,56 @@
     max-height: none !important;
     resize: none !important;
   }
+  /* =========================================================================
+     WSKAŹNIK AKTYWNEGO PANELU (3 SEGMENTY POD NAGŁÓWKIEM)
+     ========================================================================= */
+  .mobile-panel-indicator {
+    display: flex;
+    position: fixed;
+    top: 56px; /* Dokładnie pod paskiem .fb-navbar (height: 56px) */
+    left: 0;
+    right: 0;
+    width: 100vw;
+    height: 3px;
+    background-color: #ffffff;
+    z-index: 10004;
+    gap: 2px;
+    pointer-events: none;
+  }
+
+  /* Ukrywamy wskaźnik na podstronach bez karuzeli (np. profil, ustawienia, single-post) */
+  body:not(:has(.left-sidebar)) .mobile-panel-indicator,
+  body:has(.editorial-article) .mobile-panel-indicator {
+    display: none !important;
+  }
+
+  .mobile-panel-indicator .panel-segment {
+    flex: 1;
+    height: 100%;
+    background-color: #ffffff; /* Nieaktywny segment: biały */
+    transition: background-color 0.25s ease;
+  }
+
+  /* Domyślnie aktywny środkowy panel (Feed) */
+  body:not(.has-left-sidebar):not(.has-right-sidebar) .mobile-panel-indicator .seg-center {
+    background-color: #1877f2;
+  }
+
+  /* Aktywny lewy panel */
+  body.has-left-sidebar .mobile-panel-indicator .seg-left {
+    background-color: #1877f2;
+  }
+  body.has-left-sidebar .mobile-panel-indicator .seg-center {
+    background-color: #ffffff;
+  }
+
+  /* Aktywny prawy panel */
+  body.has-right-sidebar .mobile-panel-indicator .seg-right {
+    background-color: #1877f2;
+  }
+  body.has-right-sidebar .mobile-panel-indicator .seg-center {
+    background-color: #ffffff;
+  }
 }
 
 /* =========================================================================

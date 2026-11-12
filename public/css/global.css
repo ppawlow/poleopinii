@@ -1278,3 +1278,7 @@ footer.site-footer {
 #custom-loading-modal {
   z-index: 10020 !important;
 }
+
+.mobile-panel-indicator {
+  display: none;
+}

@@ -359,13 +359,17 @@ window.acceptCookieLaw = function () {
 document.addEventListener("DOMContentLoaded", () => {
   if (window.innerWidth > 900) return;
 
+  const indicator = document.querySelector(".mobile-panel-indicator");
   const leftSidebar = document.querySelector(".left-sidebar");
   const rightSidebar = document.querySelector(".right-sidebar");
   const mainFeed = document.querySelector("main.feed");
   const mainContainer = document.querySelector(".main-container");
   
-  if (!mainContainer || !mainFeed || !leftSidebar || !rightSidebar) return;
-
+  if (!mainContainer || !mainFeed || !leftSidebar || !rightSidebar) {
+    if (indicator) indicator.style.display = "none";
+    return;
+  }
+  
   // SYSTEMOWA BLOKADA: Sprawdzamy, czy panele boczne zawierają realną zawartość (np. linki, kafelki, nagłówki)
   // Wykluczamy puste znaki i białe spacje.
   const hasLeftContent = leftSidebar.innerHTML.trim().length > 0;
@@ -373,6 +377,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Jeśli OBA panele boczne są puste, wyłączamy karuzelę i przywracamy standardowy widok
   if (!hasLeftContent && !hasRightContent) {
+    const indicator = document.querySelector(".mobile-panel-indicator");
+    if (indicator) indicator.style.display = "none";
     mainContainer.style.setProperty("width", "100vw", "important");
     mainContainer.style.setProperty("max-width", "100%", "important");
     mainContainer.style.setProperty("transform", "none", "important");
@@ -442,7 +448,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   document.addEventListener("touchstart", (e) => {
-    if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select, .action-btn, button")) return;
+    if (e.target.closest(".ql-editor") || e.target.closest("textarea, select")) return;
     
     touchStartX = e.changedTouches[0].screenX;
     touchStartY = e.changedTouches[0].screenY;
@@ -459,7 +465,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }, { passive: true });
 
   document.addEventListener("touchmove", (e) => {
-    if (e.target.closest(".ql-editor") || e.target.closest("input, textarea, select, .action-btn, button")) return;
+    if (e.target.closest(".ql-editor") || e.target.closest("textarea, select")) return;
 
     const currentX = e.changedTouches[0].screenX;
     const currentY = e.changedTouches[0].screenY;
@@ -467,8 +473,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const diffX = currentX - touchStartX;
     const diffY = Math.abs(currentY - touchStartY);
 
-    if (!isDragging && Math.abs(diffX) > diffY && Math.abs(diffX) > 10) {
+    if (!isDragging && Math.abs(diffX) > diffY && Math.abs(diffX) > 15) {
       isDragging = true;
+      if (document.activeElement) document.activeElement.blur(); // Chowa klawiaturę przy przesuwaniu panelu
     }
 
     if (isDragging) {

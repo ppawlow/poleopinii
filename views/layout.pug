@@ -88,7 +88,12 @@ html(lang="pl")
                                         i.fa-solid.fa-circle-xmark
                 
                 include partials/menu.pug
-        //Login prompt
+
+        .mobile-panel-indicator(aria-hidden="true")
+            .panel-segment.seg-left
+            .panel-segment.seg-center.active
+            .panel-segment.seg-right
+
         .page-main-content
             // Prompt logowania dla gościa (wyświetli się na samej górze, tuż pod navbaru)
             if !user && currentTab
