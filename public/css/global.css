@@ -1324,19 +1324,18 @@ footer.site-footer {
 }
 
 .portal-card-image-link {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
   width: 100%;
-  background: #f0f2f5;
+  max-height: 360px;
   overflow: hidden;
+  background: #f0f2f5;
 }
 
 .portal-card-image {
   width: 100%;
-  height: auto;
-  max-height: 450px; /* Maksymalna wysokość chroniąca przed zbyt długimi pionowymi zdjęciami */
-  object-fit: contain; /* Gwarantuje wyświetlenie 100% grafiki bez przycinania */
+  height: 300px; /* Stała lub maksymalna wysokość ramki */
+  object-fit: cover; /* Wypełnienie całej szerokości bez zniekształceń */
+  object-position: top center; /* Zakotwiczenie kadru na górnej krawędzi obrazu */
   display: block;
   transition: transform 0.3s ease;
 }
