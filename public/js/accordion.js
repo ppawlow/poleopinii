@@ -1,4 +1,17 @@
 function initAccordionListeners() {
+    if (typeof liczebnik === "function") {
+    document.querySelectorAll(".likes-count[data-count]").forEach((el) => {
+      const count = parseInt(el.getAttribute("data-count")) || 0;
+      el.innerText = liczebnik(count, ["polubienie", "polubienia", "polubień"]);
+      el.removeAttribute("data-count");
+    });
+
+    document.querySelectorAll(".comments-total-count[data-count]").forEach((el) => {
+      const count = parseInt(el.getAttribute("data-count")) || 0;
+      el.innerText = liczebnik(count, ["komentarz", "komentarze", "komentarzy"]);
+      el.removeAttribute("data-count");
+    });
+  }
   const commentForms = document.querySelectorAll(".comment-submit-on-enter");
   commentForms.forEach((form) => {
     if (!form.dataset.listenerAttached) {
@@ -23,7 +36,11 @@ function initAccordionListeners() {
     if (!header.dataset.listenerAttached) {
       header.addEventListener("click", function () {
         const currentItem = this.closest(".accordion-item");
+        if (!currentItem) return;
+
         const currentContent = currentItem.querySelector(".accordion-content");
+        if (!currentContent) return; // Zabezpieczenie przed brakiem .accordion-content
+
         const currentIcon = this.querySelector(".accordion-icon");
         const isOpen = currentContent.style.display === "block";
 

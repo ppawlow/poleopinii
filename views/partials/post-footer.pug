@@ -2,11 +2,11 @@
 .post-stats(style="margin-top: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; color: #65676b; font-size: 13.5px; font-family: sans-serif;")
     span
         i.fa-solid.fa-star(style="color: #E5A93C; margin-right: 4px;") 
-        span.likes-count(id=`likes-text-${post._id}`)= `${post.likesCount || 0} polubień`
+        span.likes-count(id=`likes-text-${post._id}` data-count=(post.likesCount || 0))= `${post.likesCount || 0} polubień`
         
     span.comments-count(onclick=`toggleCommentsVisibility('${post._id}')` style="cursor: pointer; user-select: none; font-weight: 500; color: #1877f2;") 
         i.fa-solid.fa-comment(style="color: #42b72a; margin-right: 4px;") 
-        span.comments-total-count(id=`comments-text-${post._id}`)= `${post.comments ? post.comments.length : 0} komentarzy`
+        span.comments-total-count(id=`comments-text-${post._id}` data-count=(post.comments ? post.comments.length : 0))= `${post.comments ? post.comments.length : 0} komentarzy`
         
 .post-actions(style="display: flex; padding: 4px 0; border-bottom: 1px solid #e4e6eb; gap: 8px; flex-wrap: wrap;")
     if user
@@ -59,15 +59,3 @@ div(id=`comments-wrapper-${post._id}` style="display: none; width: 100%; margin-
         h3(id=`discussion-heading-${post._id}` style="font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1c1e21;") 
             | Dyskusja (#{post.comments ? post.comments.length : 0})
         include post-comments.pug
-
-script.
-    (() => {
-        const polubienia = (num) => liczebnik(num, ["polubienie", "polubienia", "polubień"]);
-        const komentarze = (num) => liczebnik(num, ["komentarz", "komentarze", "komentarzy"]);
-
-        const likesEl = document.getElementById("likes-text-#{post._id}");
-        const commentsEl = document.getElementById("comments-text-#{post._id}");
-
-        if (likesEl) likesEl.innerHTML = polubienia(parseInt("#{post.likesCount || 0}") || 0);
-        if (commentsEl) commentsEl.innerHTML = komentarze(parseInt("#{post.comments ? post.comments.length : 0}") || 0);
-    })();

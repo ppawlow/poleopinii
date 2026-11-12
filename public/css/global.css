@@ -1272,3 +1272,9 @@ footer.site-footer {
   background-position: bottom right;
   cursor: ns-resize;
 }
+/* Upewnienie się, że okna alertów i potwierdzeń są zawsze na samym wierzchu */
+#custom-confirm-modal,
+#custom-alert-modal,
+#custom-loading-modal {
+  z-index: 10020 !important;
+}

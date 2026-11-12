@@ -813,42 +813,52 @@ async function getLoadMore(req, res) {
   try {
     const skip = parseInt(req.query.skip) || 0;
     const limit = 5;
-    
+    const requestedScope = req.query.scope === "editors" && req.dbUser?.role === "editor"
+      ? "editors"
+      : "home";
+
     const { posts, totalPosts } = await getScopedPosts(req, {
-      scope: "home",
+      scope: requestedScope,
       skip,
       limit,
     });
-    
-    const hasMore = totalPosts > skip + limit;
+
+    const hasMore = totalPosts > skip + posts.length;
     let htmlOutput = "";
 
     const { getProfileUrl, urlAliases } = res.locals;
-    const isUserAdmin = req.dbUser && typeof isAdminId === "function" ? isAdminId(req.dbUser._id) : false;
+    const isUserAdmin =
+      req.dbUser && typeof isAdminId === "function"
+        ? isAdminId(req.dbUser._id)
+        : false;
+    const userBlocks = req.dbUser
+      ? (req.dbUser.blocks || []).map((id) => id.toString())
+      : [];
 
     for (const post of posts) {
-      // Przygotowanie pełnego kontekstu tożsamości i uprawnień zgodnego z wymaganiami partials/post-card.pug
       const renderContext = {
         post,
         csrfToken: req.csrfToken(),
-        user: res.locals.user, // Znormalizowany bezpieczny profil z middleware security.js
+        user: res.locals.user,
+        userBlocks,
         getProfileUrl,
         urlAliases,
-        hasPermission: hasPermission,
+        hasPermission,
         isAdmin: isUserAdmin,
-        DEFAULT_ASSETS: DEFAULT_ASSETS,
-        SERVICE_NAME: SERVICE_NAME
+        DEFAULT_ASSETS,
+        SERVICE_NAME,
       };
 
-      // Zunifikowane i bezpieczne renderowanie partiala bez jawnych obietnic i callbacków
       const htmlSnippet = renderPartial("post-card", renderContext);
       htmlOutput += htmlSnippet;
     }
-    
-    return res.json({ html: htmlOutput, hasMore: hasMore });
+
+    return res.json({ html: htmlOutput, hasMore });
   } catch (err) {
     console.error("Krytyczny błąd asynchronicznego stronicowania postów:", err);
-    return res.status(500).json({ error: "Błąd ładowania kolejnej paczki wpisów." });
+    return res
+      .status(500)
+      .json({ error: "Błąd ładowania kolejnej paczki wpisów." });
   }
 }
 

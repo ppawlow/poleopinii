@@ -73,35 +73,57 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Dedykowana funkcja do otwierania/zamykania akordeonu tworzenia postów
-window.toggleCreatePostAccordion = function () {
-  const header = document.querySelector("#post-new .accordion-header");
-  const content = document.querySelector(".create-accordion-content");
-  const icon = document.querySelector(".create-accordion-icon");
-  if (!content || !header) return;
+// // Dedykowana funkcja do otwierania/zamykania akordeonu tworzenia postów
+// window.toggleCreatePostAccordion = function () {
+//   const header = document.querySelector("#post-new .accordion-header");
+//   const content = document.querySelector(".create-accordion-content");
+//   const icon = document.querySelector(".create-accordion-icon");
+//   if (!content || !header) return;
+// 
+//   const isOpen = content.style.display === "block";
+// 
+//   // Zamykamy inne otwarte akordeony zwykłych postów
+//   document
+//     .querySelectorAll(".accordion-content")
+//     .forEach((c) => (c.style.display = "none"));
+//   document.querySelectorAll(".accordion-icon").forEach((i) => {
+//     if (i) i.style.transform = "rotate(0deg)";
+//   });
+// 
+//   if (!isOpen) {
+//     // Po aktywacji: ukrywamy nagłówek i pokazujemy pełny formularz
+//     header.style.display = "none";
+//     content.style.display = "block";
+//     if (icon) icon.style.transform = "rotate(180deg)";
+//   } else {
+//     // Przy zamykaniu: przywracamy widoczność nagłówka
+//     header.style.display = "flex";
+//     content.style.display = "none";
+//     if (icon) icon.style.transform = "rotate(0deg)";
+//   }
+// };
 
-  const isOpen = content.style.display === "block";
+window.openCreatePostModal = function () {
+  const modal = document.getElementById("create-post-modal");
+  if (!modal) return;
+  modal.style.display = "flex";
+  document.body.style.overflow = "hidden";
 
-  // Zamykamy inne otwarte akordeony zwykłych postów
-  document
-    .querySelectorAll(".accordion-content")
-    .forEach((c) => (c.style.display = "none"));
-  document.querySelectorAll(".accordion-icon").forEach((i) => {
-    if (i) i.style.transform = "rotate(0deg)";
-  });
-
-  if (!isOpen) {
-    // Po aktywacji: ukrywamy nagłówek i pokazujemy pełny formularz
-    header.style.display = "none";
-    content.style.display = "block";
-    if (icon) icon.style.transform = "rotate(180deg)";
-  } else {
-    // Przy zamykaniu: przywracamy widoczność nagłówka
-    header.style.display = "flex";
-    content.style.display = "none";
-    if (icon) icon.style.transform = "rotate(0deg)";
+  if (activeQuillInstances["new"]) {
+    setTimeout(() => activeQuillInstances["new"].focus(), 50);
   }
 };
+
+window.closeCreatePostModal = function () {
+  const modal = document.getElementById("create-post-modal");
+  if (!modal) return;
+  modal.style.display = "none";
+  document.body.style.overflow = "";
+};
+
+// Alias dla zachowania wstecznej kompatybilności
+window.toggleCreatePostAccordion = window.openCreatePostModal;
+
 
 // ==========================================
 // 2. GLOBALNE FUNKCJE OBSŁUGI FORMULARZY (Wstrzyknięte do window)
@@ -109,7 +131,7 @@ window.toggleCreatePostAccordion = function () {
 
 window.toggleInlineEdit = function (postId, event) {
   if (postId === "new") {
-    window.toggleCreatePostAccordion();
+    window.openCreatePostModal();
     return;
   }
 
@@ -218,7 +240,9 @@ window.prepareEditSubmit = async function (event, postId) {
   }
 
   const selectNode = form.querySelector('select[name="visibility"]');
-  const isPublicVerificationTriggered = (selectNode && selectNode.value === "public") || (selectNode && selectNode.disabled);
+  const isPublicVerificationTriggered =
+    (selectNode && selectNode.value === "public") ||
+    (selectNode && selectNode.disabled);
 
   if (selectNode && selectNode.disabled) {
     formData.set("visibility", "public");
@@ -231,10 +255,11 @@ window.prepareEditSubmit = async function (event, postId) {
   const loaderHeading = document.getElementById("loader-status-heading");
   const loaderText = document.getElementById("loader-status-text");
 
-  // Dla postów wewnętrznych (editors) nie potrzebujemy blokady i animacji loaderów AI
   if (loadingModal && isPublicVerificationTriggered) {
     if (loaderHeading) loaderHeading.innerText = "Trwa weryfikacja artykułu";
-    if (loaderText) loaderText.innerText = "Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa...";
+    if (loaderText)
+      loaderText.innerText =
+        "Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa...";
     loadingModal.style.display = "flex";
   }
 
@@ -245,9 +270,7 @@ window.prepareEditSubmit = async function (event, postId) {
       body: formData,
     });
 
-    // =========================================================================
     // SCENARIUSZ A: OBSŁUGA POŁĄCZENIA STRUMIENIOWEGO (DLA POSTÓW PUBLICZNYCH)
-    // =========================================================================
     if (response.ok && isPublicVerificationTriggered) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -278,6 +301,7 @@ window.prepareEditSubmit = async function (event, postId) {
 
             if (data.status === "success" && postId === "new") {
               if (loadingModal) loadingModal.style.display = "none";
+              window.closeCreatePostModal();
               window.location.reload(true);
               return;
             }
@@ -293,35 +317,32 @@ window.prepareEditSubmit = async function (event, postId) {
       return;
     }
 
-    // =========================================================================
     // SCENARIUSZ B: BEZPIECZNA OBSŁUGA DLA WPISÓW PRYWATNYCH / RESTRICTED / EDITORS
-    // =========================================================================
     if (response.ok) {
       if (loadingModal) loadingModal.style.display = "none";
 
-      // POPRAWKA: Sprawdzamy typ zawartości (Content-Type). Jeśli to nie JSON, nie parsujemy go, tylko odświeżamy stronę
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const responseData = await response.json();
-        
+
         if (postId === "new" && responseData.html) {
           const postsWrapper = document.getElementById("accordion-posts-wrapper");
-          
+
           if (postsWrapper) {
             const noPostsFallback = postsWrapper.querySelector(".no-posts");
             if (noPostsFallback) noPostsFallback.remove();
 
-            // Wstrzykujemy nowy post na samą górę listy narad bez przeładowania okna
             postsWrapper.insertAdjacentHTML("afterbegin", responseData.html);
-            
-            // Resetujemy edytor Quill i zamykamy bezpiecznie akordeon
+
             if (instance) instance.setContents([]);
             const titleField = document.getElementById("edit-title-new");
             if (titleField) titleField.value = "";
-            
+            const parentIdField = document.getElementById("edit-parent-id-new");
+            if (parentIdField) parentIdField.value = "";
+
             window.cancelSelectedImage("new");
-            window.toggleCreatePostAccordion();
-            
+            window.closeCreatePostModal();
+
             if (typeof window.refreshAccordionListeners === "function") {
               window.refreshAccordionListeners();
             }
@@ -329,11 +350,9 @@ window.prepareEditSubmit = async function (event, postId) {
             window.location.reload(true);
           }
         } else {
-          // Jeśli to był sukces zapisu edycji (paczka JSON), odświeżamy widok
           window.location.reload(true);
         }
       } else {
-        // Serwer zwrócił surowy status tekstowy (np. "OK" z res.sendStatus(200)) - bezpieczny fallback
         window.location.reload(true);
       }
     } else {
@@ -350,8 +369,6 @@ window.prepareEditSubmit = async function (event, postId) {
 // ==========================================
 // 3. ASYNCHRONICZNE STRONICOWANIE POSTÓW (AJAX)
 // ==========================================
-let currentSkip = 5;
-
 function loadMorePosts() {
   loadMorePostsChaser();
 }
@@ -359,21 +376,22 @@ function loadMorePosts() {
 function loadMorePostsChaser() {
   return new Promise((resolve, reject) => {
     const btn = document.getElementById("load-more-btn");
-    if (!btn) return resolve(false);
+    const wrapper = document.getElementById("accordion-posts-wrapper");
+    if (!btn || !wrapper) return resolve(false);
+
+    const currentSkip = wrapper.querySelectorAll(".post-card").length;
+    const scope = window.location.pathname === "/editors" ? "editors" : "home";
 
     btn.innerText = "Ładowanie...";
     btn.disabled = true;
 
-    fetch(`/posts/load-more?skip=${currentSkip}`)
+    fetch(`/posts/load-more?skip=${currentSkip}&scope=${scope}`)
       .then((res) => res.json())
       .then((data) => {
-        const wrapper = document.getElementById("accordion-posts-wrapper");
-
         if (data.html) {
           wrapper.insertAdjacentHTML("beforeend", data.html);
         }
 
-        currentSkip += 5;
         btn.disabled = false;
         btn.innerText = "Pokaż więcej";
 
@@ -396,7 +414,6 @@ function loadMorePostsChaser() {
       });
   });
 }
-
 // ==========================================
 // 4. WYCOFYWANIE POSTÓW PUBLICZNYCH DO SZKICU (Z automatycznym otwieraniem akordeonu)
 // ==========================================
@@ -442,7 +459,6 @@ async function revertToDraft(postId) {
 }
 
 window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
-  const isVerified = document.body.dataset.userVerified === "true";
   const postCard =
     document.getElementById(`post-${parentPostId}`) ||
     document.querySelector(".editorial-article");
@@ -455,7 +471,7 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
     await window.Alert(
       `
                 <div style="text-align: left; line-height: 1.5;">
-                    <p style="margin-bottom: 10px;">Próba opublikowania artykułu in odpowiedzi na <b>🌐 Wpis Publiczny</b> została wstrzymana.</p>
+                    <p style="margin-bottom: 10px;">Próba opublikowania artykułu w odpowiedzi na <b>🌐 Wpis Publiczny</b> została wstrzymana.</p>
                     <p style="margin-bottom: 12px;">Tworzenie publicznych powiązań dyskusyjnych za pomocą nowych postów jest zastrzeżone dla profili o w pełni potwierdzonej tożsamości.</p>
                     <hr style="border:0; border-top:1px solid #e4e6eb; margin: 10px 0;">
                     <p style="font-size: 13px; color: #65676b;">🔰 <b>Wyjątek:</b> Możesz odpowiedzieć postem niezweryfikowanym tylko wtedy, gdy autor oryginalnego artykułu już obserwuje Twój profil.</p>
@@ -467,19 +483,8 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
     return;
   }
 
-  const createPostBlock = document.getElementById("post-new");
-  if (!createPostBlock) return;
-
-  // --- Sprawdzenie czy kreator jest ukryty (kontekst single-post) ---
-  const isSidebarOrHidden =
-    window.getComputedStyle(createPostBlock.parentElement).display === "none";
-
-  const accordionContent = createPostBlock.querySelector(
-    ".create-accordion-content",
-  );
-  if (!accordionContent || accordionContent.style.display === "none") {
-    window.toggleCreatePostAccordion();
-  }
+  const createModal = document.getElementById("create-post-modal");
+  if (!createModal) return;
 
   const decoder = document.createElement("div");
   decoder.innerHTML = parentPostTitle;
@@ -491,7 +496,6 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
     titleField.placeholder = "Dodaj tytuł polemiki";
   }
 
-  // Dynamicznie zmieniamy podtytuł nad edytorem na informację o polemice
   const contextSubtitle = document.getElementById("create-post-context-time");
   if (contextSubtitle) {
     contextSubtitle.innerText = `Polemika z "${decodedTitle}"`;
@@ -499,38 +503,22 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
     contextSubtitle.style.fontWeight = "600";
   }
 
-  // KRYTYCZNA DOSTAWKA: Pobieramy ukryte pole i wpisujemy do niego ID posta nadrzędnego
   const parentIdHiddenInput = document.getElementById("edit-parent-id-new");
   if (parentIdHiddenInput) {
     parentIdHiddenInput.value = parentPostId;
   }
 
-  // POPRAWKA: Wymuszenie jawności krytyki i zablokowanie zmiany statusu widoczności
   const selectEl = document.getElementById("visibility-select-node");
   const warningEl = document.getElementById("public-debate-warning-badge");
   if (selectEl && warningEl) {
     selectEl.value = "public";
-    selectEl.disabled = true; // Blokada wyboru na poziomie UI
+    selectEl.disabled = true;
     warningEl.innerText =
       "📢 Uwaga: Polemika z postem publicznym będzie widoczna dla wszystkich użytkowników serwisu.";
     warningEl.style.display = "inline-block";
   }
 
-  // Jeśli kreator jest ukryty (jesteśmy na stronie single-post), wykonujemy asynchroniczny submit,
-  // a funkcja prepareEditSubmit w api.js automatycznie przekieruje nas na stronę główną po sukcesie!
-  if (!isSidebarOrHidden) {
-    createPostBlock.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (activeQuillInstances["new"]) {
-      activeQuillInstances["new"].focus();
-    }
-  } else {
-    // Płynne i eleganckie przewinięcie ekranu do ukrytego formularza w celu otwarcia modalnego edytora
-    createPostBlock.parentElement.style.display = "block";
-    createPostBlock.scrollIntoView({ behavior: "smooth", block: "center" });
-    if (activeQuillInstances["new"]) {
-      activeQuillInstances["new"].focus();
-    }
-  }
+  window.openCreatePostModal();
 };
 
 window.removePostImage = async function (postId) {
@@ -739,9 +727,7 @@ window.safeCancelInlineEdit = async function (postId) {
   let hasChanges = false;
 
   if (postId === "new") {
-    // Scenariusz A: Kreator nowego posta
     const hasTitle = titleField && titleField.value.trim().length > 0;
-    // Quill bez tekstu domyślnie zwraca pusty paragraf lub pojedynczy znak nowej linii
     const hasContent = instance && instance.getText().trim().length > 0;
 
     if (hasTitle || hasContent) {
@@ -752,7 +738,6 @@ window.safeCancelInlineEdit = async function (postId) {
     );
     if (categoryWrapperReset) categoryWrapperReset.style.display = "none";
   } else {
-    // Scenariusz B: Edycja istniejącego szkicu prywatnego/restricted
     const staticTitle = document.getElementById(`title-text-${postId}`);
     const staticContent = document.getElementById(`content-html-${postId}`);
 
@@ -761,7 +746,6 @@ window.safeCancelInlineEdit = async function (postId) {
       staticTitle &&
       titleField.value.trim() !== staticTitle.innerText.trim();
 
-    // Porównujemy zawartość semantyczną HTML edytora z pierwotnym stanem karty
     const isContentChanged =
       instance &&
       staticContent &&
@@ -772,7 +756,6 @@ window.safeCancelInlineEdit = async function (postId) {
     }
   }
 
-  // Jeśli wykryto zmiany, pytamy użytkownika o zgodę na ich odrzucenie
   if (hasChanges) {
     const message =
       "Masz niezapisane zmiany w tym poście. Czy na pewno chcesz anulować edycję? Cały wpisany tekst zostanie bezpowrotnie utracony.";
@@ -781,21 +764,24 @@ window.safeCancelInlineEdit = async function (postId) {
         ? await window.Confirm(message, "Porzucić zmiany?")
         : confirm(message);
 
-    if (!confirmed) return; // Przerywamy anulowanie, użytkownik wraca do edycji
+    if (!confirmed) return;
   }
 
-  // Jeśli brak zmian lub użytkownik potwierdził chęć ich odrzucenia – zamykamy edytor
   if (postId === "new") {
-    if (titleField) titleField.value = "";
+    if (titleField) {
+      titleField.value = "";
+      titleField.placeholder = "Dodaj tytuł postu";
+    }
     if (instance) instance.setContents([]);
+
     const previewContainer = document.getElementById(
       "edit-image-preview-container-new",
     );
     if (previewContainer) previewContainer.style.display = "none";
+
     const fileInput = document.getElementById("editPostImage-new");
     if (fileInput) fileInput.value = "";
 
-    // Resetujemy podtytuł do stanu wyjściowego po zamknięciu/anulowaniu
     const contextSubtitle = document.getElementById("create-post-context-time");
     if (contextSubtitle) {
       contextSubtitle.innerText = "Tworzenie nowego wpisu";
@@ -803,22 +789,23 @@ window.safeCancelInlineEdit = async function (postId) {
       contextSubtitle.style.fontWeight = "normal";
     }
 
-    // Przywrócenie pierwotnego stanu selecta oraz ukrycie odznak ostrzegawczych
     const selectResetEl = document.getElementById("visibility-select-node");
     const warningResetEl = document.getElementById(
       "public-debate-warning-badge",
     );
     if (selectResetEl && warningResetEl) {
-      selectResetEl.disabled = false; // Przywracamy interaktywność
-      selectResetEl.value = ""; // POPRAWKA: Ustawienie na pustą wartość zamiast wymuszonego "private"
+      selectResetEl.disabled = false;
+      selectResetEl.value = "";
       warningResetEl.style.display = "none";
     }
 
-    // Usuwamy flagę zgłoszenia nadużycia, jeśli formularz był w tym trybie uruchomiony
+    const parentIdReset = document.getElementById("edit-parent-id-new");
+    if (parentIdReset) parentIdReset.value = "";
+
     const abuseFlag = document.getElementById("abuse-report-flag-new");
     if (abuseFlag) abuseFlag.value = "false";
 
-    window.toggleCreatePostAccordion();
+    window.closeCreatePostModal();
   } else {
     window.toggleInlineEdit(postId);
   }
@@ -830,10 +817,9 @@ window.safeCancelInlineEdit = async function (postId) {
  * @param {string} summary - Skrócona treść wiadomości AI
  */
 window.initAiTopicDiscussion = function (title, summary) {
-  // 1. Sprawdzamy czy użytkownik jest zalogowany (czy istnieje kreator wpisów na stronie)
-  const createPostBlock = document.getElementById("post-new");
+  const createModal = document.getElementById("create-post-modal");
 
-  if (!createPostBlock) {
+  if (!createModal) {
     window.Alert(
       "🔒 Funkcja niedostępna: Aby publikować polemiki i komentarze do wydarzeń AI, musisz najpierw zalogować się do swojego konta.",
       "Autoryzacja systemu",
@@ -842,8 +828,10 @@ window.initAiTopicDiscussion = function (title, summary) {
     return;
   }
 
-  // 2. WIDOK MOBILNY: Przeskakujemy z prawego panelu ("Przegląd dnia") do panelu głównego
-  const isMobileCarousel = window.innerWidth <= 900 && document.querySelector(".main-container:not(:has(.editorial-article))");
+  // Widok mobilny: zamykamy otwarty boczny panel "Przegląd dnia"
+  const isMobileCarousel =
+    window.innerWidth <= 900 &&
+    document.querySelector(".main-container:not(:has(.editorial-article))");
   if (isMobileCarousel) {
     const mainContainer = document.querySelector(".main-container");
     if (mainContainer) {
@@ -851,41 +839,25 @@ window.initAiTopicDiscussion = function (title, summary) {
       mainContainer.style.transition = "";
     }
     document.body.classList.remove("has-left-sidebar", "has-right-sidebar");
-    document.body.style.overflow = "";
   }
 
-  // 3. Wymuszamy otwarcie akordeonu tworzenia posta, jeśli był zwinięty
-  const accordionContent = createPostBlock.querySelector(
-    ".create-accordion-content",
-  );
-  if (!accordionContent || accordionContent.style.display === "none") {
-    window.toggleCreatePostAccordion();
-  }
+  window.openCreatePostModal();
 
-  // 4. Wstrzykujemy tytuł polemiki do standardowego pola input
   const titleField = document.getElementById("edit-title-new");
   if (titleField) {
     titleField.value = title.trim();
   }
 
-  // 5. Bezpiecznie wstrzykujemy treść newsa w formie eleganckiego cytatu blokowego do instancji Quill
   const quillInstance = activeQuillInstances["new"];
   if (quillInstance) {
     const formattedHtml = `<blockquote><strong>${summary.trim()}</strong></blockquote><p><br></p>`;
     quillInstance.clipboard.dangerouslyPasteHTML(formattedHtml);
-  }
 
-  // 6. Przewijamy stronę do kreatora i ustawiamy fokus po zakończeniu animacji przesuwania panelu (300ms)
-  const delay = isMobileCarousel ? 320 : 100;
-  setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    createPostBlock.scrollIntoView({ behavior: "smooth", block: "start" });
-
-    if (quillInstance) {
+    setTimeout(() => {
       quillInstance.focus();
       quillInstance.setSelection(quillInstance.getLength(), 0);
-    }
-  }, delay);
+    }, 100);
+  }
 };
 
 /**
@@ -1049,4 +1021,3 @@ socket.onmessage = function (event) {
 document.addEventListener("DOMContentLoaded", () => {
   initEditorsRoomWebSocket();
 });
-
