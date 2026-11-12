@@ -1287,6 +1287,8 @@ footer.site-footer {
    ALTERNATYWNY WIDOK PORTALOWY (KARTY PRASOWE)
    ========================================================================= */
 .view-switch-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   background: #ffffff;
   border: 1px solid #dddfe2;
   color: #65676b;

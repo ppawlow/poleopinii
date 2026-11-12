@@ -1102,9 +1102,16 @@ document.addEventListener("DOMContentLoaded", () => {
   initGlobalWebSocket();
 });
 
-window.setFeedViewMode = function (mode) {
+window.setFeedViewMode = function (mode, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
+  if (document.activeElement && typeof document.activeElement.blur === "function") {
+    document.activeElement.blur();
+  }
+  if (!window.appUser) return;
   const validMode = mode === "portal" ? "portal" : "accordion";
   document.cookie = `feedView=${validMode}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
   window.location.reload();
 };
-

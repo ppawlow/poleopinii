@@ -33,10 +33,8 @@ block content
                     span(style="font-size: 12px; color: #65676b; margin-right: 4px;") Widok:
                     button.view-switch-btn(type="button" class=(feedView !== 'portal' ? 'active' : '') onclick="window.setFeedViewMode('accordion')" title="Widok listy rozwijanej")
                         i.fa-solid.fa-list
-                        span  Strumień
                     button.view-switch-btn(type="button" class=(feedView === 'portal' ? 'active' : '') onclick="window.setFeedViewMode('portal')" title="Widok portalu informacyjnego")
                         i.fa-solid.fa-newspaper
-                        span  Portal
 
                 #accordion-posts-wrapper.accordion-container
                     if posts && posts.length > 0

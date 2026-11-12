@@ -341,6 +341,16 @@
   body.has-right-sidebar .mobile-panel-indicator .seg-center {
     background-color: #ffffff;
   }
+    /* Wyłączenie dotyku dla paneli bocznych, gdy nie są aktywne */
+  body:not(.has-left-sidebar) .main-container:not(:has(.editorial-article)) .left-sidebar,
+  body:not(.has-right-sidebar) .main-container:not(:has(.editorial-article)) .right-sidebar {
+    pointer-events: none !important;
+  }
+
+  body.has-left-sidebar .main-container:not(:has(.editorial-article)) .left-sidebar,
+  body.has-right-sidebar .main-container:not(:has(.editorial-article)) .right-sidebar {
+    pointer-events: auto !important;
+  }
 }
 
 /* =========================================================================
