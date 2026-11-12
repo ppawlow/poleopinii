@@ -92,6 +92,7 @@ async function postLogin(req, res) {
         return req.session.regenerate(async (err) => {
           if (err) return res.redirect("/auth/login?error=server");
           req.session.user = { id: foundUser._id };
+          res.clearCookie("feedView", { path: "/" });
           await createLog(req, "Zalogowano pomyślnie", foundUser.email);
           return req.session.save(() => res.redirect("/"));
         });
