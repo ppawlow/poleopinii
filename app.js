@@ -38,6 +38,7 @@ const {
   isDevelopment,
   DEFAULT_USER,
   RECAPTCHA_SITE_KEY,
+  SHARE_PLATFORMS,
   useRecaptcha,
 } = require("./config");
 
@@ -201,7 +202,7 @@ app.use(async (req, res, next) => {
     isDevelopment,
     useRecaptcha,
     feedView,
-    // feedView: req.cookies?.feedView === "portal" ? "portal" : "accordion",
+    SHARE_PLATFORMS,
   };
   res.locals.getProfileUrl = function (userDetails) {
     if (!userDetails) return "/";

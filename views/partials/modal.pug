@@ -31,19 +31,19 @@
             h3 Udostępnij artykuł
             span(onclick="window.closeShareModal()" style="cursor: pointer; font-size: 20px; font-weight: bold; color: #65676b;") &times;
         .custom-modal-body(style="padding: 16px; display: flex; flex-direction: column; gap: 12px;")
-            button#share-fb-link.dropdown-item(style="background: #1877f2; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;")
-                i.fa-brands.fa-facebook(style="color: white;")
-                | Udostępnij na Facebooku
-            button#share-x-link.dropdown-item(style="background: #000000; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;")
-                i.fa-brands.fa-x-twitter(style="color: white;")
-                | Udostępnij na platformie X
-            button#share-li-link.dropdown-item(style="background: #0077b5; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;")
-                i.fa-brands.fa-linkedin(style="color: white;")
-                | Udostępnij na LinkedIn
+            if SHARE_PLATFORMS && SHARE_PLATFORMS.length > 0
+                each platform in SHARE_PLATFORMS
+                    button.dropdown-item.share-platform-btn(
+                        type="button"
+                        data-url-template=platform.urlTemplate
+                        style=`background: ${platform.bgColor}; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;`
+                    )
+                        i(class=platform.icon style="color: white;")
+                        | #{platform.label}
             hr(style="border: 0; border-top: 1px solid #e4e6eb; margin: 4px 0;")
             div(style="display: flex; gap: 8px;")
                 input#share-copy-input(type="text" readonly style="flex: 1; padding: 8px; border: 1px solid #dddfe2; border-radius: 6px; font-size: 13px; background: #f0f2f5; outline: none;")
-                button(onclick="window.copyShareLinkToClipboard()" style="background: #42b72a; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;") Kopiuj
+                button(type="button" onclick="window.copyShareLinkToClipboard()" style="background: #42b72a; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;") Kopiuj
 
 //- DYNAMICZNY LOADER MODAL (SSE-COMPATIBLE)
 #custom-loading-modal.custom-modal-backdrop(style="display: none; background-color: rgba(0, 0, 0, 0.7); pointer-events: auto;")

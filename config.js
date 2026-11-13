@@ -147,6 +147,31 @@ module.exports = {
     bank: "Nest Bank",
     number: "78 2530 0008 2097 1091 9637 0001",
   },
+  
+    SHARE_PLATFORMS: [
+    {
+      id: "facebook",
+      label: "Udostępnij na Facebooku",
+      icon: "fa-brands fa-facebook",
+      bgColor: "#1877f2",
+      urlTemplate: "https://facebook.com/sharer/sharer.php?u={url}",
+    },
+    {
+      id: "x",
+      label: "Udostępnij na platformie X",
+      icon: "fa-brands fa-x-twitter",
+      bgColor: "#000000",
+      urlTemplate: "https://twitter.com/intent/tweet?url={url}&text={title}",
+    },
+    {
+      id: "linkedin",
+      label: "Udostępnij na LinkedIn",
+      icon: "fa-brands fa-linkedin",
+      bgColor: "#0077b5",
+      urlTemplate: "https://linkedin.com/sharing/share-offsite/?url={url}",
+    },
+  ],
+  
 
   PORT: 3000,
   SALT_ROUNDS: 12,

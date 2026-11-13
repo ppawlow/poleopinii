@@ -568,7 +568,9 @@ window.sharePost = async function (postId, postTitle) {
   const decoder = document.createElement("div");
   decoder.innerHTML = postTitle;
   const cleanTitle = decoder.textContent || "Wpis";
-
+  
+  console.log(shareUrl);
+  
   if (navigator.share) {
     try {
       await navigator.share({
@@ -591,42 +593,26 @@ window.sharePost = async function (postId, postTitle) {
 
   const modal = document.getElementById("custom-share-modal");
   const copyInput = document.getElementById("share-copy-input");
-  const fbBtn = document.getElementById("share-fb-link");
-  const xBtn = document.getElementById("share-x-link");
-  const liBtn = document.getElementById("share-li-link");
 
   if (modal && copyInput) {
     copyInput.value = shareUrl;
     const popupFeatures =
       "width=600,height=450,resizable=yes,scrollbars=yes,status=no";
 
-    if (fbBtn) {
-      fbBtn.onclick = function () {
-        window.open(
-          `https://facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`,
-          "_blank",
-          popupFeatures,
-        );
+    const encodedUrl = encodeURIComponent(shareUrl);
+    const encodedTitle = encodeURIComponent(cleanTitle);
+
+    modal.querySelectorAll(".share-platform-btn").forEach((btn) => {
+      const template = btn.getAttribute("data-url-template");
+      if (!template) return;
+
+      btn.onclick = function () {
+        const targetUrl = template
+          .replace(/\{url\}/g, encodedUrl)
+          .replace(/\{title\}/g, encodedTitle);
+        window.open(targetUrl, "_blank", popupFeatures);
       };
-    }
-    if (xBtn) {
-      xBtn.onclick = function () {
-        window.open(
-          `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(postTitle)}`,
-          "_blank",
-          popupFeatures,
-        );
-      };
-    }
-    if (liBtn) {
-      liBtn.onclick = function () {
-        window.open(
-          `https://linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`,
-          "_blank",
-          popupFeatures,
-        );
-      };
-    }
+    });
 
     modal.style.display = "flex";
   }
