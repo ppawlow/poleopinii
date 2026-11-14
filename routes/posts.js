@@ -1303,10 +1303,19 @@ async function postReaderFactCheck(req, res) {
     const factCheckAnalysis = await checkContentFacts(ai, originalPost.title, originalPost.content);
 
     // 5. Zapisujemy raport jako oficjalny artykuł polemiczny (Polemika) przypisany do konta "Gemini AI"
-    const reportTitle = factCheckAnalysis.result.hasErrors
-      ? `⚠️ Korekta Faktograficzna AI: "${originalPost.title}"`
-      : `🟢 Certyfikat Wiarygodności AI: "${originalPost.title}"`;
+    // Skracamy tytuł artykułu do maksymalnie 5 słów + "..."
+    const titleWords = (originalPost.title || "Wpis bez tytułu")
+      .trim()
+      .split(/\s+/);
+      
+    const shortArticleTitle =
+      titleWords.length > 5
+        ? titleWords.slice(0, 5).join(" ") + "..."
+        : titleWords.join(" ");
 
+    const reportTitle = factCheckAnalysis.result.hasErrors
+      ? `⚠️ Korekta Faktograficzna AI: "${shortArticleTitle}"`
+      : `🟢 Certyfikat Wiarygodności AI: "${shortArticleTitle}"`;
     // Formatowanie tekstu do standardu artykułów (zamiana znaków nowej linii z raportu na akapity HTML)
     const formattedContent = factCheckAnalysis.result.report
       .split("\n")
@@ -1315,7 +1324,7 @@ async function postReaderFactCheck(req, res) {
       .join("");
 
     const aiReportPost = new Post({
-      title: reportTitle.length > 95 ? reportTitle.substring(0, 92) + '..."' : reportTitle,
+      title: reportTitle,
       author: aiUser.name,
       authorEmail: aiUser.email,
       authorId: aiUser._id,
