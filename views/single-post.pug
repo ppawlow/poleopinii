@@ -95,9 +95,6 @@ block content
                                 div(style="font-size: 12.5px; color: #4b5563; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;")
                                     span Opracowanie: <b>#{report.author}</b> • #{report.createdAt ? new Date(report.createdAt).toLocaleDateString('pl-PL') : ''}
                                     a(href=`/posts/${report._id}` style="background: #bc2525; color: #ffffff; padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; text-decoration: none;") Czytaj pełny raport →
-                            div(style="font-size: 12.5px; color: #4b5563; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;")
-                                span Opracowanie: <b>#{report.author}</b> • #{report.createdAt ? new Date(report.createdAt).toLocaleDateString('pl-PL') : ''}
-                                a(href=`/posts/${report._id}` style="background: #146c43; color: #ffffff; padding: 4px 12px; border-radius: 14px; font-size: 12px; font-weight: 600; text-decoration: none;") Czytaj pełny raport →
 
             //- Sekcja "Artykuły polemizujące"
             if debatePosts && debatePosts.length > 0
