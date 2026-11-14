@@ -1315,7 +1315,7 @@ async function postReaderFactCheck(req, res) {
       .join("");
 
     const aiReportPost = new Post({
-      title: reportTitle.substring(0, 95),
+      title: reportTitle.length > 95 ? reportTitle.substring(0, 92) + '..."' : reportTitle,
       author: aiUser.name,
       authorEmail: aiUser.email,
       authorId: aiUser._id,
