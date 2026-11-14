@@ -426,7 +426,7 @@ async function getScopedPosts(req, options = {}) {
     isAbuseReport: { $ne: true },
   };
 
-  if (scope !== "single") {
+  if (scope !== "single" && scope !== "profile") {
     matchConditions.isFactCheckReport = { $ne: true };
   }
 
