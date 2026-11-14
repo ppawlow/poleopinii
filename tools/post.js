@@ -89,7 +89,7 @@ async function countAuthorPublicLikes(authorId) {
     return 0;
   }
 }
-
+/*
 async function getScopedPosts(req, options = {}) {
   const limit = options.limit || 5;
   const skip = options.skip || 0;
@@ -280,6 +280,328 @@ async function getScopedPosts(req, options = {}) {
               name: { $ifNull: ["$authorDetails.name", "$author"] },
               alias: { $ifNull: ["$authorDetails.alias", null] },
               role: { $ifNull: ["$authorDetails.role", "user"] }
+            },
+          },
+        },
+        comments: {
+          $map: {
+            input: "$comments",
+            as: "c",
+            in: {
+              _id: "$$c._id",
+              content: "$$c.content",
+              likedBy: "$$c.likedBy",
+              createdAt: "$$c.createdAt",
+              authorId: "$$c.authorId",
+              authorAvatar: {
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$commentAuthors",
+                            cond: { $eq: ["$$this._id", "$$c.authorId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    $ifNull: ["$$matchedUser.avatarUrl", DEFAULT_ASSETS.avatar],
+                  },
+                },
+              },
+              author: {
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$commentAuthors",
+                            cond: { $eq: ["$$this._id", "$$c.authorId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: { $ifNull: ["$$matchedUser.name", "$$c.author"] },
+                },
+              },
+              role: {
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$commentAuthors",
+                            cond: { $eq: ["$$this._id", "$$c.authorId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: { $ifNull: ["$$matchedUser.role", "user"] },
+                },
+              },
+              isFullyVerified: {
+                $let: {
+                  vars: {
+                    matchedUser: {
+                      $arrayElemAt: [
+                        {
+                          $filter: {
+                            input: "$commentAuthors",
+                            cond: { $eq: ["$$this._id", "$$c.authorId"] },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                  },
+                  in: {
+                    $and: [
+                      { $eq: ["$$matchedUser.isVerified", true] },
+                      {
+                        $eq: [
+                          "$$matchedUser.verificationTransferStatus",
+                          "approved",
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  ];
+
+  const posts = await mongoose.model("Post").aggregate(pipeline);
+  const totalPosts = await mongoose
+    .model("Post")
+    .countDocuments(matchConditions);
+
+  return { posts, totalPosts };
+}
+*/
+
+async function getScopedPosts(req, options = {}) {
+  const limit = options.limit || 5;
+  const skip = options.skip || 0;
+  const scope = options.scope || "home";
+
+  let currentUserId = null;
+  let userFollowingIds = [];
+  let exclusionIds = [];
+  let userIsAdmin = false;
+  let dbUser = null;
+
+  if (req.session && req.session.user) {
+    dbUser = await mongoose.model("User").findById(req.session.user.id);
+    if (dbUser) {
+      currentUserId = dbUser._id;
+      userFollowingIds = dbUser.following || [];
+      const userBlockedIds = dbUser.blocks || [];
+      const blockers = await mongoose
+        .model("User")
+        .find({ blocks: dbUser._id });
+      exclusionIds = [...userBlockedIds, ...blockers.map((u) => u._id)];
+
+      const { ADMINS } = require("../config");
+      userIsAdmin = ADMINS.includes(dbUser._id.toString());
+    }
+  }
+
+  const matchConditions = {
+    authorId: { $exists: true, $nin: exclusionIds },
+    isAbuseReport: { $ne: true },
+  };
+
+  if (scope !== "single") {
+    matchConditions.isFactCheckReport = { $ne: true };
+  }
+
+  if (scope === "single" && options.targetPostId) {
+    matchConditions._id = new mongoose.Types.ObjectId(options.targetPostId);
+  } else if (scope === "profile" && options.targetUserId) {
+    matchConditions.authorId = {
+      $eq: new mongoose.Types.ObjectId(options.targetUserId),
+      $nin: exclusionIds,
+    };
+  } else if (scope === "following") {
+    matchConditions.authorId = { $in: userFollowingIds, $nin: exclusionIds };
+    matchConditions.visibility = { $ne: "private" };
+  }
+
+  // Budowanie warunków widoczności dla pozostałych widoków
+  if (scope !== "following") {
+    matchConditions.$or = [
+      { visibility: "public" },
+      {
+        visibility: "restricted",
+        $or: [
+          { authorId: currentUserId },
+          { authorId: { $in: userFollowingIds } },
+        ],
+      },
+      { visibility: "private", authorId: currentUserId },
+    ];
+
+    if (dbUser && dbUser.role === "editor") {
+      matchConditions.$or.push({ visibility: "editors" });
+    }
+  }
+
+  // Nadpisanie warunków, gdy celujemy bezpośrednio w Pokój Redakcyjny
+  if (scope === "editors") {
+    matchConditions.visibility = "editors";
+  }
+
+  const pipeline = [
+    { $match: matchConditions },
+    { $sort: { createdAt: -1 } },
+    { $skip: skip },
+    { $limit: limit },
+    {
+      $lookup: {
+        from: "posts",
+        localField: "parentPostId",
+        foreignField: "_id",
+        as: "parentPostDetails",
+      },
+    },
+    {
+      $unwind: { path: "$parentPostDetails", preserveNullAndEmptyArrays: true },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "parentPostDetails.authorId",
+        foreignField: "_id",
+        as: "parentPostAuthorDetails",
+      },
+    },
+    {
+      $unwind: {
+        path: "$parentPostAuthorDetails",
+        preserveNullAndEmptyArrays: true,
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "authorId",
+        foreignField: "_id",
+        as: "authorDetails",
+      },
+    },
+    { $unwind: { path: "$authorDetails", preserveNullAndEmptyArrays: true } },
+    {
+      $lookup: {
+        from: "users",
+        localField: "comments.authorId",
+        foreignField: "_id",
+        as: "commentAuthors",
+      },
+    },
+    {
+      $lookup: {
+        from: "posts",
+        let: { postId: "$_id" },
+        pipeline: [
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  { $eq: ["$parentPostId", "$$postId"] },
+                  { $eq: ["$isFactCheckReport", true] },
+                ],
+              },
+            },
+          },
+          { $limit: 1 },
+        ],
+        as: "aiFactCheckDocs",
+      },
+    },
+    {
+      $project: {
+        title: 1,
+        content: 1,
+        imageUrl: 1,
+        visibility: 1,
+        createdAt: 1,
+        authorId: 1,
+        parentPostId: 1,
+        isAbuseReport: 1,
+        isFactCheckReport: 1,
+        hasAiReport: { $gt: [{ $size: "$aiFactCheckDocs" }, 0] },
+        parentPostTitle: {
+          $ifNull: ["$parentPostDetails.title", "Wpis bez tytułu"],
+        },
+        parentPostAuthor: {
+          $ifNull: [
+            "$parentPostAuthorDetails.name",
+            "$parentPostDetails.author",
+          ],
+        },
+        isLikedByMe: {
+          $cond: {
+            if: {
+              $and: [
+                { $ne: [currentUserId, null] },
+                { $isArray: "$likedBy" },
+                { $in: [{ $toString: currentUserId }, "$likedBy"] },
+              ],
+            },
+            then: true,
+            else: false,
+          },
+        },
+        likesCount: { $size: { $ifNull: ["$likedBy", []] } },
+        authorDetails: {
+          $cond: {
+            if: {
+              $and: [
+                { $eq: ["$isAbuseReport", true] },
+                { $eq: [userIsAdmin, false] },
+              ],
+            },
+            then: {
+              _id: "$authorDetails._id",
+              avatarUrl: DEFAULT_ASSETS.avatar,
+              isFullyVerified: false,
+              name: "Anonimowy Użytkownik",
+              alias: null,
+              role: "user",
+            },
+            else: {
+              _id: "$authorDetails._id",
+              avatarUrl: {
+                $ifNull: ["$authorDetails.avatarUrl", DEFAULT_ASSETS.avatar],
+              },
+              isFullyVerified: {
+                $and: [
+                  { $eq: ["$authorDetails.isVerified", true] },
+                  {
+                    $eq: [
+                      "$authorDetails.verificationTransferStatus",
+                      "approved",
+                    ],
+                  },
+                ],
+              },
+              name: { $ifNull: ["$authorDetails.name", "$author"] },
+              alias: { $ifNull: ["$authorDetails.alias", null] },
+              role: { $ifNull: ["$authorDetails.role", "user"] },
             },
           },
         },

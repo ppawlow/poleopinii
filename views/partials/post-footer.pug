@@ -30,8 +30,8 @@
                 i.fa-regular.fa-comments
                 span.btn-text Polemizuj
 
-        //- DEDYKOWANY PRZYCISK DLA CZYTELNIKA: Uruchomienie Fact-Checkingu (Widoczny tylko w widoku artykułu, jeśli brak raportu AI)
-        if post.visibility === 'public' && !post.isAbuseReport && !post.isFactCheckReport && typeof hasAiReport !== 'undefined' && !hasAiReport
+        //- DEDYKOWANY PRZYCISK DLA CZYTELNIKA: Uruchomienie Fact-Checkingu (Widoczny w obu widokach, jeśli brak raportu AI)
+        if post.visibility === 'public' && !post.isAbuseReport && !post.isFactCheckReport && !post.hasAiReport
             button.action-btn.factcheck-reader-trigger-btn(
                 type="button" 
                 id=`factcheck-btn-${post._id}`

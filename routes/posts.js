@@ -301,6 +301,7 @@ async function postCreate(req, res) {
       visibility: isReplyOrReport ? "public" : visibility,
       imageUrl: finalImageName ? "/uploads/" + finalImageName : null,
       parentPostId: isReplyOrReport ? parentPostId : null,
+      hasAiReport: false,
       isAbuseReport: isReport,
       abuseCategory: isReport ? req.body.abuseCategory || "general" : "general",
     });
