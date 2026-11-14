@@ -680,7 +680,7 @@ window.executeReaderFactCheckPayload = async function (postId, buttonElement) {
       );
 
       // Przeładowujemy okno z kotwicą celującą bezpośrednio w nowo utworzony post polemiczny bota
-      window.location.href = `/posts/${postId}#post-${data.reportPostId}`;
+      window.location.href = `/posts/${postId}#factcheck-report-item-${data.reportPostId}`;
       window.location.reload(true);
 
     } else {
