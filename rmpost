@@ -1,0 +1,50 @@
+#!/usr/bin/env node
+require("dotenv").config();
+const path = require("path");
+const fs = require("fs");
+const { ObjectId } = require("mongodb");
+const { Post, Notification } = require("./tools/db");
+
+const postId = process.argv[2];
+
+if (!postId || !ObjectId.isValid(postId)) {
+  console.error("Użycie: ./rmpost <poprawne_24_znakowe_id_posta>");
+  process.exit(1);
+}
+
+async function rmPost(id) {
+  try {
+    const post = await Post.findById(id);
+    if (!post) {
+      console.log("Nie znaleziono posta o podanym ID.");
+      process.exit(0);
+    }
+
+    if (post.imageUrl) {
+      const filePath = path.join(__dirname, "public", post.imageUrl);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+        console.log("Usunięto plik graficzny:", post.imageUrl);
+      }
+    }
+
+    await Notification.deleteMany({ postId: id });
+    await Post.deleteMany({
+      parentPostId: id,
+      $or: [{ isAbuseReport: true }, { isFactCheckReport: true }],
+    });
+    await Post.updateMany(
+      { parentPostId: id },
+      { $set: { parentPostId: null } },
+    );
+
+    await Post.findByIdAndDelete(id);
+    console.log("Usunięto post:", post.title);
+    process.exit(0);
+  } catch (err) {
+    console.error("Błąd podczas usuwania posta:", err.message);
+    process.exit(1);
+  }
+}
+
+rmPost(postId);

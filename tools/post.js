@@ -36,6 +36,7 @@ const postSchema = new mongoose.Schema({
   visibility: { type: String, enum: POST_VISIBILITY, default: "public" },
   isAbuseReport: { type: Boolean, default: false },
   isFactCheckReport: { type: Boolean, default: false },
+  hasFactCheckErrors: { type: Boolean, default: false }, 
   isModeratorLocked: { type: Boolean, default: false },
   abuseCategory: {
     type: String,

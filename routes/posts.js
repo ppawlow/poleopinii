@@ -1325,6 +1325,7 @@ async function postReaderFactCheck(req, res) {
       parentPostId: originalPost._id,
       isAbuseReport: false,
       isFactCheckReport: true,
+      hasFactCheckErrors: Boolean(factCheckAnalysis.result.hasErrors),
     });
 
     const savedReport = await aiReportPost.save();
