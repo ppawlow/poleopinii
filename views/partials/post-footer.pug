@@ -36,11 +36,11 @@
                 type="button" 
                 id=`factcheck-btn-${post._id}`
                 onclick=`window.executeReaderFactCheckWithConfirm('${post._id}', this)` 
-                title="Zleć niezależny audyt faktograficzny algorytmom AI" 
+                title="Zweryfikuj wiarygodność i fakty zawarte we wpisie" 
                 style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;"
             )
-                i.fa-solid.fa-robot
-                span.btn-text Sprawdź wiarygodność z AI
+                i.fa-solid.fa-scale-balanced
+                span.btn-text Prawda?
     else
         button.action-btn(disabled)
             i.fa-regular.fa-star
