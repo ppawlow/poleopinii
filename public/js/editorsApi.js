@@ -196,3 +196,60 @@ window.executeEditorFactCheckWithConfirm = async function (postId, buttonElement
     window.executeEditorFactCheck(postId, buttonElement);
   }
 };
+
+/**
+ * Asynchroniczne usunięcie raportu faktograficznego AI przez Redaktora
+ */
+window.executeEditorDeleteFactCheckReport = async function (reportId) {
+  if (!reportId) return;
+
+  const message =
+    "Czy na pewno chcesz trwale usunąć ten raport faktograficzny AI? Po jego usunięciu pod artykułem ponownie pojawi się przycisk umożliwiający zlecenie nowej weryfikacji.";
+
+  const confirmed =
+    typeof window.Confirm === "function"
+      ? await window.Confirm(message, "Usuwanie raportu AI")
+      : confirm(message);
+
+  if (!confirmed) return;
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+
+  try {
+    const response = await fetch(`/editors/factcheck-reports/${reportId}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+
+    if (response.ok) {
+      if (typeof window.Alert === "function") {
+        await window.Alert(
+          "Raport faktograficzny AI został pomyślnie usunięty.",
+          "Moderacja AI",
+        );
+      }
+      window.location.reload();
+    } else {
+      const errText = await response.text();
+      if (typeof window.Alert === "function") {
+        window.Alert(
+          `Nie udało się usunąć raportu: ${errText}`,
+          "Błąd uprawnień",
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas usuwania raportu AI:", err);
+    if (typeof window.Alert === "function") {
+      window.Alert(
+        "Wystąpił błąd połączenia sieciowego podczas próby usunięcia raportu.",
+        "Błąd sieci",
+      );
+    }
+  }
+};

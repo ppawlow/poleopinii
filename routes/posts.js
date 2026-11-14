@@ -124,8 +124,15 @@ async function getId(req, res) {
     const abuseAndReplyPostsRaw = await Post.find({ parentPostId: post._id })
       .sort({ createdAt: -1 })
       .lean();
+      
+    const factCheckReports = abuseAndReplyPostsRaw.filter(
+      (p) => p.isFactCheckReport === true,
+    );
 
-    const debatePosts = abuseAndReplyPostsRaw.filter((p) => !p.isAbuseReport);
+    const debatePosts = abuseAndReplyPostsRaw.filter(
+      (p) => !p.isAbuseReport && !p.isFactCheckReport,
+    );
+    const hasAiReport = factCheckReports.length > 0;
     const userIsAdmin = isAdminId(req.dbUser?.id) || false;
 
     const abuseReports = abuseAndReplyPostsRaw
@@ -159,6 +166,8 @@ async function getId(req, res) {
       post,
       authorBio,
       otherPosts,
+      factCheckReports,
+      hasAiReport,
       debatePosts,
       abuseReports,
       userBlocks,
@@ -588,6 +597,10 @@ async function postRevert(req, res) {
     }
     post.visibility = "private";
     await post.save();
+
+    // Automatyczne usunięcie raportu faktograficznego AI po wycofaniu artykułu do szkicu
+    await Post.deleteMany({ parentPostId: post._id, isFactCheckReport: true });
+
     await createLog(req, `Wycofano post do szkicu: ${post.title}`);
     return res.json({ id: post._id });
   } catch (err) {
@@ -595,6 +608,7 @@ async function postRevert(req, res) {
     return res.status(500).send("Błąd serwera podczas wycofywania wpisu.");
   }
 }
+
 // ==========================================
 // KOMENTOWANIE POSTU (Z INTEGRACJĄ MATRYCY UPRAWNIEŃ)
 // ==========================================
@@ -973,18 +987,20 @@ async function postDelete(req, res) {
     // A. Usuwamy wszystkie powiadomienia (lajki, komentarze) powiązane z tym postem
     await Notification.deleteMany({ postId: post._id });
 
-    // B. Usuwamy wszystkie zgłoszenia nadużyć, które dotyczyły tego posta
-    // (Ponieważ zgłoszenie bez posta traci rację bytu w systemie)
-    await Post.deleteMany({ parentPostId: post._id, isAbuseReport: true });
+    await Post.deleteMany({
+      parentPostId: post._id,
+      $or: [{ isAbuseReport: true }, { isFactCheckReport: true }],
+    });
 
-    // C. Dla zwykłych artykułów polemicznych (debaty) NIE usuwamy ich treści,
-    // ale bezpiecznie odpinamy relację nadrzędną, ustawiając parentPostId na null,
-    // by nie zaburzać aggregate osi czasu, informując widok, że oryginał usunięto.
     await Post.updateMany(
-      { parentPostId: post._id, isAbuseReport: false },
+      {
+        parentPostId: post._id,
+        isAbuseReport: false,
+        isFactCheckReport: { $ne: true },
+      },
       { $set: { parentPostId: null } },
     );
-    // =========================================================================
+    // =======================================
 
     // 2. Bezwzględne usunięcie głównego dokumentu posta
     await Post.findByIdAndDelete(post._id);
@@ -1274,7 +1290,7 @@ async function postReaderFactCheck(req, res) {
     // 3. Sprawdzamy, czy dla tego posta istnieje już polemika stworzona przez "Gemini AI"
     const existingAnalysis = await Post.findOne({
       parentPostId: originalPost._id,
-      authorId: aiUser._id
+      isFactCheckReport: true,
     });
 
     if (existingAnalysis) {
@@ -1304,9 +1320,10 @@ async function postReaderFactCheck(req, res) {
       authorId: aiUser._id,
       authorAvatar: aiUser.avatarUrl,
       content: formattedContent,
-      visibility: "public", // Publikacja jawna dla całej społeczności
+      visibility: "public",
       parentPostId: originalPost._id,
-      isAbuseReport: false // Zwykły post polemiczny (Debata)
+      isAbuseReport: false,
+      isFactCheckReport: true,
     });
 
     const savedReport = await aiReportPost.save();

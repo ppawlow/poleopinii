@@ -569,7 +569,7 @@ window.sharePost = async function (postId, postTitle) {
   decoder.innerHTML = postTitle;
   const cleanTitle = decoder.textContent || "Wpis";
   
-  console.log(shareUrl);
+  console.log(`Udostępnianie: ${shareUrl}`);
   
   if (navigator.share) {
     try {

@@ -19,8 +19,9 @@ module.exports = express.Router()
 
   .use("/posts/:postId", validateId("postId"))
   .post("/posts/:postId/check", postCheck)
-  
-// 2. WIDOK GŁÓWNY POKOJU REDAKCJI
+  .use("/factcheck-reports/:reportId", validateId("reportId"))
+  .delete("/factcheck-reports/:reportId", deleteFactCheckReport)
+
 async function getMain(req, res) {
   try {
     const limit = 20;
@@ -239,3 +240,32 @@ async function postCheck(req, res) {
     return res.status(500).send("Wewnętrzny błąd serwera podczas analityki tekstu.");
   }
 }
+
+async function deleteFactCheckReport(req, res) {
+  try {
+    const { reportId } = req.params;
+    const { Post, Notification } = require("../tools/db");
+
+    const report = await Post.findById(reportId);
+    if (!report || !report.isFactCheckReport) {
+      return res.status(404).send("Nie odnaleziono raportu faktograficznego AI.");
+    }
+
+    // Usuwamy powiązane powiadomienia oraz sam raport AI
+    await Notification.deleteMany({ postId: report._id });
+    await Post.findByIdAndDelete(report._id);
+
+    await createLog(
+      req,
+      `[MODERACJA AI] Redaktor ${req.dbUser.name} usunął raport faktograficzny AI: "${report.title}" (ID: ${report._id})`,
+    );
+
+    return res.sendStatus(200);
+  } catch (err) {
+    console.error("Błąd podczas usuwania raportu faktograficznego AI:", err);
+    return res
+      .status(500)
+      .send("Wewnętrzny błąd serwera podczas usuwania raportu AI.");
+  }
+}
+

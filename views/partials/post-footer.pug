@@ -11,37 +11,40 @@
 .post-actions(style="display: flex; padding: 4px 0; border-bottom: 1px solid #e4e6eb; gap: 8px; flex-wrap: wrap;")
     if user
         if hasPermission(user, post.visibility, 'LIKE') && (!userBlocks || !userBlocks.includes(String(post.authorId))) && !user.isOwnerOf(post)
-            //- ... (formularz like)
+            form.post-like-form(action=`/posts/${post._id}/like` method="POST")
+                input(type="hidden" name="_csrf" value=csrfToken)
+                button.action-btn(type="submit" title=(post.isLikedByMe ? "Cofnij polubienie" : "Doceń wpis"))
+                    i(class=(post.isLikedByMe ? "fa-solid fa-star" : "fa-regular fa-star"))
+                    span.btn-text.like-text #{post.isLikedByMe ? 'Cofnij' : 'Doceń'}
         else if !user.isOwnerOf(post)
-            //- ... (button like restricted)
+            button.action-btn.restricted-feature-trigger(type="button" data-reason="like_public" title="Wymaga weryfikacji profilu")
+                i.fa-regular.fa-star
+                span.btn-text Doceń
                 
         button.action-btn.comment-trigger-btn(type="button" onclick=`toggleCommentsVisibility('${post._id}')` title="Napisz komentarz")
             i.fa-regular.fa-comment
             span.btn-text Skomentuj
 
-        if !post.isAbuseReport && String(user.id) !== String(post.authorId)
+        if !post.isAbuseReport && !post.isFactCheckReport && String(user.id) !== String(post.authorId)
             button.action-btn.reply-post-btn(type="button" onclick=`window.openReplyPostModal('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Polemizuj")
                 i.fa-regular.fa-comments
                 span.btn-text Polemizuj
 
-        //- DEDYKOWANY PRZYCISK DLA CZYTELNIKA: Uruchomienie Fact-Checkingu (Widoczny jeśli nie ma jeszcze polemiki bota)
-        if post.visibility === 'public' && !post.isAbuseReport
-            //- Szukamy w spakowanej tablicy komentarzy/polemik czy Gemini AI już tam jest
-            - var hasAiReport = debatePosts && debatePosts.some(d => d.authorEmail === 'gemini-ai@poleopinii.pl')
-            if !hasAiReport
-                button.action-btn.factcheck-reader-trigger-btn(
-                    type="button" 
-                    id=`factcheck-btn-${post._id}`
-                    onclick=`window.executeReaderFactCheckWithConfirm('${post._id}', this)` 
-                    title="Zleć niezależny audyt faktograficzny algorytmom AI" 
-                    style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;"
-                )
-                    i.fa-solid.fa-robot
-                    span.btn-text Sprawdź wiarygodność z AI
+        //- DEDYKOWANY PRZYCISK DLA CZYTELNIKA: Uruchomienie Fact-Checkingu (Widoczny tylko w widoku artykułu, jeśli brak raportu AI)
+        if post.visibility === 'public' && !post.isAbuseReport && !post.isFactCheckReport && typeof hasAiReport !== 'undefined' && !hasAiReport
+            button.action-btn.factcheck-reader-trigger-btn(
+                type="button" 
+                id=`factcheck-btn-${post._id}`
+                onclick=`window.executeReaderFactCheckWithConfirm('${post._id}', this)` 
+                title="Zleć niezależny audyt faktograficzny algorytmom AI" 
+                style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;"
+            )
+                i.fa-solid.fa-robot
+                span.btn-text Sprawdź wiarygodność z AI
     else
         button.action-btn(disabled)
-          i.fa-regular.fa-star
-          span.btn-text Doceń
+            i.fa-regular.fa-star
+            span.btn-text Doceń
           
     if post.visibility === 'public'
         button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Udostępnij")

@@ -35,6 +35,7 @@ const postSchema = new mongoose.Schema({
   imageUrl: { type: String, default: null },
   visibility: { type: String, enum: POST_VISIBILITY, default: "public" },
   isAbuseReport: { type: Boolean, default: false },
+  isFactCheckReport: { type: Boolean, default: false },
   isModeratorLocked: { type: Boolean, default: false },
   abuseCategory: {
     type: String,
@@ -120,7 +121,11 @@ async function getScopedPosts(req, options = {}) {
     authorId: { $exists: true, $nin: exclusionIds },
     isAbuseReport: { $ne: true },
   };
-
+  
+  if (scope !== "single") {
+    matchConditions.isFactCheckReport = { $ne: true };
+  }
+  
   if (scope === "single" && options.targetPostId) {
     matchConditions._id = new mongoose.Types.ObjectId(options.targetPostId);
   } else if (scope === "profile" && options.targetUserId) {
@@ -215,6 +220,8 @@ async function getScopedPosts(req, options = {}) {
         authorId: 1,
         parentPostId: 1,
         isAbuseReport: 1,
+        isFactCheckReport: 1,
+        
         parentPostTitle: {
           $ifNull: ["$parentPostDetails.title", "Wpis bez tytułu"],
         },
