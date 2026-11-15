@@ -41,8 +41,8 @@ async function publishPostToFacebook(post, req) {
     const fbMessage = [
       // `📰 ${post.title}`,
       excerpt ? `\n${excerpt}` : "",
-      `(✍️ ${post.author}, ${authorProfileUrl})`,
       `\nCzytaj całość i dyskutuj na ${SERVICE_NAME}:`,
+      `(Autor: ${post.author}, ${authorProfileUrl})`,
     ]
       .filter(Boolean)
       .join("\n");
