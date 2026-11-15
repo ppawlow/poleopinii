@@ -153,13 +153,13 @@ window.toggleInlineEdit = async function (postId, event) {
       const msg =
         "Ten artykuł został zablokowany ze względów bezpieczeństwa lub naruszenia zasad. Czy chcesz wycofać go do prywatnego szkicu, aby nanieść poprawki?";
       if (await window.Confirm(msg, "🛡️ Wpis zablokowany")) {
-        await revertToDraft(postId);
+        await revertToDraft(postId, true);
       }
     } else {
       const msg =
         "Zgodnie z regulaminem bezpośrednia edycja opublikowanych wpisów publicznych jest zablokowana. Czy chcesz wycofać wpis do prywatnego szkicu i otworzyć go do edycji?";
       if (await window.Confirm(msg, "🌐 Post publiczny")) {
-        await revertToDraft(postId);
+        await revertToDraft(postId, true);
       }
     }
     return;
@@ -493,10 +493,11 @@ function loadMorePostsChaser() {
 // ==========================================
 // 4. WYCOFYWANIE POSTÓW PUBLICZNYCH DO SZKICU (Z automatycznym otwieraniem akordeonu)
 // ==========================================
-async function revertToDraft(postId) {
+async function revertToDraft(postId, skipConfirm = false) {
   if (
+    !skipConfirm &&
     !(await Confirm(
-      "Czy na pewno chcesz wycofać ten post? Bieżący post publiczny (wraz z polubieniami i komentarzami) zostanie usunięty, a Ty otrzymasz jego kopię w formie prywatnego szkicu do reedycji.",
+      "Czy na pewno chcesz wycofać ten wpis ze strefy publicznej do prywatnego szkicu? Zostanie on również usunięty z fanpage'a na Facebooku.",
     ))
   ) {
     return;
@@ -515,9 +516,6 @@ async function revertToDraft(postId) {
     });
     if (response.ok) {
       const data = await response.json();
-
-      // POPRAWKA: Jeśli backend zwrócił ID nowego szkicu prywatnego,
-      // doklejamy poprawną kotwicę do adresu URL i wymuszamy natychmiastowe przeładowanie.
       if (data && data.id) {
         window.location.hash = `post-${data.id}`;
       }
