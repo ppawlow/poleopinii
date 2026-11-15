@@ -34,11 +34,11 @@
                         span(title="Wewnętrzny poufny post redakcyjny" style="color: #e5a93c; font-weight: bold; font-size: 11.5px; background: #fff3d6; padding: 1px 6px; border-radius: 4px; margin-left: 4px;") ⚠️ [Kolegium]
                     
                     a.post-direct-link(
-                                href=`/posts/${post._id}` 
-                                title="Otwórz jako osobną stronę" 
-                                onclick="event.stopPropagation();" 
-                                style="margin-left: 8px; color: #65676b; text-decoration: none; transition: color 0.2s;"
-                            )
+                        href=`/posts/${post._id}` 
+                        title="Otwórz jako osobną stronę" 
+                        onclick="event.stopPropagation();" 
+                        style="margin-left: 8px; color: #65676b; text-decoration: none; transition: color 0.2s;"
+                    )
                         i.fa-solid.fa-link(style="font-size: 11px;")
 
                     if isAdmin && post.isModeratorLocked
@@ -48,7 +48,14 @@
             
             if user && user.isOwnerOf(post)
                 .author-actions(style="margin-left: auto; display: flex; gap: 12px; align-items: center;" onclick="event.stopPropagation();")
-                    button.edit-btn(onclick=`window.toggleInlineEdit('${post._id}', event);` style="background:none; border:none; color:#1877f2; cursor:pointer; font-weight:600; font-size:13px; display:flex; align-items:center; gap:4px;")
+                    button.edit-btn(
+                        type="button"
+                        data-visibility=post.visibility
+                        data-locked=String(Boolean(post.isModeratorLocked))
+                        data-image=(post.imageUrl || '')
+                        onclick=`window.toggleInlineEdit('${post._id}', event);`
+                        style="background:none; border:none; color:#1877f2; cursor:pointer; font-weight:600; font-size:13px; display:flex; align-items:center; gap:4px;"
+                    )
                         i.fa-solid.fa-pen(title="Edytuj post")
 
                     form(action=`/posts/${post._id}/delete` method="POST" data-confirm="Czy na pewno chcesz trwale usunąć ten wpis?" style="margin:0;")
@@ -70,7 +77,5 @@
     .accordion-content(style=isEditorPost ? "display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid #dddfe2; background-color: #fffdf5; width: 100%;" : "display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid #e4e6eb; width: 100%;")
         .post-view-mode(id=`view-${post._id}`)
             include post-body.pug
-        
-        include post-edit.pug
 
         include post-footer.pug

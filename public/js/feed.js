@@ -126,63 +126,107 @@ window.toggleCreatePostAccordion = window.openCreatePostModal;
 
 
 // ==========================================
-// 2. GLOBALNE FUNKCJE OBSŁUGI FORMULARZY (Wstrzyknięte do window)
+// 2. GLOBALNE FUNKCJE OBSŁUGI FORMULARZY
 // ==========================================
+window.toggleInlineEdit = async function (postId, event) {
+  if (event) {
+    event.preventDefault();
+    event.stopPropagation();
+  }
 
-window.toggleInlineEdit = function (postId, event) {
   if (postId === "new") {
     window.openCreatePostModal();
     return;
   }
 
   const postItem = document.getElementById(`post-${postId}`);
-  const wrapperBlock = document.getElementById(`edit-form-block-${postId}`);
-  const viewBlock = document.getElementById(`view-${postId}`);
-  const staticTitle = document.getElementById(`title-text-${postId}`);
+  const editBtn = postItem ? postItem.querySelector(".edit-btn") : null;
+  if (!postItem || !editBtn) return;
 
-  if (!wrapperBlock || !postItem) return;
+  const visibility = editBtn.getAttribute("data-visibility") || "private";
+  const isLocked = editBtn.getAttribute("data-locked") === "true";
+  const currentImage = editBtn.getAttribute("data-image") || "";
 
-  const accordionContent = postItem.querySelector(".accordion-content");
-  const accordionIcon = postItem.querySelector(".accordion-icon");
-
-  // 1. Wymuszamy otwarcie głównego akordeonu posta
-  if (accordionContent) {
-    accordionContent.style.display = "block";
-  }
-  if (accordionIcon) {
-    accordionIcon.style.transform = "rotate(180deg)";
-  }
-
-  const isHidden =
-    window.getComputedStyle(wrapperBlock).display === "none" ||
-    wrapperBlock.style.display === "none";
-
-  if (isHidden) {
-    // Pokazujemy formularz edycji, ukrywamy statyczną treść i tytuł
-    wrapperBlock.style.display = "block";
-    if (viewBlock) viewBlock.style.display = "none";
-    if (staticTitle) staticTitle.style.display = "none";
-
-    // Inicjalizacja edytora Quill
-    const quillContainer = document.getElementById(`edit-quill-${postId}`);
-    if (quillContainer && !activeQuillInstances[postId]) {
-      activeQuillInstances[postId] = new Quill(`#edit-quill-${postId}`, {
-        theme: "snow",
-        modules: COMMON_QUILL_MODULES,
-      });
-      const contentSource = document.getElementById(`content-html-${postId}`);
-      if (contentSource) {
-        activeQuillInstances[postId].clipboard.dangerouslyPasteHTML(
-          contentSource.innerHTML,
-        );
+  // 1. Obsługa postów publicznych (zgodnie z regulaminem wymagają wycofania do szkicu)
+  if (visibility === "public") {
+    if (isLocked) {
+      const msg =
+        "Ten artykuł został zablokowany ze względów bezpieczeństwa lub naruszenia zasad. Czy chcesz wycofać go do prywatnego szkicu, aby nanieść poprawki?";
+      if (await window.Confirm(msg, "🛡️ Wpis zablokowany")) {
+        await revertToDraft(postId);
+      }
+    } else {
+      const msg =
+        "Zgodnie z regulaminem bezpośrednia edycja opublikowanych wpisów publicznych jest zablokowana. Czy chcesz wycofać wpis do prywatnego szkicu i otworzyć go do edycji?";
+      if (await window.Confirm(msg, "🌐 Post publiczny")) {
+        await revertToDraft(postId);
       }
     }
-  } else {
-    // Powrót do widoku czytania
-    wrapperBlock.style.display = "none";
-    if (viewBlock) viewBlock.style.display = "block";
-    if (staticTitle) staticTitle.style.display = "block";
+    return;
   }
+
+  // 2. Ustawienie trybu reedycji w modalu #create-post-modal
+  const editingIdField = document.getElementById("edit-post-id-new");
+  if (editingIdField) editingIdField.value = postId;
+
+  const contextSubtitle = document.getElementById("create-post-context-time");
+  if (contextSubtitle) {
+    contextSubtitle.innerText = "Edycja istniejącego wpisu";
+    contextSubtitle.style.color = "#1877f2";
+    contextSubtitle.style.fontWeight = "600";
+  }
+
+  const staticTitle = document.getElementById(`title-text-${postId}`);
+  const titleField = document.getElementById("edit-title-new");
+  if (titleField && staticTitle) {
+    titleField.value = staticTitle.innerText.trim();
+  }
+
+  const selectEl = document.getElementById("visibility-select-node");
+  const warningEl = document.getElementById("public-debate-warning-badge");
+  if (selectEl) {
+    selectEl.value = visibility;
+    if (visibility === "editors") {
+      selectEl.disabled = true;
+      if (warningEl) {
+        warningEl.innerText =
+          "🔒 Status zamrożony: Post poufny Kolegium. Zmiana widoczności zablokowana.";
+        warningEl.style.display = "inline-block";
+      }
+    } else {
+      selectEl.disabled = false;
+      if (warningEl) warningEl.style.display = "none";
+    }
+  }
+
+  // Wczytanie istniejącej treści HTML do edytora Quill w modalu
+  const contentSource = document.getElementById(`content-html-${postId}`);
+  const quillInstance = activeQuillInstances["new"];
+  if (quillInstance && contentSource) {
+    quillInstance.setContents([]);
+    quillInstance.clipboard.dangerouslyPasteHTML(contentSource.innerHTML);
+  }
+
+  // Obsługa podglądu aktualnego zdjęcia zapisanego w bazie
+  window.cancelSelectedImage("new");
+  const currentImgContainer = document.getElementById("current-image-preview-new");
+  const currentImgTag = document.getElementById("current-image-img-new");
+  const removeCurrentBtn = document.getElementById("remove-current-image-btn");
+
+  if (currentImgContainer && currentImgTag) {
+    if (currentImage) {
+      currentImgTag.src = currentImage;
+      currentImgContainer.style.display = "block";
+      if (removeCurrentBtn) {
+        removeCurrentBtn.onclick = () => window.removePostImage(postId);
+      }
+    } else {
+      currentImgTag.src = "";
+      currentImgContainer.style.display = "none";
+    }
+  }
+
+  window.openCreatePostModal();
 };
 
 window.previewEditImage = function (input, postId) {
@@ -219,12 +263,19 @@ window.prepareEditSubmit = async function (event, postId) {
   const form = document.getElementById(`editForm-${postId}`);
   if (!form) return;
 
-  // Wyszukanie przycisku zarówno wewnątrz formularza, jak i w nagłówku modalu (form="editForm-new")
+  // Sprawdzamy, czy modal działa w trybie tworzenia nowego posta czy reedycji istniejącego
+  const editingIdField = document.getElementById("edit-post-id-new");
+  const realPostId =
+    postId === "new" && editingIdField && editingIdField.value
+      ? editingIdField.value
+      : postId;
+  const isNewPost = realPostId === "new";
+
   const submitBtn =
     form.querySelector('button[type="submit"]') ||
     document.querySelector(`button[type="submit"][form="${form.id}"]`);
 
-  if (submitBtn && submitBtn.disabled) return; // Dodatkowa osłona przed podwójnym kliknięciem
+  if (submitBtn && submitBtn.disabled) return;
 
   const originalBtnText = submitBtn ? submitBtn.innerText : "";
 
@@ -234,31 +285,30 @@ window.prepareEditSubmit = async function (event, postId) {
   if (instance) {
     formData.set("content", instance.getSemanticHTML());
   } else {
-    const hiddenContent = document.getElementById(
-      `edit-hidden-content-${postId}`,
-    );
+    const hiddenContent = document.getElementById(`edit-hidden-content-${postId}`);
     if (hiddenContent) formData.set("content", hiddenContent.value);
   }
 
-  if (postId === "new") {
-    const fileInput = document.getElementById("editPostImage-new");
+  const fileInput = document.getElementById(`editPostImage-${postId}`);
+  if (isNewPost) {
     formData.delete("editPostImage");
     if (fileInput && fileInput.files && fileInput.files[0]) {
       formData.set("postImage", fileInput.files[0]);
     }
+  } else if (fileInput && fileInput.files && fileInput.files[0]) {
+    formData.set("editPostImage", fileInput.files[0]);
   }
 
   const selectNode = form.querySelector('select[name="visibility"]');
-  const isPublicVerificationTriggered =
-    (selectNode && selectNode.value === "public") ||
-    (selectNode && selectNode.disabled);
+  const currentVis = selectNode ? selectNode.value : "";
+  const isPublicVerificationTriggered = currentVis === "public";
 
   if (selectNode && selectNode.disabled) {
-    formData.set("visibility", "public");
+    formData.set("visibility", currentVis);
   }
 
   const csrfToken = form.getAttribute("data-csrf");
-  const targetUrl = postId === "new" ? "/posts" : `/posts/${postId}/edit`;
+  const targetUrl = isNewPost ? "/posts" : `/posts/${realPostId}/edit`;
 
   const loadingModal = document.getElementById("custom-loading-modal");
   const loaderHeading = document.getElementById("loader-status-heading");
@@ -274,7 +324,7 @@ window.prepareEditSubmit = async function (event, postId) {
     if (loaderHeading) loaderHeading.innerText = "Trwa weryfikacja artykułu";
     if (loaderText)
       loaderText.innerText =
-        "Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa...";
+        "Nasz algorytm sztucznej inteligencji właśnie przeprowadza audyt bezpieczeństwa...";
     loadingModal.style.display = "flex";
   }
 
@@ -285,7 +335,7 @@ window.prepareEditSubmit = async function (event, postId) {
       body: formData,
     });
 
-    // SCENARIUSZ A: OBSŁUGA POŁĄCZENIA STRUMIENIOWEGO (DLA POSTÓW PUBLICZNYCH)
+    // SCENARIUSZ A: STRUMIEŃ SSE (POSTY PUBLICZNE)
     if (response.ok && isPublicVerificationTriggered) {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
@@ -315,7 +365,7 @@ window.prepareEditSubmit = async function (event, postId) {
               if (loaderText) loaderText.innerText = data.message;
             }
 
-            if (data.status === "success" && postId === "new") {
+            if (data.status === "success" && isNewPost) {
               if (loadingModal) loadingModal.style.display = "none";
               window.closeCreatePostModal();
               window.location.reload(true);
@@ -324,6 +374,7 @@ window.prepareEditSubmit = async function (event, postId) {
 
             if (data.status === "edit_success") {
               if (loadingModal) loadingModal.style.display = "none";
+              window.closeCreatePostModal();
               window.location.reload(true);
               return;
             }
@@ -333,7 +384,7 @@ window.prepareEditSubmit = async function (event, postId) {
       return;
     }
 
-    // SCENARIUSZ B: BEZPIECZNA OBSŁUGA DLA WPISÓW PRYWATNYCH / RESTRICTED / EDITORS
+    // SCENARIUSZ B: WPISY PRYWATNE / RESTRICTED / EDITORS
     if (response.ok) {
       if (loadingModal) loadingModal.style.display = "none";
 
@@ -341,10 +392,8 @@ window.prepareEditSubmit = async function (event, postId) {
       if (contentType && contentType.includes("application/json")) {
         const responseData = await response.json();
 
-        if (postId === "new" && responseData.html) {
-          const postsWrapper = document.getElementById(
-            "accordion-posts-wrapper",
-          );
+        if (isNewPost && responseData.html) {
+          const postsWrapper = document.getElementById("accordion-posts-wrapper");
 
           if (postsWrapper) {
             const noPostsFallback = postsWrapper.querySelector(".no-posts");
@@ -368,9 +417,11 @@ window.prepareEditSubmit = async function (event, postId) {
             window.location.reload(true);
           }
         } else {
+          window.closeCreatePostModal();
           window.location.reload(true);
         }
       } else {
+        window.closeCreatePostModal();
         window.location.reload(true);
       }
     } else {
@@ -547,7 +598,7 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
 };
 
 window.removePostImage = async function (postId) {
-  if (postId === "new") return;
+  if (!postId || postId === "new") return;
   const confirmed =
     typeof window.Confirm === "function"
       ? await window.Confirm(
@@ -568,15 +619,16 @@ window.removePostImage = async function (postId) {
       },
     });
     if (response.ok) {
-      const previewContainer = document.getElementById(
-        `current-image-preview-${postId}`,
-      );
-      if (previewContainer) previewContainer.remove();
+      // Ukrywamy podgląd aktualnego zdjęcia w modalu i czyścimy atrybut na karcie
+      const modalPreview = document.getElementById("current-image-preview-new");
+      if (modalPreview) modalPreview.style.display = "none";
 
-      // Opcjonalne usunięcie elementu img z trybu widoku statycznego w locie
-      const staticView = document.getElementById(`view-${postId}`);
-      if (staticView) {
-        const imgWrap = staticView.querySelector(".post-image-container");
+      const postCard = document.getElementById(`post-${postId}`);
+      if (postCard) {
+        const editBtn = postCard.querySelector(".edit-btn");
+        if (editBtn) editBtn.setAttribute("data-image", "");
+
+        const imgWrap = postCard.querySelector(".article-featured-image");
         if (imgWrap) imgWrap.remove();
       }
 
@@ -707,17 +759,14 @@ window.submitAbuseModalForm = async function (event) {
  * Obsługuje zarówno kreator 'new', jak i reedycję istniejących szkiców.
  */
 window.cancelSelectedImage = function (postId) {
-  // 1. Wyznaczamy poprawne ID elementu input w zależności od kontekstu (kreator używa innego ID)
   const inputId =
     postId === "new" ? "editPostImage-new" : `editPostImage-${postId}`;
   const fileInput = document.getElementById(inputId);
 
-  // 2. Czyścimy surową wartość pola input (reset binarnego bufora pliku)
   if (fileInput) {
     fileInput.value = "";
   }
 
-  // 3. Ukrywamy kontener podglądu nowej grafiki i czyścimy jego źródło
   const previewContainer = document.getElementById(
     `edit-image-preview-container-${postId}`,
   );
@@ -730,14 +779,19 @@ window.cancelSelectedImage = function (postId) {
     previewImg.src = "";
   }
 
-  // 4. Jeśli reedycja dotyczy istniejącego wpisu, przywracamy widoczność starego zdjęcia z bazy (jeśli istniało)
-  if (postId !== "new") {
-    const currentPreview = document.getElementById(
-      `current-image-preview-${postId}`,
-    );
-    if (currentPreview) {
-      currentPreview.style.display = "block";
-    }
+  // Przywracamy podgląd aktualnego zdjęcia z bazy, jeśli modal jest w trybie reedycji i post ma zdjęcie
+  const editingIdField = document.getElementById("edit-post-id-new");
+  const currentPreview = document.getElementById("current-image-preview-new");
+  const currentImgTag = document.getElementById("current-image-img-new");
+  if (
+    postId === "new" &&
+    editingIdField &&
+    editingIdField.value &&
+    currentPreview &&
+    currentImgTag &&
+    currentImgTag.getAttribute("src")
+  ) {
+    currentPreview.style.display = "block";
   }
 };
 
@@ -748,23 +802,17 @@ window.cancelSelectedImage = function (postId) {
 window.safeCancelInlineEdit = async function (postId) {
   const titleField = document.getElementById(`edit-title-${postId}`);
   const instance = activeQuillInstances[postId];
+  const editingIdField = document.getElementById("edit-post-id-new");
+  const existingPostId =
+    postId === "new" && editingIdField && editingIdField.value
+      ? editingIdField.value
+      : null;
 
   let hasChanges = false;
 
-  if (postId === "new") {
-    const hasTitle = titleField && titleField.value.trim().length > 0;
-    const hasContent = instance && instance.getText().trim().length > 0;
-
-    if (hasTitle || hasContent) {
-      hasChanges = true;
-    }
-    const categoryWrapperReset = document.getElementById(
-      "abuse-category-wrapper-new",
-    );
-    if (categoryWrapperReset) categoryWrapperReset.style.display = "none";
-  } else {
-    const staticTitle = document.getElementById(`title-text-${postId}`);
-    const staticContent = document.getElementById(`content-html-${postId}`);
+  if (existingPostId) {
+    const staticTitle = document.getElementById(`title-text-${existingPostId}`);
+    const staticContent = document.getElementById(`content-html-${existingPostId}`);
 
     const isTitleChanged =
       titleField &&
@@ -777,6 +825,13 @@ window.safeCancelInlineEdit = async function (postId) {
       instance.getSemanticHTML().trim() !== staticContent.innerHTML.trim();
 
     if (isTitleChanged || isContentChanged) {
+      hasChanges = true;
+    }
+  } else {
+    const hasTitle = titleField && titleField.value.trim().length > 0;
+    const hasContent = instance && instance.getText().trim().length > 0;
+
+    if (hasTitle || hasContent) {
       hasChanges = true;
     }
   }
@@ -792,48 +847,45 @@ window.safeCancelInlineEdit = async function (postId) {
     if (!confirmed) return;
   }
 
-  if (postId === "new") {
-    if (titleField) {
-      titleField.value = "";
-      titleField.placeholder = "Dodaj tytuł postu";
-    }
-    if (instance) instance.setContents([]);
+  // Pełny reset modalu do czystego stanu tworzenia nowego posta
+  if (editingIdField) editingIdField.value = "";
 
-    const previewContainer = document.getElementById(
-      "edit-image-preview-container-new",
-    );
-    if (previewContainer) previewContainer.style.display = "none";
-
-    const fileInput = document.getElementById("editPostImage-new");
-    if (fileInput) fileInput.value = "";
-
-    const contextSubtitle = document.getElementById("create-post-context-time");
-    if (contextSubtitle) {
-      contextSubtitle.innerText = "Tworzenie nowego wpisu";
-      contextSubtitle.style.color = "#65676b";
-      contextSubtitle.style.fontWeight = "normal";
-    }
-
-    const selectResetEl = document.getElementById("visibility-select-node");
-    const warningResetEl = document.getElementById(
-      "public-debate-warning-badge",
-    );
-    if (selectResetEl && warningResetEl) {
-      selectResetEl.disabled = false;
-      selectResetEl.value = "";
-      warningResetEl.style.display = "none";
-    }
-
-    const parentIdReset = document.getElementById("edit-parent-id-new");
-    if (parentIdReset) parentIdReset.value = "";
-
-    const abuseFlag = document.getElementById("abuse-report-flag-new");
-    if (abuseFlag) abuseFlag.value = "false";
-
-    window.closeCreatePostModal();
-  } else {
-    window.toggleInlineEdit(postId);
+  if (titleField) {
+    titleField.value = "";
+    titleField.placeholder = "Dodaj tytuł postu";
   }
+  if (instance) instance.setContents([]);
+
+  const currentImgContainer = document.getElementById("current-image-preview-new");
+  const currentImgTag = document.getElementById("current-image-img-new");
+  if (currentImgContainer) currentImgContainer.style.display = "none";
+  if (currentImgTag) currentImgTag.src = "";
+
+  const previewContainer = document.getElementById("edit-image-preview-container-new");
+  if (previewContainer) previewContainer.style.display = "none";
+
+  const fileInput = document.getElementById("editPostImage-new");
+  if (fileInput) fileInput.value = "";
+
+  const contextSubtitle = document.getElementById("create-post-context-time");
+  if (contextSubtitle) {
+    contextSubtitle.innerText = "Tworzenie nowego wpisu";
+    contextSubtitle.style.color = "#65676b";
+    contextSubtitle.style.fontWeight = "normal";
+  }
+
+  const selectResetEl = document.getElementById("visibility-select-node");
+  const warningResetEl = document.getElementById("public-debate-warning-badge");
+  if (selectResetEl && warningResetEl) {
+    selectResetEl.disabled = false;
+    selectResetEl.value = "";
+    warningResetEl.style.display = "none";
+  }
+
+  const parentIdReset = document.getElementById("edit-parent-id-new");
+  if (parentIdReset) parentIdReset.value = "";
+
+  window.closeCreatePostModal();
 };
 
 /**
