@@ -205,16 +205,17 @@ app.use(async (req, res, next) => {
     useRecaptcha,
     feedView,
     SHARE_PLATFORMS,
+    getProfileUrl:User.getProfileUrl,
   };
-  res.locals.getProfileUrl = function (userDetails) {
-    if (!userDetails) return "/";
-    if (typeof userDetails === "string") return `/profile/${userDetails}`;
-    const userAlias = userDetails.alias || userDetails.authorDetails?.alias;
-    const userId = userDetails._id || userDetails.id || userDetails.authorId;
-    if (userAlias) return `/profile/${userAlias}`;
-    if (userId) return `/profile/${userId.toString()}`;
-    return "/";
-  };
+  // res.locals.getProfileUrl = function (userDetails) {
+  //   if (!userDetails) return "/";
+  //   if (typeof userDetails === "string") return `/profile/${userDetails}`;
+  //   const userAlias = userDetails.alias || userDetails.authorDetails?.alias;
+  //   const userId = userDetails._id || userDetails.id || userDetails.authorId;
+  //   if (userAlias) return `/profile/${userAlias}`;
+  //   if (userId) return `/profile/${userId.toString()}`;
+  //   return "/";
+  // };
   next();
 });
 

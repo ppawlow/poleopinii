@@ -6,6 +6,7 @@ const { Post } = require("./db");
 
 const FB_GRAPH_VERSION = "v21.0";
 const MAX_EXCERPT_LENGTH = 220;
+const fbApi = `https://graph.facebook.com/${FB_GRAPH_VERSION}/`;
 
 /**
  * Publikuje post publiczny na fanpage'u Facebooka za pomocą Graph API.
@@ -19,7 +20,6 @@ async function publishPostToFacebook(post, req) {
     return null;
   }
 
-  // Zabezpieczenie: nie publikujemy ponownie, jeśli post ma już przypisane fbPostId
   if (
     !post ||
     post.fbPostId ||
@@ -33,20 +33,21 @@ async function publishPostToFacebook(post, req) {
   try {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const postUrl = `${baseUrl}/posts/${post._id}`;
+    const profilePath = req.dbUser?.profileUrl || `/profile/${post.authorId}`;
+    const authorProfileUrl = `${baseUrl}${profilePath}`;
+
     const excerpt = generatePostExcerpt(post.content, MAX_EXCERPT_LENGTH);
 
     const fbMessage = [
       `📰 ${post.title}`,
-      `✍️ Autor: ${post.author}`,
+      `✍️ Autor: ${post.author} (${authorProfileUrl})`,
       excerpt ? `\n${excerpt}` : "",
       `\nCzytaj całość i dyskutuj na ${SERVICE_NAME}:`,
     ]
       .filter(Boolean)
       .join("\n");
 
-      const endpoint = `https://graph.facebook.com/${FB_GRAPH_VERSION}/${pageId}/feed`;
-
-    const response = await fetch(endpoint, {
+    const response = await fetch(fbApi + `${pageId}/feed`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -69,7 +70,6 @@ async function publishPostToFacebook(post, req) {
       return null;
     }
 
-    // Zapisujemy identyfikator posta z FB w bazie MongoDB
     await Post.findByIdAndUpdate(post._id, { fbPostId: data.id });
 
     console.log(`[FB AUTO-SHARE] Opublikowano post na fanpage'u. FB Post ID: ${data.id}`);
@@ -92,7 +92,7 @@ async function publishPostToFacebook(post, req) {
 }
 
 /**
- * Usuwa opublikowany wcześniej post z fanpage'a Facebooka (np. po wycofaniu do szkicu lub usunięciu).
+ * Usuwa opublikowany wcześniej post z fanpage'a Facebooka.
  */
 async function deletePostFromFacebook(post, req) {
   const accessToken = process.env.FB_PAGE_ACCESS_TOKEN;
@@ -104,11 +104,10 @@ async function deletePostFromFacebook(post, req) {
   const fbId = post.fbPostId;
 
   try {
-	const endpoint = `https://graph.facebook.com/${FB_GRAPH_VERSION}/${fbId}?access_token=${encodeURIComponent(accessToken)}`;
-
-    const response = await fetch(endpoint, {
-      method: "DELETE",
-    });
+    const response = await fetch(
+      fbApi + `${fbId}?access_token=${encodeURIComponent(accessToken)}`,
+      { method: "DELETE" }
+    );
 
     const data = await response.json();
 
@@ -123,7 +122,6 @@ async function deletePostFromFacebook(post, req) {
       return false;
     }
 
-    // Czyścimy fbPostId w bazie (ważne przy wycofaniu do szkicu, aby ponowna publikacja znów go udostępniła)
     await Post.findByIdAndUpdate(post._id, { fbPostId: null });
 
     console.log(`[FB AUTO-DELETE] Usunięto post z fanpage'a. FB Post ID: ${fbId}`);

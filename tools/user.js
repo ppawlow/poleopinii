@@ -130,6 +130,26 @@ userSchema.virtual("displayName").get(function () {
   return this.name;
 });
 
+function resolveProfileUrl(userDetails) {
+  if (!userDetails) return "/";
+  if (typeof userDetails === "string") return `/profile/${userDetails}`;
+  const userAlias = userDetails.alias || userDetails.authorDetails?.alias;
+  const userId = userDetails._id || userDetails.id || userDetails.authorId;
+  if (userAlias) return `/profile/${userAlias}`;
+  if (userId) return `/profile/${userId.toString()}`;
+  return "/";
+}
+
+userSchema.methods.getProfileUrl = function (userDetails = this) {
+  return resolveProfileUrl(userDetails);
+};
+
+userSchema.statics.getProfileUrl = resolveProfileUrl;
+
+userSchema.virtual("profileUrl").get(function () {
+  return resolveProfileUrl(this);
+});
+
 userSchema.set("toObject", { virtuals: true, getters: true });
 userSchema.set("toJSON", { virtuals: true, getters: true });
 

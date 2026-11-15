@@ -5,32 +5,27 @@ html(lang="pl")
         meta(name="viewport" content="width=device-width, initial-scale=1.0")
         meta(name="csrf-token" content=csrfToken)
         
+        - var metaDescription = (post && post.content && typeof generatePostExcerpt === 'function') ? generatePostExcerpt(post.content, 160) : ("Przeczytaj najnowsze publicystyki i opinie w serwisie " + SERVICE_NAME)
+        - var metaTitle = post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME
+        - var metaImage = (post && post.imageUrl) ? (windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl) : (windowOrigin ? windowOrigin + LOGOTYP : LOGOTYP)
+
         //- Tagi Open Graph (Facebook, LinkedIn, Messenger)
         meta(property="og:type" content="article")
-        meta(property="og:title" content=post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME)
-        meta(property="og:description" content=post && post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) : "Przeczytaj najnowsze publicystyki i opinie w serwisie " + SERVICE_NAME)
-        if post && post.imageUrl
-            meta(property="og:image" content=windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl)
-        else
-            meta(property="og:image" content=windowOrigin ? windowOrigin + LOGOTYP : LOGOTYP)
+        meta(property="og:title" content=metaTitle)
+        meta(property="og:description" content=metaDescription)
+        meta(property="og:image" content=metaImage)
         
         //- Tagi Twitter Cards / X
         meta(name="twitter:card" content="summary_large_image")
-        meta(name="twitter:title" content=post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME)
-        meta(name="twitter:description" content=post && post.content ? post.content.replace(/<\/?[^>]+(>|$)/g, "").substring(0, 160) : "Przeczytaj najnowsze publicystyki i opinie w serwisie " + SERVICE_NAME)
-        if post && post.imageUrl
-            meta(name="twitter:image" content=windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl)
-        else
-            meta(name="twitter:image" content=windowOrigin ? windowOrigin + LOGOTYP : LOGOTYP)
+        meta(name="twitter:title" content=metaTitle)
+        meta(name="twitter:description" content=metaDescription)
+        meta(name="twitter:image" content=metaImage)
 
         title #{title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME}
-        // link(rel="preconnect" href="https://googleapis.com")
-        // link(rel="preconnect" href="https://gstatic.com" crossorigin)
-        // link(href="https://googleapis.com/css2?family=Varela+Round&display=swap" rel="stylesheet")
+
         link(rel="stylesheet" href="/quill/quill.snow.css")
         script(src="/quill/quill.js")
-        //if RECAPTCHA_SITE_KEY && useRecaptcha
-            //script(src="https://www.google.com/recaptcha/api.js?render=" + RECAPTCHA_SITE_KEY)
+
         script(src="https://www.google.com/recaptcha/enterprise.js?render=" +    RECAPTCHA_SITE_KEY)        
         script.
             window.env = { 
