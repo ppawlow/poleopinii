@@ -42,7 +42,7 @@ async function publishPostToFacebook(post, req) {
       // `📰 ${post.title}`,
       excerpt ? `\n${excerpt}` : "",
       `\nCzytaj całość i dyskutuj na ${SERVICE_NAME}:`,
-      `(Autor: ${post.author}, ${authorProfileUrl})`,
+      `(Autor: ${post.author}, ${authorProfileUrl})\n`,
     ]
       .filter(Boolean)
       .join("\n");
