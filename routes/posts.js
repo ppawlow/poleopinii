@@ -4,6 +4,7 @@ const fsPromises = require("fs").promises;
 const { ObjectId } = require("mongodb");
 const mailer = require("../tools/mailer");
 const { renderPartial } = require("../tools/pug2html"); 
+const { publishPostToFacebook, deletePostFromFacebook } = require("../tools/facebookPublisher");
 
 const {
   User,
@@ -309,6 +310,10 @@ async function postCreate(req, res) {
     const savedPost = await newPost.save();
     await createLog(req, `Utworzono post (${visibility}): ${title}`);
 
+    if (savedPost.visibility === "public" && !savedPost.isAbuseReport) {
+      publishPostToFacebook(savedPost, req);
+    }
+
     if (savedPost.visibility === "editors") {
       mailer.sendNewEditorPostNotification(dbUser, savedPost, req);
     }
@@ -565,6 +570,9 @@ async function postEdit(req, res) {
 
     await post.save();
 
+    if (isChangingToPublic && !post.isAbuseReport) {
+      publishPostToFacebook(post, req);
+    }
     // Jeśli strumień był otwarty, zamykamy go dedykowaną wiadomością SSE i kończymy połączenie
     if (isChangingToPublic) {
       res.write(`data: ${JSON.stringify({ status: "edit_success" })}\n\n`);
@@ -596,6 +604,12 @@ async function postRevert(req, res) {
     if (!post.isOwnedBy(req.dbUser)) {
       return res.status(403).send("Brak uprawnień do modyfikacji tego zasobu.");
     }
+    
+    if (post.fbPostId) {
+      deletePostFromFacebook(post, req);
+      post.fbPostId = null;
+    }
+    
     post.visibility = "private";
     await post.save();
 
@@ -925,6 +939,7 @@ async function getLoadMore(req, res) {
         getProfileUrl,
         urlAliases,
         hasPermission,
+        generatePostExcerpt,
         isAdmin: isUserAdmin,
         DEFAULT_ASSETS,
         SERVICE_NAME,
@@ -1003,6 +1018,9 @@ async function postDelete(req, res) {
     );
     // =======================================
 
+    if (post.fbPostId) {
+      deletePostFromFacebook(post, req);
+    }
     // 2. Bezwzględne usunięcie głównego dokumentu posta
     await Post.findByIdAndDelete(post._id);
 

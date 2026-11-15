@@ -544,6 +544,7 @@ async function getConfirmDeleteAccount(req, res) {
     const savedUserEmail = user.email;
     const savedUserName = user.name;
     const { Notification, Alias, Post } = require("../tools/db");
+    const { deletePostFromFacebook } = require("../tools/facebookPublisher");
 
     // 1. Kaskadowe czyszczenie wszystkich śladów aktywności w bazie danych
     await Notification.deleteMany({
@@ -551,9 +552,20 @@ async function getConfirmDeleteAccount(req, res) {
     });
     await Alias.deleteMany({ userId: userId });
 
-    // Pobieramy i bezpowrotnie kasujemy posty użytkownika oraz powiązane z nimi zgłoszenia nadużyć
-    const userPostsList = await Post.find({ authorId: userId }).select("_id");
+    // Pobieramy posty użytkownika (wraz z fbPostId i title, aby usunąć je z fanpage'a FB)
+    const userPostsList = await Post.find({ authorId: userId }).select(
+      "_id title fbPostId",
+    );
     const userPostIds = userPostsList.map((p) => p._id);
+
+    // Usuwamy powiązane posty z fanpage'a Facebooka przed ich skasowaniem z MongoDB
+    const fbPostsToDelete = userPostsList.filter((p) => p.fbPostId);
+    if (fbPostsToDelete.length > 0) {
+      await Promise.allSettled(
+        fbPostsToDelete.map((postDoc) => deletePostFromFacebook(postDoc, req)),
+      );
+    }
+
     await Post.deleteMany({
       $or: [
         { authorId: userId },

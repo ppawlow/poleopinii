@@ -44,6 +44,7 @@ const {
 
 // Narzędzia
 const { User, Alias, createLog, createVerifiedUser } = require("./tools/db");
+const { generatePostExcerpt } = require("./tools/excerptHelper");
 
 const app = express();
 
@@ -198,6 +199,7 @@ app.use(async (req, res, next) => {
     FAVICON,
     LOGOTYP,
     hasPermission,
+    generatePostExcerpt,
     RECAPTCHA_SITE_KEY,
     isDevelopment,
     useRecaptcha,
