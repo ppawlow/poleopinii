@@ -39,9 +39,9 @@ async function publishPostToFacebook(post, req) {
     const excerpt = generatePostExcerpt(post.content, MAX_EXCERPT_LENGTH);
 
     const fbMessage = [
-      `📰 ${post.title}`,
-      `✍️ Autor: ${post.author} (${authorProfileUrl})`,
+      // `📰 ${post.title}`,
       excerpt ? `\n${excerpt}` : "",
+      `(✍️ ${post.author}, ${authorProfileUrl})`,
       `\nCzytaj całość i dyskutuj na ${SERVICE_NAME}:`,
     ]
       .filter(Boolean)
