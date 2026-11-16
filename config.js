@@ -181,6 +181,14 @@ module.exports = {
       url: "https://facebook.com/poleopinii",
     },
     {
+      id: "bluesky",
+      label: "Obserwuj nas na Bluesky",
+      icon: "fa-brands fa-bluesky",
+      color: "#0085ff",
+      url: "https://bsky.app/profile/poleopinii.bsky.social",
+    },
+/*
+    {
       id: "x",
       label: "Obserwuj na X",
       icon: "fa-brands fa-x-twitter",
@@ -194,13 +202,7 @@ module.exports = {
       color: "#6364ff",
       url: "https://mastodon.social",
     },
-    {
-      id: "bluesky",
-      label: "Obserwuj nas na Bluesky",
-      icon: "fa-brands fa-bluesky",
-      color: "#0085ff",
-      url: "https://bsky.app",
-    },
+*/
   ],
 
   PORT: 3000,
