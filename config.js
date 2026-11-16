@@ -194,8 +194,15 @@ module.exports = {
       color: "#6364ff",
       url: "https://mastodon.social",
     },
+    {
+      id: "bluesky",
+      label: "Obserwuj nas na Bluesky",
+      icon: "fa-brands fa-bluesky",
+      color: "#0085ff",
+      url: "https://bsky.app",
+    },
   ],
-  
+
   PORT: 3000,
   SALT_ROUNDS: 12,
   useRecaptcha: process.env.USE_RECAPTCHA || false,

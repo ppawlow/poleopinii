@@ -40,6 +40,9 @@ const postSchema = new mongoose.Schema({
   isModeratorLocked: { type: Boolean, default: false },
   fbPostId: { type: String, default: null },
   fediPostId: { type: String, default: null },
+  bskyPostUri: { type: String, default: null },
+  xPostId: { type: String, default: null },
+
   abuseCategory: {
     type: String,
     enum: ["general", "copyright"],
