@@ -6,7 +6,7 @@ const { SERVICE_NAME } = require("../config");
 const { generatePostExcerpt } = require("./excerptHelper");
 const { Post } = require("./db");
 
-const BSKY_API = "https://bsky.social";
+const BSKY_API = "https://bsky.social/xrpc";
 const MAX_BSKY_LENGTH = 300; // Limit Bluesky wynosi 300 znaków
 
 /**
