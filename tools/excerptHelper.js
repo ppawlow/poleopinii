@@ -31,7 +31,7 @@ function generatePostExcerpt(htmlContent, maxLength = 220) {
 
   // 1. Sprawdzenie bloku <blockquote> lub <quote> na początku treści
   const quoteMatch = cleanedStart.match(
-    /^\s*<(?:blockquote|quote)[^>]*>([\s\S]*?)<\/(?:blockquote|quote)>/i
+    /^\s*<(?:lead|blockquote|quote)[^>]*>([\s\S]*?)<\/(?:lead|blockquote|quote)>/i
   );
 
   if (quoteMatch && quoteMatch[1]) {

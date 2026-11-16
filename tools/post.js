@@ -39,6 +39,7 @@ const postSchema = new mongoose.Schema({
   hasFactCheckErrors: { type: Boolean, default: false }, 
   isModeratorLocked: { type: Boolean, default: false },
   fbPostId: { type: String, default: null },
+  fediPostId: { type: String, default: null },
   abuseCategory: {
     type: String,
     enum: ["general", "copyright"],

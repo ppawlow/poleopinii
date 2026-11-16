@@ -5,31 +5,52 @@ if (window.Alert === undefined) window.Alert = window.alert;
 // ==========================================
 const activeQuillInstances = {};
 
+const Block = Quill.import("blots/block");
+
+class LeadBlot extends Block {
+  static blotName = "lead";
+  static tagName = "LEAD";
+}
+
+Quill.register(LeadBlot);
+
 // Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
 const COMMON_QUILL_MODULES = {
-  toolbar: [
-    // Wybór czcionki i jej rozmiaru
-    [{ header: [1, 2, 3, 4, false] }],
+  toolbar: {
+    container: [
+      [{ header: [1, 2, 3, 4, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      [{ indent: "-1" }, { indent: "+1" }],
+      [{ align: [] }],
+      ["lead", "blockquote"],
+      ["link"],
+      ["clean"],
+    ],
+    handlers: {
+      lead: function (value) {
+        const range = this.quill.getSelection();
+        if (!range) return;
 
-    // Podstawowe formatowanie i kolory
-    ["bold", "italic", "underline", "strike"],
-    // [{ 'color': [] }, { 'background': [] }],
+        // Sprawdzamy, czy kursor/zaznaczenie znajduje się w pierwszym bloku (indeks linii === 0)
+        const [line] = this.quill.getLine(range.index);
+        const lineIndex = this.quill.getIndex(line);
 
-    // Listy, wcięcia i wyrównanie
-    [{ list: "ordered" }, { list: "bullet" }],
-    [{ indent: "-1" }, { indent: "+1" }],
-    [{ align: [] }],
+        if (lineIndex !== 0) {
+          if (typeof window.Alert === "function") {
+            window.Alert(
+              "Zajawka artykułu może być ustawiona wyłącznie dla pierwszego akapitu na samym początku wpisu.",
+              "Formatowanie artykułu",
+            );
+          }
+          return;
+        }
 
-    // Cytaty, kod i multimedia
-    // ['blockquote', 'code-block'],
-    // ['link', 'image', 'video'],
-    ["blockquote"],
-    ["link"],
-    // ['link', 'image', 'video'],
-
-    // Czyszczenie formatowania (usuwa style z zaznaczonego tekstu)
-    ["clean"],
-  ],
+        // Przełączamy format <lead> dla pierwszego bloku
+        this.quill.format("lead", value);
+      },
+    },
+  },
 };
 
 // ==========================================
@@ -925,7 +946,7 @@ window.initAiTopicDiscussion = function (title, summary) {
 
   const quillInstance = activeQuillInstances["new"];
   if (quillInstance) {
-    const formattedHtml = `<blockquote><strong>${summary.trim()}</strong></blockquote><p><br></p>`;
+    const formattedHtml = `<lead>${summary.trim()}</lead><p><br></p>`;
     quillInstance.clipboard.dangerouslyPasteHTML(formattedHtml);
 
     setTimeout(() => {

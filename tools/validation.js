@@ -1,9 +1,11 @@
+const fs = require("fs");
+const path = require("path");
+const pug = require("pug");
 const rateLimit = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
 const { ObjectId } = require("mongodb");
 const sanitizeHtml = require("sanitize-html");
 const { POST_VISIBILITY, PASSWORD_REGEX, ADMINS } = require("../config");
-// const { isAliasReserved } = require("./security");
 const { verifyBufferSignature } = require("./db");
 const { renderMessage } = require("./pug2html");
 const tools = { validationResult };
@@ -11,13 +13,14 @@ module.exports = tools;
 
 // Funkcja walidacji zawartości edytora HTML
 // tools/validation.js
-
+// tools/validation.js
 tools.validateContent = function (content) {
   if (!content || typeof content !== "string") return "";
 
-  // 1. KROK: Najpierw przepuszczamy przez sanitizer (zabezpieczenie XSS)
+  // 1. KROK: Sanityzacja HTML (zabezpieczenie XSS + wsparcie dla znacznika <lead>)
   let sanitized = sanitizeHtml(content, {
     allowedTags: [
+      "lead",
       "p",
       "br",
       "strong",
@@ -85,32 +88,143 @@ tools.validateContent = function (content) {
     },
   });
 
-  // 2. KROK (BEZPIECZNY REPLACER):
-  // Czyścimy twarde spacje tekstowe (zarówno encje, jak i surowy znak Unicode),
-  // ale przy użyciu negatywnego dopasowania (Negative Lookahead), aby NIE usuwać ich,
-  // jeśli stoją same w pustym akapicie typu <p>&nbsp;</p> lub <p>\u00a0</p>
+  // 2. KROK: Wymuszenie pozycji zajawki (<lead>) wyłącznie jako pierwszego niepustego bloku
+  let leadAllowedAtStart = true;
+  sanitized = sanitized.replace(
+    /<(\/?)lead\b[^>]*>/gi,
+    (fullMatch, isClosing, offset, fullStr) => {
+      if (!isClosing) {
+        const prefixWithoutEmptyP = fullStr
+          .slice(0, offset)
+          .replace(/(?:\s|<p>(?:\s|<br\s*\/?>|&nbsp;|\u00a0)*<\/p>)/gi, "");
+
+        if (leadAllowedAtStart && prefixWithoutEmptyP.length === 0) {
+          leadAllowedAtStart = false;
+          return "<lead>";
+        }
+        return "<p>";
+      }
+      return "</lead>";
+    },
+  );
+
+  // Domknięcie par tagów <lead>...</lead> oraz zamiana nieuprawnionych domknięć na </p>
+  let openLeads = 0;
+  sanitized = sanitized.replace(/<(\/?)lead>/gi, (match, isClosing) => {
+    if (!isClosing) {
+      openLeads++;
+      return "<lead>";
+    }
+    if (openLeads > 0) {
+      openLeads--;
+      return "</lead>";
+    }
+    return "</p>";
+  });
+
+  // 3. KROK: Bezpieczne czyszczenie twardych spacji tekstowych (z zachowaniem pustych linii <p>&nbsp;</p>)
   sanitized = sanitized.replace(/(?<!<p>)(&nbsp;|\u00a0)(?!\s*<\/p>)/g, " ");
 
   return sanitized;
 };
-// tools/validation.js
 
-// tools/validation.js - Sekcja integracji z Gemini AI
+// Sekcja integracji z Gemini AI
+
+let cachedAiRules = "";
+let lastTermsMtimeMs = 0;
 
 /**
- * ETAP 1: Audyt Bezpieczeństwa i zgodności z Regulaminem (Safety, Hate Speech, Policy)
+ * Pobiera z pliku views/terms.pug wyłącznie punkty oznaczone klasą .ai-rule
+ * i buforuje je w pamięci do momentu modyfikacji pliku regulaminu.
  */
-tools.checkContentSafety = async function (ai, title, content) {
-  const fullTextToAnalyze = `Tytuł: ${title}\nTreść: ${content.replace(/<\/?[^>]+(>|$)/g, "")}`;
-  const safetyInstruction = `Jesteś rygorystycznym algorytmem moderującym treść na poważnej platformie publicystycznej. 
-  Przeanalizuj przesłany tekst pod kątem: wulgaryzmów (w tym ukrytych), mowy nienawiści, dyskryminacji (rasowej, religijnej, płciowej), wzywania do przemocy, nawoływania do łamania prawa oraz treści pornograficznych.
-  Zwróć dane wyłącznie jako ustrukturyzowany obiekt JSON zawierający pola:
-  - 'approved' (wartość Boolean: true jeśli tekst jest bezpieczny, false jeśli wykryto naruszenie).
-  - 'reason' (krótki, konkretny tekst po polsku wyjaśniający powód odrzucenia, lub null jeśli approved wynosi true).`;
+function getAiRulesFromTerms() {
+  try {
+    const termsPath = path.join(__dirname, "../views/terms.pug");
+    const stats = fs.statSync(termsPath);
+
+    if (cachedAiRules && stats.mtimeMs === lastTermsMtimeMs) {
+      return cachedAiRules;
+    }
+
+    const compiledHtml = pug.renderFile(termsPath);
+    const ruleMatches = [
+      ...compiledHtml.matchAll(/<li[^>]*\bclass="[^"]*\bai-rule\b[^"]*"[^>]*>([\s\S]*?)<\/li>/gi),
+    ];
+
+    if (ruleMatches.length > 0) {
+      cachedAiRules = ruleMatches
+        .map((match, idx) => {
+          const cleanRule = sanitizeHtml(match[1], {
+            allowedTags: [],
+            allowedAttributes: {},
+          })
+            .replace(/\s+/g, " ")
+            .trim();
+          return `${idx + 1}. ${cleanRule}`;
+        })
+        .join("\n");
+      lastTermsMtimeMs = stats.mtimeMs;
+    }
+
+    return cachedAiRules;
+  } catch (err) {
+    console.error("[AI VALIDATOR] Błąd odczytu reguł .ai-rule z regulaminu:", err);
+    return "";
+  }
+}
+
+/**
+ * ETAP 1: Multimodalny Audyt Bezpieczeństwa i zgodności z Regulaminem (Tekst + Grafika)
+ */
+tools.checkContentSafety = async function (ai, title, content, imageAsset = null) {
+  const plainText = content.replace(/<\/?[^>]+(>|$)/g, " ").replace(/\s+/g, " ").trim();
+  const hasImage = Boolean(imageAsset && imageAsset.buffer && imageAsset.mimetype);
+
+  const fullTextToAnalyze = [
+    `Tytuł artykułu: ${title}`,
+    `Załączona grafika: ${hasImage ? "TAK (przesłana w załączniku)" : "NIE"}`,
+    `Treść artykułu:\n${plainText}`,
+  ].join("\n\n");
+
+  const termsRules =
+    getAiRulesFromTerms() ||
+    "1. Zabrania się treści łamiących prawo, mowy nienawiści, dyskryminacji, wzywania do łamania prawa oraz pornografii.\n2. Zabrania się treści stanowiących reklamę produktów lub usług.\n3. Zabrania się wykorzystywania cudzego tekstu lub grafiki bez wyraźnego oznaczenia w tekście jego autora, oraz wskazania jego źródła.";
+
+  const safetyInstruction = `Jesteś rygorystycznym, ale sprawiedliwym algorytmem moderującym treść na platformie publicystycznej Pole Opinii.
+Przeanalizuj przesłany tekst ORAZ załączoną grafikę (jeśli została załączona) pod kątem naruszeń poniższych zasad Regulaminu Serwisu:
+
+OBOWIĄZUJĄCE ZASADY REGULAMINU:
+${termsRules}
+
+SZCZEGÓŁOWE WYTYCZNE OCENY GRAFIKI I PRAW AUTORSKICH:
+1. Bezpieczeństwo wizualne (jeśli załączono grafikę): Odrzuć obraz, jeśli zawiera treści pornograficzne/erotyczne, drastyczną przemoc (gore), symbole nienawiści/totalitarne, wulgarne napisy/memy, nawoływanie do przemocy lub bezpośrednią reklamę produktów/usług (banery reklamowe, kody rabatowe, logotypy promocyjne).
+2. Weryfikacja autora i źródła grafiki (dotyczy punktu o wykorzystywaniu cudzej grafiki):
+   - Jeśli załączono grafikę, sprawdź w treści artykułu, czy znajduje się informacja o autorze/źródle/licencji obrazu (np. „Fot. Jan Kowalski”, „Źródło: Wikimedia Commons”, „Grafika własna”, „CC BY-SA”, „domena publiczna”, „wygenerowano przez AI”).
+   - ZAKAZ FAŁSZYWYCH ALARMÓW: Jeśli grafika wygląda na zwykłe, czyste zdjęcie lub ilustrację bez znaków wodnych, a autor nie podał źródła — NIE odrzucaj posta (domyślnie traktuj ją jako materiał własny autora).
+   - ODRZUĆ POSTA (approved: false), jeśli zachodzi KTÓRYKOLWIEK z poniższych przypadków:
+     a) Na grafice widoczny jest znak wodny banku zdjęć lub agencji prasowej (np. Shutterstock, Getty Images, iStock, Adobe Stock, Alamy, Depositphotos, PAP, Reuters, East News) LUB grafika jest zrzutem ekranu z cudzego portalu/telewizji/mediów społecznościowych, a w treści artykułu brak wyraźnego wskazania autora i źródła.
+     b) W treści artykułu autor wyraźnie wskazuje, że grafika jest cudza (np. podaje nazwę innego portalu lub autora), ale podał tylko jedno z dwóch wymaganych elementów (brakuje albo autora, albo źródła).
+     c) W treści artykułu znajduje się wyraźny, dosłowny cytat z cudzego utworu bez podania jego autora i źródła.
+
+FORMAT ODPOWIEDZI:
+Zwróć dane wyłącznie jako ustrukturyzowany obiekt JSON z polami:
+- 'approved' (Boolean: true jeśli tekst i grafika spełniają wszystkie wymogi, false jeśli wykryto naruszenie).
+- 'reason' (krótki, konkretny komunikat po polsku wyjaśniający użytkownikowi, który dokładnie punkt regulaminu został naruszony i co należy poprawić — np. „Załączona grafika posiada znak wodny agencji/banku zdjęć, a w treści artykułu brakuje wskazania jej autora oraz źródła.” — lub null, jeśli approved wynosi true).`;
+
+  const contentsPayload = [fullTextToAnalyze];
+
+  if (hasImage) {
+    contentsPayload.push({
+      inlineData: {
+        data: imageAsset.buffer.toString("base64"),
+        mimeType: imageAsset.mimetype,
+      },
+    });
+  }
 
   const response = await ai.models.generateContent({
     model: "gemini-3.8-flash",
-    contents: fullTextToAnalyze,
+    contents: contentsPayload,
     config: {
       systemInstruction: safetyInstruction,
       responseMimeType: "application/json",
@@ -127,7 +241,11 @@ tools.checkContentSafety = async function (ai, title, content) {
 
   return {
     result: JSON.parse(response.text),
-    meta: response.usageMetadata || { promptTokenCount: 0, candidatesTokenCount: 0, totalTokenCount: 0 }
+    meta: response.usageMetadata || {
+      promptTokenCount: 0,
+      candidatesTokenCount: 0,
+      totalTokenCount: 0,
+    },
   };
 };
 
@@ -167,71 +285,96 @@ tools.checkContentFacts = async function (ai, title, content) {
 };
 
 /**
- * Centralny Koordynator Walidacji Publicznej (Zostaje TYLKO Etap 1: Bezpieczeństwo)
+ * Centralny Koordynator Walidacji Publicznej (Tekst + Opcjonalna Grafika)
  */
-
-tools.validatePublicContent = async function (req, title, content, res = null) {
+tools.validatePublicContent = async function (
+  req,
+  title,
+  content,
+  res = null,
+  fallbackImageAsset = null,
+) {
   try {
     const { GoogleGenAI } = require("@google/genai");
     const { createLog } = require("./systemLog");
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: "v1beta" });
+    const ai = new GoogleGenAI({
+      apiKey: process.env.GEMINI_API_KEY,
+      apiVersion: "v1beta",
+    });
     const dbUser = req.dbUser;
     const executionEmail = dbUser ? dbUser.email : "Anonimowy Twórca";
     const totalTokens = { input: 0, output: 0, total: 0 };
 
-    // Wywołanie Etapu 1: Bezpieczeństwo i zgodność z regulaminem
-    const safetyData = await tools.checkContentSafety(ai, title, content);
+    // Priorytet ma nowo przesłany plik z Multera (req.file), a przy publikacji szkicu — obraz zapisany wcześniej na dysku
+    const imageToAudit =
+      req.file && req.file.buffer
+        ? { buffer: req.file.buffer, mimetype: req.file.mimetype }
+        : fallbackImageAsset;
+
+    const safetyData = await tools.checkContentSafety(
+      ai,
+      title,
+      content,
+      imageToAudit,
+    );
     totalTokens.input += safetyData.meta.promptTokenCount;
     totalTokens.output += safetyData.meta.candidatesTokenCount;
     totalTokens.total += safetyData.meta.totalTokenCount;
 
     if (!safetyData.result.approved) {
-      await createLog(req, `[AI MODERACJA - BLOKADA] Odrzucono post publiczny ("${title}"). Powód: ${safetyData.result.reason}`, executionEmail);
+      await createLog(
+        req,
+        `[AI MODERACJA - BLOKADA] Odrzucono post publiczny ("${title}"). Powód: ${safetyData.result.reason}`,
+        executionEmail,
+      );
       if (dbUser && typeof dbUser.updateOne === "function") {
         await dbUser.updateOne({ $inc: { aiBlockedSafetyCount: 1 } });
       }
 
-      // NOWOŚĆ: Generujemy dynamiczny kod HTML z szablonu wiadomości przed odesłaniem
-      const compiledHtmlHtml = renderMessage("aiRejection", {
-        reason: safetyData.result.reason || "Treść odrzucona przez filtry bezpieczeństwa.",
-        report: safetyData.result.report || null // Przekazujemy raport, o ile istnieje
+      const compiledHtml = renderMessage("aiRejection", {
+        reason:
+          safetyData.result.reason ||
+          "Treść lub załączona grafika odrzucona przez filtry bezpieczeństwa.",
+        report: safetyData.result.report || null,
       });
 
       return {
         approved: false,
-        reason: compiledHtmlHtml // <--- Zwracamy skompilowany szablon HTML
+        reason: compiledHtml,
       };
     }
 
-    // Informacja dla frontu o sukcesie Etapu 1 - natychmiast kończymy sukcesem
     if (res && typeof res.write === "function") {
-      res.write(`data: ${JSON.stringify({ status: "stage1_success", message: "✨ Weryfikacja bezpieczeństwa przeszła pomyślnie. Publikowanie..." })}\n\n`);
+      res.write(
+        `data: ${JSON.stringify({ status: "stage1_success", message: "✨ Weryfikacja treści i grafiki przeszła pomyślnie. Publikowanie..." })}\n\n`,
+      );
     }
 
-    await createLog(req, `[AI VALIDATOR - SUKCES] Post publiczny przeszedł audyt regulaminu ("${title}"). Zużycie tokenów: ${totalTokens.total}`, executionEmail);
+    await createLog(
+      req,
+      `[AI VALIDATOR - SUKCES] Post publiczny przeszedł audyt regulaminu ("${title}"). Zużycie tokenów: ${totalTokens.total}`,
+      executionEmail,
+    );
 
     return {
       approved: true,
-      reason: null
+      reason: null,
     };
-
   } catch (err) {
     console.error("Krytyczny błąd modułu walidacji AI:", err);
-    
-    // Zapewniamy ładny fallback dla błędu serwera również w formacie Pug
+
     const errorHtml = renderMessage("aiRejection", {
-      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści.",
-      report: null
+      reason: "Wewnętrzny błąd serwera podczas weryfikacji treści lub grafiki.",
+      report: null,
     });
 
     return {
       approved: false,
-      reason: errorHtml
+      reason: errorHtml,
     };
   }
 };
-
 tools.validateId = function (idName) {
   return (req, res, next) => {
     const idValue = req.params[idName];

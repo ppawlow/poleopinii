@@ -1,6 +1,6 @@
 - var isEditorPost = post.visibility === 'editors'
 - var rawContent = (post.content || '').trim()
-- var quoteMatch = rawContent.match(/^\s*<(?:blockquote|quote)[^>]*>([\s\S]*?)<\/(?:blockquote|quote)>/i)
+- var quoteMatch = rawContent.match(/^\s*<(?:lead|blockquote|quote)[^>]*>([\s\S]*?)<\/(?:lead|blockquote|quote)>/i)
 - var leadText = quoteMatch ? quoteMatch[1].replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim() : ''
 - if (!leadText) {
 -   var plainFallback = rawContent.replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim()

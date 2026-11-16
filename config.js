@@ -126,7 +126,7 @@ module.exports = {
   // ===================================
   // MATRYCA UPRAWNIEŃ W RELACJACH
   // ===================================
-  USER_PERMISSIONS: { // <--- TUTAJ BYŁO BŁĘDNIE "POST_PERMISSIONS"
+  USER_PERMISSIONS: {
     canSendMail: (actingUser, targetUser) =>
       actingUser && targetUser &&
       actingUser.isPublicAllowed &&
@@ -171,7 +171,6 @@ module.exports = {
       urlTemplate: "https://linkedin.com/sharing/share-offsite/?url={url}",
     },
   ],
-  
 
   PORT: 3000,
   SALT_ROUNDS: 12,

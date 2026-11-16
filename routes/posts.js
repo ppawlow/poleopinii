@@ -4,7 +4,7 @@ const fsPromises = require("fs").promises;
 const { ObjectId } = require("mongodb");
 const mailer = require("../tools/mailer");
 const { renderPartial } = require("../tools/pug2html"); 
-const { publishPostToFacebook, deletePostFromFacebook } = require("../tools/facebookPublisher");
+const { publishToAllSocials, deleteFromAllSocials } = require("../tools/socialPublisher");
 
 const {
   User,
@@ -311,7 +311,7 @@ async function postCreate(req, res) {
     await createLog(req, `Utworzono post (${visibility}): ${title}`);
 
     if (savedPost.visibility === "public" && !savedPost.isAbuseReport) {
-      publishPostToFacebook(savedPost, req);
+      publishToAllSocials(savedPost, req);
     }
 
     if (savedPost.visibility === "editors") {
@@ -492,9 +492,10 @@ async function postEdit(req, res) {
     const isChangingToPublic =
       visibility === "public" && post.visibility !== "public";
 
-    // =========================================================================
+    // ===========================================================
     // OBSŁUGA STRUMIENIOWANIA SSE DLA ZMIANY STATUSU NA PUBLICZNY
-    // =========================================================================
+    // ===========================================================
+// routes/posts.js (zastąp blok SSE wewnątrz funkcji postEdit)
     if (isChangingToPublic && !dbUser.isEditor) {
       const targetTitle = title ? title.trim() : post.title;
 
@@ -503,11 +504,43 @@ async function postEdit(req, res) {
       res.setHeader("Connection", "keep-alive");
       res.flushHeaders();
 
+      // Jeśli autor nie wgrywa nowego pliku (brak req.file), ale szkic ma już grafikę na dysku,
+      // wczytujemy ją z bezpiecznego katalogu uploads do kontroli przez AI.
+      let existingImageAsset = null;
+      if (!req.file && post.imageUrl) {
+        const resolvedImgPath = path.resolve(__dirname, "../public", post.imageUrl);
+        const allowedUploadDir = path.resolve(__dirname, "../public/uploads");
+        if (resolvedImgPath.startsWith(allowedUploadDir)) {
+          try {
+            const imgBuffer = await fsPromises.readFile(resolvedImgPath);
+            const ext = path.extname(resolvedImgPath).toLowerCase();
+            const mimeByExt = {
+              ".jpg": "image/jpeg",
+              ".jpeg": "image/jpeg",
+              ".png": "image/png",
+              ".gif": "image/gif",
+              ".webp": "image/webp",
+            };
+            if (mimeByExt[ext]) {
+              existingImageAsset = {
+                buffer: imgBuffer,
+                mimetype: mimeByExt[ext],
+              };
+            }
+          } catch (readErr) {
+            if (readErr.code !== "ENOENT") {
+              console.error("Błąd odczytu istniejącej grafiki do audytu AI:", readErr);
+            }
+          }
+        }
+      }
+
       const aiValidation = await validatePublicContent(
         req,
         targetTitle,
         cleanContent,
         res,
+        existingImageAsset,
       );
 
       if (!aiValidation.approved) {
@@ -517,7 +550,6 @@ async function postEdit(req, res) {
         return res.end();
       }
     }
-    // =========================================================================
 
     // Przetwarzanie nowej grafiki (jeśli została przesłana podczas poprawiania posta)
     if (req.file) {
@@ -571,7 +603,7 @@ async function postEdit(req, res) {
     await post.save();
 
     if (isChangingToPublic && !post.isAbuseReport) {
-      publishPostToFacebook(post, req);
+      publishToAllSocials(post, req);
     }
     // Jeśli strumień był otwarty, zamykamy go dedykowaną wiadomością SSE i kończymy połączenie
     if (isChangingToPublic) {
@@ -606,7 +638,7 @@ async function postRevert(req, res) {
     }
     
     if (post.fbPostId) {
-      deletePostFromFacebook(post, req);
+      deleteFromAllSocials(post, req);
       post.fbPostId = null;
     }
     
@@ -1019,7 +1051,7 @@ async function postDelete(req, res) {
     // =======================================
 
     if (post.fbPostId) {
-      deletePostFromFacebook(post, req);
+      deleteFromAllSocials(post, req);
     }
     // 2. Bezwzględne usunięcie głównego dokumentu posta
     await Post.findByIdAndDelete(post._id);

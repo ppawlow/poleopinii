@@ -109,8 +109,9 @@ async function postGenerateArticle(req, res){
     Na podstawie krótkiego streszczenia wiadomości masz stworzyć kompletny, głęboki, profesjonalny i analityczny artykuł prasowy w języku polskim.
     
     WYMOGI STRUKTURALNE (ZWRÓĆ CZYSTY HTML DO EDYTORA QUILL):
-    - Artykuł musi zawierać chwytliwy wstęp (lead), rozwinięcie podzielone na podsekcje z nagłówkami (używaj <h2> i <h3>) oraz merytoryczne podsumowanie.
-    - Używaj tagów <p>, <strong>, <em> dla wyróżnień oraz ewentualnie <blockquote> dla symulacji cytatów eksperckich.
+    - Artykuł musi zaczynać się od chwytliwego wstępu (zajawki) ujętego w znacznik <lead>...</lead>.
+    - Dalsze rozwinięcie podziel na podsekcje z nagłówkami (używaj <h2> i <h3>) oraz merytoryczne podsumowanie w zwykłych akapitach <p>.
+    - Używaj tagów <p>, <strong>, <em> dla wyróżnień oraz <blockquote> wyłącznie dla rzeczywistych lub przykładowych cytatów eksperckich (zawsze podając autora i źródło cytatu).
     - Tekst musi być rozbudowany, bogaty słownictwowo, obiektywny i brzmieć w 100% naturalnie (jak tekst z wiodących portali opinii).
     - Zwróć WYŁĄCZNIE kod HTML gotowy do wklejenia — nie owijaj go w znaczniki markdown \`\`\`html \`\`\`.`;
 
