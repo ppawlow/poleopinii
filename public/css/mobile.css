@@ -351,6 +351,9 @@
   body.has-right-sidebar .main-container:not(:has(.editorial-article)) .right-sidebar {
     pointer-events: auto !important;
   }
+  .feed-toolbar-row {
+  padding: 4px 16px 0 16px;
+}
 }
 
 /* =========================================================================

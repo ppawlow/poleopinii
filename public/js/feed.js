@@ -1172,11 +1172,15 @@ function initGlobalWebSocket() {
 document.addEventListener("DOMContentLoaded", () => {
   initGlobalWebSocket();
 });
-
 window.setFeedViewMode = function (mode, event) {
   if (event) {
     event.preventDefault();
     event.stopPropagation();
+    const btn = event.currentTarget;
+    const label = document.getElementById("feed-view-label");
+    if (btn && label && btn.title) {
+      label.textContent = btn.title;
+    }
   }
   if (document.activeElement && typeof document.activeElement.blur === "function") {
     document.activeElement.blur();

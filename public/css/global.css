@@ -1286,20 +1286,28 @@ footer.site-footer {
 /* =========================================================================
    ALTERNATYWNY WIDOK PORTALOWY (KARTY PRASOWE)
    ========================================================================= */
+.toolbar-group-label {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #65676b;
+  line-height: 1;
+}
+
 .view-switch-btn {
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 50%;
   background: #ffffff;
   border: 1px solid #dddfe2;
   color: #65676b;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12.5px;
-  font-weight: 600;
+  font-size: 13px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  justify-content: center;
   transition: all 0.2s ease;
 }
 
@@ -1309,7 +1317,6 @@ footer.site-footer {
   border-color: #1877f2;
   color: #ffffff;
 }
-
 .portal-news-card {
   padding: 0 !important;
   overflow: hidden;
@@ -1483,4 +1490,25 @@ footer.site-footer {
   margin-bottom: 16px;
   padding-bottom: 12px;
   border-bottom: 1px solid #e4e6eb;
+}
+
+/* public/css/global.css */
+.social-pill-link {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  border: 1px solid #dddfe2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+}
+
+.social-pill-link:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  background-color: #f8f9fa;
 }

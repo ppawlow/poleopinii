@@ -172,6 +172,30 @@ module.exports = {
     },
   ],
 
+    SERVICE_SOCIALS: [
+    {
+      id: "facebook",
+      label: "Obserwuj na Facebooku",
+      icon: "fa-brands fa-facebook",
+      color: "#1877f2",
+      url: "https://facebook.com/poleopinii",
+    },
+    {
+      id: "x",
+      label: "Obserwuj na X",
+      icon: "fa-brands fa-x-twitter",
+      color: "#000000",
+      url: "https://x.com",
+    },
+    {
+      id: "mastodon",
+      label: "Obserwuj w Fediversum (Mastodon)",
+      icon: "fa-brands fa-mastodon",
+      color: "#6364ff",
+      url: "https://mastodon.social",
+    },
+  ],
+  
   PORT: 3000,
   SALT_ROUNDS: 12,
   useRecaptcha: process.env.USE_RECAPTCHA || false,
