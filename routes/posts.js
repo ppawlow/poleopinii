@@ -639,7 +639,7 @@ async function postRevert(req, res) {
     }
     
     if (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) {
-      deleteFromAllSocials(post, req);
+      await deleteFromAllSocials(post, req);
       post.fbPostId = null;
       post.fediPostId = null;
       post.bskyPostUri = null;

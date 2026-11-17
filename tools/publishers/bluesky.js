@@ -213,11 +213,13 @@ async function publishPostToBluesky(post, req) {
 async function deletePostFromBluesky(post, req) {
   if (!post || !post.bskyPostUri) return false;
 
+  const postUri = post.bskyPostUri;
+
   try {
     const session = await createBlueskySession();
     if (!session) return false;
 
-    const rkey = post.bskyPostUri.split("/").pop();
+    const rkey = postUri.split("/").pop();
 
     const response = await fetch(`${BSKY_API}/com.atproto.repo.deleteRecord`, {
       method: "POST",
