@@ -2,13 +2,12 @@
 const fs = require("fs");
 const path = require("path");
 const { createLog } = require("../systemLog");
-const { SERVICE_NAME } = require("../../config");
+const { SERVICE_NAME, OG_DEFAULT_IMAGE } = require("../../config");
 const { generatePostExcerpt } = require("../excerptHelper");
 const { Post } = require("../db");
 
 const BSKY_API = "https://bsky.social/xrpc";
 const MAX_BSKY_LENGTH = 300; // Limit Bluesky wynosi 300 znaków
-
 /**
  * Tworzy sesję w AT Protocol i zwraca accessJwt oraz did konta.
  */
@@ -140,7 +139,8 @@ async function publishPostToBluesky(post, req) {
     }
 
     // Wgranie miniatury posta (jeśli istnieje) i budowa bogatej karty artykułu
-    const thumbBlob = await uploadImageBlob(session.accessJwt, post.imageUrl);
+    const imageToUpload = post.imageUrl || OG_DEFAULT_IMAGE;
+    const thumbBlob = await uploadImageBlob(session.accessJwt, imageToUpload);
     const externalEmbed = {
       $type: "app.bsky.embed.external",
       external: {
