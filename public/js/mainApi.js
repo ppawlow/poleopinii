@@ -347,6 +347,9 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
   if (form.dataset.loading === "true") return;
   form.dataset.loading = "true";
 
+  const deleteBtn = form.querySelector('button[type="submit"]');
+  if (deleteBtn) deleteBtn.disabled = true;
+
   try {
     const response = await fetch(form.action, {
       method: "POST",
@@ -354,21 +357,19 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
     });
 
     if (response.ok) {
-      // Znajduje najbliższą kartę komentarza (.comment-card) lub posta (.post-card)
       const targetCard = form.closest(".comment-card, .post-card");
       const postCard = form.closest(".post-card, .editorial-article");
-      const isComment = targetCard && targetCard.classList.contains("comment-card");
+      const isComment = Boolean(targetCard && targetCard.classList.contains("comment-card"));
 
       if (targetCard) {
-        // Płynna animacja znikania z elementu z widoku (UX)
+        targetCard.style.pointerEvents = "none";
         targetCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
         targetCard.style.opacity = "0";
         targetCard.style.transform = "scale(0.98)";
-        
+
         setTimeout(() => {
           targetCard.remove();
 
-          // Jeśli usunięto komentarz, dynamicznie aktualizujemy liczniki bez przeładowania strony
           if (isComment && postCard) {
             let postId = "";
             const actionParts = form.action.split("/");
@@ -379,19 +380,20 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
 
             const freshCommentsCount = postCard.querySelectorAll(".comment-card").length;
 
-            // Aktualizacja licznika w stopce posta (np. "3 komentarze")
             const commentsCountEl = document.getElementById(`comments-text-${postId}`);
             if (commentsCountEl && typeof liczebnik === "function") {
-              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, ["komentarz", "komentarze", "komentarzy"]);
+              commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
+                "komentarz",
+                "komentarze",
+                "komentarzy",
+              ]);
             }
 
-            // Aktualizacja nagłówka sekcji komentarzy (Dyskusja (3))
             const discussionHeadingEl = document.getElementById(`discussion-heading-${postId}`);
             if (discussionHeadingEl) {
               discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
             }
 
-            // Jeśli to był ostatni komentarz, wstrzyknij informację o braku komentarzy
             const commentsListContainer = document.getElementById(`comments-list-${postId}`);
             if (freshCommentsCount === 0 && commentsListContainer) {
               commentsListContainer.insertAdjacentHTML(
@@ -401,6 +403,9 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
             }
           }
         }, 200);
+      } else if (postCard && postCard.classList.contains("editorial-article")) {
+        // Jeśli usunięto artykuł z poziomu widoku pojedynczego wpisu (single-post), wracamy na oś czasu
+        window.location.href = "/";
       }
     } else {
       const errText = await response.text();
@@ -412,6 +417,7 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
     console.error("Błąd sieciowy podczas usuwania zasobu:", err);
   } finally {
     form.dataset.loading = "false";
+    if (deleteBtn) deleteBtn.disabled = false;
   }
 }
 

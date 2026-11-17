@@ -1,6 +1,7 @@
 // tools/post.js
 const mongoose = require("mongoose");
 const { POST_VISIBILITY, DEFAULT_ASSETS } = require("../config");
+const { deleteFromAllSocials } = require("./socialPublisher");
 
 // 1. Definiujemy dedykowany schemat dla komentarza
 const commentSchema = new mongoose.Schema({
@@ -723,7 +724,7 @@ async function getScopedPosts(req, options = {}) {
 /**
  * Trwale i kaskadowo usuwa post o zadanym ID wraz ze wszystkimi powiązanymi zasobami:
  * - fizycznym plikiem graficznym (imageUrl) z dysku serwera,
- * - wpisami w zewnętrznych mediach społecznościowych (Facebook, Fediversum, Bluesky, X),
+ * - wpisami w zewnętrznych mediach społecznościowych (Facebook, Fediversum, Bluesky, X) w tle,
  * - powiadomieniami powiązanymi z wpisem,
  * - powiązanymi zgłoszeniami nadużyć oraz raportami faktograficznymi AI,
  * - relacjami nadrzędnymi (parentPostId) w artykułach polemicznych.
@@ -757,17 +758,16 @@ async function rmPost(id, req = null) {
       }
     }
 
-    // 2. Usunięcie wpisów z zewnętrznych mediów społecznościowych (jeśli były opublikowane)
+    // 2. Usunięcie wpisów z zewnętrznych mediów społecznościowych w tle (bez blokowania UX)
     if (
       (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) &&
       req
     ) {
-      try {
-        const { deleteFromAllSocials } = require("./socialPublisher");
-        await deleteFromAllSocials(post, req);
-      } catch (socialErr) {
+      // const { deleteFromAllSocials } = require("./socialPublisher");
+      const postSnapshot = post.toObject();
+      deleteFromAllSocials(postSnapshot, req).catch((socialErr) => {
         console.error("[rmPost] Błąd podczas usuwania wpisu z social media:", socialErr);
-      }
+      });
     }
 
     // 3. Kaskadowe czyszczenie powiadomień oraz powiązanych zgłoszeń / raportów AI
