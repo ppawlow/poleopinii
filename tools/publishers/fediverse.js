@@ -1,8 +1,8 @@
 // tools/fediversePublisher.js
-const { createLog } = require("./systemLog");
-const { SERVICE_NAME } = require("../config");
-const { generatePostExcerpt } = require("./excerptHelper");
-const { Post } = require("./db");
+const { createLog } = require("../systemLog");
+const { SERVICE_NAME } = require("../../config");
+const { generatePostExcerpt } = require("../excerptHelper");
+const { Post } = require("../db");
 
 /**
  * Publikuje post publiczny w Fediversum (Mastodon REST API v1).

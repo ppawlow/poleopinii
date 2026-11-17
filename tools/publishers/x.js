@@ -1,10 +1,10 @@
 // tools/xPublisher.js
 const crypto = require("crypto");
-const { createLog } = require("./systemLog");
-const { generatePostExcerpt } = require("./excerptHelper");
-const { Post } = require("./db");
+const { createLog } = require("../systemLog");
+const { generatePostExcerpt } = require("../excerptHelper");
+const { Post } = require("../db");
 
-const X_API_TWEETS = "https://x.com/2/tweets";
+const X_API_TWEETS = "https://api.x.com/2/tweets";
 const MAX_TWEET_LENGTH = 280;
 const X_TCO_URL_LENGTH = 23; // X zawsze liczy każdy URL jako 23 znaki
 

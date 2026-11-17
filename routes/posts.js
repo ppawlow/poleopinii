@@ -999,70 +999,26 @@ async function postDelete(req, res) {
     return res.status(400).send("Niepoprawny format identyfikatora wpisu.");
   }
   try {
-    const postId = req.params.id;
-    const post = await Post.findById(postId);
-
+    const post = await Post.findById(req.params.id).select("_id title authorId");
     if (!post) {
       return res.status(404).send("Nie znaleziono posta w bazie danych.");
     }
 
     // Autoryzacja właściciela wpisu
-    if (
-      !post.authorId || !post.isOwnedBy(req.session.user)
-    ) {
+    if (!post.authorId || !post.isOwnedBy(req.dbUser)) {
       return res
         .status(403)
         .send("Brak uprawnień: Nie jesteś właścicielem tego wpisu.");
     }
 
-    // 1. Usuwanie fizycznego pliku graficznego z dysku serwera
-    if (post.imageUrl) {
-      const imagePath = path.join(__dirname, "../public", post.imageUrl);
-      const resolvedPath = path.resolve(imagePath);
-      const allowedUploadDir = path.resolve(__dirname, "../public/uploads");
-      if (resolvedPath.startsWith(allowedUploadDir)) {
-        try {
-          await fsPromises.unlink(resolvedPath);
-        } catch (fileErr) {
-          if (fileErr.code !== "ENOENT") {
-            console.error("Nie udało się usunąć pliku z dysku:", fileErr);
-          }
-        }
-      }
+    const result = await rmPost(post._id, req);
+    if (result.error) {
+      return res.status(500).send(result.message);
     }
-
-    // =========================================================================
-    // NOWOŚĆ: CZYSZCZENIE KASKADOWE RELACJI BAZODANOWYCH
-    // =========================================================================
-    const { Notification } = require("../tools/db");
-
-    // A. Usuwamy wszystkie powiadomienia (lajki, komentarze) powiązane z tym postem
-    await Notification.deleteMany({ postId: post._id });
-
-    await Post.deleteMany({
-      parentPostId: post._id,
-      $or: [{ isAbuseReport: true }, { isFactCheckReport: true }],
-    });
-
-    await Post.updateMany(
-      {
-        parentPostId: post._id,
-        isAbuseReport: false,
-        isFactCheckReport: { $ne: true },
-      },
-      { $set: { parentPostId: null } },
-    );
-    // =======================================
-
-    if (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) {
-      deleteFromAllSocials(post, req);
-    }
-    // 2. Bezwzględne usunięcie głównego dokumentu posta
-    await Post.findByIdAndDelete(post._id);
 
     await createLog(
       req,
-      `Usunięto post wraz z kaskadą powiązań: ${post.title}`,
+      `Usunięto post wraz z kaskadą powiązań: ${result.deletedPost.title}`,
     );
     return res.sendStatus(200);
   } catch (err) {

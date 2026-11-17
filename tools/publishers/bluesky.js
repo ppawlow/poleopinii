@@ -1,10 +1,10 @@
 // tools/blueskyPublisher.js
 const fs = require("fs");
 const path = require("path");
-const { createLog } = require("./systemLog");
-const { SERVICE_NAME } = require("../config");
-const { generatePostExcerpt } = require("./excerptHelper");
-const { Post } = require("./db");
+const { createLog } = require("../systemLog");
+const { SERVICE_NAME } = require("../../config");
+const { generatePostExcerpt } = require("../excerptHelper");
+const { Post } = require("../db");
 
 const BSKY_API = "https://bsky.social/xrpc";
 const MAX_BSKY_LENGTH = 300; // Limit Bluesky wynosi 300 znaków
@@ -37,7 +37,7 @@ async function createBlueskySession() {
 async function uploadImageBlob(accessJwt, imageUrl) {
   if (!imageUrl) return null;
   try {
-    const localPath = path.join(__dirname, "../public", imageUrl);
+    const localPath = path.join(__dirname, "../../public", imageUrl);
     if (!fs.existsSync(localPath)) return null;
 
     const stats = fs.statSync(localPath);

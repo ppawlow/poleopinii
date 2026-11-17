@@ -1,8 +1,8 @@
 // tools/facebookPublisher.js
-const { createLog } = require("./systemLog");
-const { SERVICE_NAME } = require("../config");
-const { generatePostExcerpt } = require("./excerptHelper");
-const { Post } = require("./db");
+const { createLog } = require("../systemLog");
+const { SERVICE_NAME } = require("../../config");
+const { generatePostExcerpt } = require("../excerptHelper");
+const { Post } = require("../db");
 
 const FB_GRAPH_VERSION = "v21.0";
 const MAX_EXCERPT_LENGTH = 220;
