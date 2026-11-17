@@ -13,6 +13,7 @@ const {
   createNotification,
   upload,
   getScopedPosts,
+  rmPost,
 } = require("../tools/db");
 
 const { POST_VISIBILITY, DEFAULT_ASSETS, SERVICE_NAME } = require("../config");
@@ -1402,3 +1403,4 @@ async function postReaderFactCheck(req, res) {
     return res.status(500).send("Wewnętrzny błąd serwera podczas analityki tekstu.");
   }
 }
+

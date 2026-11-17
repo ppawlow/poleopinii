@@ -366,60 +366,22 @@ async function rmUser(id, req = null) {
     await safeUnlink(user.avatarUrl, DEFAULT_ASSETS.avatar);
     await safeUnlink(user.coverUrl, DEFAULT_ASSETS.cover);
 
-    // 2. Pobranie wszystkich postów użytkownika (wraz z grafikami i identyfikatorami social media)
+    // 2. Pobranie i kaskadowe usunięcie wszystkich postów użytkownika (wraz z grafikami i social media)
     const Post = mongoose.model("Post");
     const Notification = mongoose.model("Notification");
+    const { rmPost } = require("./post");
 
-    const userPosts = await Post.find({ authorId: userId }).select(
-      "_id title imageUrl fbPostId fediPostId bskyPostUri xPostId"
-    );
-    const userPostIds = userPosts.map((p) => p._id);
-
-    // 3. Usunięcie grafik z artykułów użytkownika oraz wpisów z mediów społecznościowych
-    const { deleteFromAllSocials } = require("./socialPublisher");
+    const userPosts = await Post.find({ authorId: userId }).select("_id");
     for (const postDoc of userPosts) {
-      if (postDoc.imageUrl) {
-        await safeUnlink(postDoc.imageUrl, null);
-      }
+      await rmPost(postDoc._id, req);
     }
 
-    const socialPosts = userPosts.filter(
-      (p) => p.fbPostId || p.fediPostId || p.bskyPostUri || p.xPostId
-    );
-    if (socialPosts.length > 0 && req) {
-      await Promise.allSettled(
-        socialPosts.map((postDoc) => deleteFromAllSocials(postDoc, req))
-      );
-    }
-
-    // 4. Kaskadowe czyszczenie powiadomień, postów, komentarzy i relacji w MongoDB
+    // 3. Czyszczenie pozostałych powiadomień powiązanych bezpośrednio z użytkownikiem
     await Notification.deleteMany({
-      $or: [
-        { senderId: userId },
-        { recipientId: userId },
-        { postId: { $in: userPostIds } },
-      ],
+      $or: [{ senderId: userId }, { recipientId: userId }],
     });
 
-    await Post.deleteMany({
-      $or: [
-        { authorId: userId },
-        { parentPostId: { $in: userPostIds }, isAbuseReport: true },
-        { parentPostId: { $in: userPostIds }, isFactCheckReport: true },
-      ],
-    });
-
-    // Odpięcie polemik innych autorów od skasowanych artykułów
-    await Post.updateMany(
-      {
-        parentPostId: { $in: userPostIds },
-        isAbuseReport: false,
-        isFactCheckReport: { $ne: true },
-      },
-      { $set: { parentPostId: null } }
-    );
-
-    // Usunięcie komentarzy oraz polubień autora w postach innych użytkowników
+    // 4. Usunięcie komentarzy oraz polubień autora w postach innych użytkowników
     await Post.updateMany(
       {},
       {
@@ -430,7 +392,7 @@ async function rmUser(id, req = null) {
       }
     );
 
-    // Usunięcie ID użytkownika z list following i blocks innych użytkowników
+    // 5. Usunięcie ID użytkownika z list following i blocks innych użytkowników
     await User.updateMany(
       {},
       {
@@ -441,7 +403,7 @@ async function rmUser(id, req = null) {
       }
     );
 
-    // 5. Usunięcie głównego dokumentu użytkownika
+    // 6. Usunięcie głównego dokumentu użytkownika
     await User.findByIdAndDelete(userId);
 
     return {

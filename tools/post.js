@@ -720,8 +720,98 @@ async function getScopedPosts(req, options = {}) {
   return { posts, totalPosts };
 }
 
+/**
+ * Trwale i kaskadowo usuwa post o zadanym ID wraz ze wszystkimi powiązanymi zasobami:
+ * - fizycznym plikiem graficznym (imageUrl) z dysku serwera,
+ * - wpisami w zewnętrznych mediach społecznościowych (Facebook, Fediversum, Bluesky, X),
+ * - powiadomieniami powiązanymi z wpisem,
+ * - powiązanymi zgłoszeniami nadużyć oraz raportami faktograficznymi AI,
+ * - relacjami nadrzędnymi (parentPostId) w artykułach polemicznych.
+ */
+async function rmPost(id, req = null) {
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return { error: true, message: "Nieprawidłowy format identyfikatora wpisu." };
+  }
+
+  try {
+    const post = await Post.findById(id);
+    if (!post) {
+      return { error: true, message: "Nie znaleziono posta w bazie danych." };
+    }
+
+    const path = require("path");
+    const fsPromises = require("fs").promises;
+
+    // 1. Usunięcie fizycznego pliku graficznego z dysku serwera
+    if (post.imageUrl) {
+      const allowedUploadDir = path.resolve(__dirname, DEFAULT_ASSETS.uploads);
+      const targetPath = path.resolve(allowedUploadDir, path.basename(post.imageUrl));
+      if (targetPath.startsWith(allowedUploadDir)) {
+        try {
+          await fsPromises.unlink(targetPath);
+        } catch (fileErr) {
+          if (fileErr.code !== "ENOENT") {
+            console.error("[rmPost] Nie udało się usunąć pliku z dysku:", fileErr);
+          }
+        }
+      }
+    }
+
+    // 2. Usunięcie wpisów z zewnętrznych mediów społecznościowych (jeśli były opublikowane)
+    if (
+      (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) &&
+      req
+    ) {
+      try {
+        const { deleteFromAllSocials } = require("./socialPublisher");
+        await deleteFromAllSocials(post, req);
+      } catch (socialErr) {
+        console.error("[rmPost] Błąd podczas usuwania wpisu z social media:", socialErr);
+      }
+    }
+
+    // 3. Kaskadowe czyszczenie powiadomień oraz powiązanych zgłoszeń / raportów AI
+    const Notification = mongoose.model("Notification");
+    await Notification.deleteMany({ postId: post._id });
+
+    await Post.deleteMany({
+      parentPostId: post._id,
+      $or: [{ isAbuseReport: true }, { isFactCheckReport: true }],
+    });
+
+    // Odpinamy polemiki innych autorów (ustawiając parentPostId na null)
+    await Post.updateMany(
+      {
+        parentPostId: post._id,
+        isAbuseReport: false,
+        isFactCheckReport: { $ne: true },
+      },
+      { $set: { parentPostId: null } },
+    );
+
+    // 4. Bezwzględne usunięcie głównego dokumentu posta
+    await Post.findByIdAndDelete(post._id);
+
+    return {
+      success: true,
+      deletedPost: {
+        _id: post._id,
+        title: post.title,
+        authorId: post.authorId,
+      },
+    };
+  } catch (err) {
+    console.error(`[rmPost CRITICAL] Błąd usuwania posta ${id}:`, err);
+    return {
+      error: true,
+      message: "Wystąpił błąd serwera podczas kaskadowego usuwania wpisu.",
+    };
+  }
+}
+
 module.exports = {
   Post,
+  rmPost,
   countAuthorPublicLikes,
   getScopedPosts,
 };

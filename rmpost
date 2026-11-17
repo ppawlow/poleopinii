@@ -1,50 +1,107 @@
-#!/usr/bin/env node
+// rm-post.js
 require("dotenv").config();
-const path = require("path");
-const fs = require("fs");
-const { ObjectId } = require("mongodb");
-const { Post, Notification } = require("./tools/db");
+const readline = require("readline");
+const mongoose = require("mongoose");
+const { Post, rmPost } = require("./tools/db");
 
-const postId = process.argv[2];
+const targetId = process.argv[2];
 
-if (!postId || !ObjectId.isValid(postId)) {
-  console.error("Użycie: ./rmpost <poprawne_24_znakowe_id_posta>");
+if (!targetId) {
+  console.error("Użycie: node rm-post.js <POST_ID>");
+  console.error("Przykład: node rm-post.js 6afb3c5339b5a8838851ae37");
   process.exit(1);
 }
 
-async function rmPost(id) {
+function askConfirmation(question) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase());
+    });
+  });
+}
+
+async function run() {
   try {
-    const post = await Post.findById(id);
+    if (!mongoose.Types.ObjectId.isValid(targetId)) {
+      console.error(`❌ Błąd: Podany identyfikator "${targetId}" nie jest poprawnym ObjectId.`);
+      process.exit(1);
+    }
+
+    await mongoose.connect(
+      process.env.MONGODB_URI || "mongodb://localhost:27017/test"
+    );
+
+    const post = await Post.findById(targetId);
+
     if (!post) {
-      console.log("Nie znaleziono posta o podanym ID.");
+      console.error(`⚠️  Nie znaleziono posta o ID: "${targetId}"`);
+      await mongoose.disconnect();
+      process.exit(1);
+    }
+
+    const socials = [
+      post.fbPostId ? "Facebook" : null,
+      post.bskyPostUri ? "Bluesky" : null,
+      post.fediPostId ? "Fediversum" : null,
+      post.xPostId ? "X" : null,
+    ].filter(Boolean);
+
+    console.log("\n============================================================");
+    console.log(" Znaleziono post do trwałego usunięcia:");
+    console.log(`  ID:            ${post._id}`);
+    console.log(`  Tytuł:         ${post.title || "(bez tytułu)"}`);
+    console.log(`  Autor:         ${post.author} (${post.authorEmail})`);
+    console.log(`  Widoczność:    ${post.visibility}`);
+    console.log(`  Grafika:       ${post.imageUrl || "brak"}`);
+    console.log(`  Social Media:  ${socials.length > 0 ? socials.join(", ") : "brak"}`);
+    console.log(`  Komentarze:    ${post.comments ? post.comments.length : 0}`);
+    console.log(`  Polubienia:    ${post.likedBy ? post.likedBy.length : 0}`);
+    console.log(
+      `  Data dodania:  ${post.createdAt ? post.createdAt.toISOString() : "-"}`
+    );
+    console.log("============================================================\n");
+
+    const answer = await askConfirmation(
+      "Czy na pewno chcesz TRWALE usunąć ten post wraz z grafiką, powiadomieniami i wpisami w social media? [tak/NIE]: "
+    );
+
+    if (answer !== "tak") {
+      console.log("Anulowano operację.");
+      await mongoose.disconnect();
       process.exit(0);
     }
 
-    if (post.imageUrl) {
-      const filePath = path.join(__dirname, "public", post.imageUrl);
-      if (fs.existsSync(filePath)) {
-        fs.unlinkSync(filePath);
-        console.log("Usunięto plik graficzny:", post.imageUrl);
-      }
+    const mockReq = {
+      protocol: "https",
+      get: () => process.env.SERVICE_HOST || "poleopinii.pl",
+      ip: "127.0.0.1",
+    };
+
+    const result = await rmPost(post._id, mockReq);
+
+    if (result.error) {
+      console.error(`❌ Błąd: ${result.message}`);
+      await mongoose.disconnect();
+      process.exit(1);
     }
 
-    await Notification.deleteMany({ postId: id });
-    await Post.deleteMany({
-      parentPostId: id,
-      $or: [{ isAbuseReport: true }, { isFactCheckReport: true }],
-    });
-    await Post.updateMany(
-      { parentPostId: id },
-      { $set: { parentPostId: null } },
+    console.log(
+      `✅ Pomyślnie usunięto post: "${result.deletedPost.title}" (ID: ${result.deletedPost._id})`
     );
-
-    await Post.findByIdAndDelete(id);
-    console.log("Usunięto post:", post.title);
+    await mongoose.disconnect();
     process.exit(0);
   } catch (err) {
-    console.error("Błąd podczas usuwania posta:", err.message);
+    console.error("❌ Błąd krytyczny:", err);
+    try {
+      await mongoose.disconnect();
+    } catch (_) {}
     process.exit(1);
   }
 }
 
-rmPost(postId);
+run();
