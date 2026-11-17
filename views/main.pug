@@ -73,7 +73,7 @@ block content
                                 button.view-switch-btn(type="button" class=(feedView !== 'portal' ? 'active' : '') onclick="window.setFeedViewMode('accordion', event)" title="Widok roboczy" aria-label="Widok roboczy")
                                     i.fa-solid.fa-tools
                                 button.view-switch-btn(type="button" class=(feedView === 'portal' ? 'active' : '') onclick="window.setFeedViewMode('portal', event)" title="Widok czytelnika" aria-label="Widok czytelnika")
-                                    i.fa-solid.fa-book
+                                    i.fa-solid.fa-book-open
 
             #accordion-posts-wrapper.accordion-container
                 if posts && posts.length > 0
