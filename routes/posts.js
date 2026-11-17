@@ -630,6 +630,7 @@ async function postEdit(req, res) {
 
 
 // WYCOFANIE DO SZKICU
+// WYCOFANIE DO SZKICU
 async function postRevert(req, res) {
   try {
     const post = await Post.findById(req.params.id);
@@ -639,7 +640,10 @@ async function postRevert(req, res) {
     }
     
     if (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) {
-      await deleteFromAllSocials(post, req);
+      const postSnapshot = post.toObject();
+      deleteFromAllSocials(postSnapshot, req).catch((err) => {
+        console.error("[postRevert] Błąd usuwania z mediów społecznościowych w tle:", err);
+      });
       post.fbPostId = null;
       post.fediPostId = null;
       post.bskyPostUri = null;
