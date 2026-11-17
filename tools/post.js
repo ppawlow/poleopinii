@@ -1,7 +1,6 @@
 // tools/post.js
 const mongoose = require("mongoose");
 const { POST_VISIBILITY, DEFAULT_ASSETS } = require("../config");
-const { deleteFromAllSocials } = require("./socialPublisher");
 
 // 1. Definiujemy dedykowany schemat dla komentarza
 const commentSchema = new mongoose.Schema({
@@ -763,7 +762,7 @@ async function rmPost(id, req = null) {
       (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) &&
       req
     ) {
-      // const { deleteFromAllSocials } = require("./socialPublisher");
+      const { deleteFromAllSocials } = require("./socialPublisher");
       const postSnapshot = post.toObject();
       deleteFromAllSocials(postSnapshot, req).catch((socialErr) => {
         console.error("[rmPost] Błąd podczas usuwania wpisu z social media:", socialErr);
