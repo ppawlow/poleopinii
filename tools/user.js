@@ -71,6 +71,16 @@ const userSchema = new mongoose.Schema({
   },
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   blocks: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    get: function (val) {
+      if (val) return val;
+      return this._id && typeof this._id.getTimestamp === "function"
+        ? this._id.getTimestamp()
+        : null;
+    },
+  },
 });
 
 userSchema.virtual("isFullyVerified").get(function () {
@@ -241,6 +251,13 @@ async function addUser(name, email, password = null) {
 
     return await newUser.save();
   } catch (err) {
+    if (err.code === 11000) {
+      return {
+        error: true,
+        message:
+          "Podany adres e-mail jest już zajęty przez innego użytkownika.",
+      };
+    }
     console.error("Krytyczny błąd addUser():", err);
     return {
       error: true,
@@ -309,6 +326,140 @@ async function createVerifiedUser(userData) {
   }
 }
 
+/**
+ * Trwale i kaskadowo usuwa użytkownika o zadanym ID wraz ze wszystkimi powiązanymi zasobami:
+ * - zdjęciami profilowymi (avatar, cover) i grafikami jego artykułów z dysku serwera,
+ * - wpisami z mediów społecznościowych (Facebook, Fediversum, Bluesky, X),
+ * - postami, zgłoszeniami, powiadomieniami, komentarzami, polubieniami oraz relacjami follow/block.
+ */
+async function rmUser(id, req = null) {
+  if (!id || !ObjectId.isValid(id)) {
+    return { error: true, message: "Nieprawidłowy identyfikator użytkownika." };
+  }
+
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      return { error: true, message: "Nie odnaleziono użytkownika w bazie danych." };
+    }
+
+    const userId = user._id;
+    const fsPromises = require("fs").promises;
+    const path = require("path");
+    const uploadDir = path.resolve(__dirname, DEFAULT_ASSETS.uploads);
+
+    const safeUnlink = async (relativeUrl, defaultFile) => {
+      if (!relativeUrl || (defaultFile && relativeUrl.includes(defaultFile))) return;
+      const targetPath = path.resolve(uploadDir, path.basename(relativeUrl));
+      if (targetPath.startsWith(uploadDir)) {
+        try {
+          await fsPromises.unlink(targetPath);
+        } catch (e) {
+          if (e.code !== "ENOENT") {
+            console.error(`[rmUser] Błąd usuwania pliku ${targetPath}:`, e);
+          }
+        }
+      }
+    };
+
+    // 1. Usunięcie zdjęć profilowych użytkownika z dysku
+    await safeUnlink(user.avatarUrl, DEFAULT_ASSETS.avatar);
+    await safeUnlink(user.coverUrl, DEFAULT_ASSETS.cover);
+
+    // 2. Pobranie wszystkich postów użytkownika (wraz z grafikami i identyfikatorami social media)
+    const Post = mongoose.model("Post");
+    const Notification = mongoose.model("Notification");
+
+    const userPosts = await Post.find({ authorId: userId }).select(
+      "_id title imageUrl fbPostId fediPostId bskyPostUri xPostId"
+    );
+    const userPostIds = userPosts.map((p) => p._id);
+
+    // 3. Usunięcie grafik z artykułów użytkownika oraz wpisów z mediów społecznościowych
+    const { deleteFromAllSocials } = require("./socialPublisher");
+    for (const postDoc of userPosts) {
+      if (postDoc.imageUrl) {
+        await safeUnlink(postDoc.imageUrl, null);
+      }
+    }
+
+    const socialPosts = userPosts.filter(
+      (p) => p.fbPostId || p.fediPostId || p.bskyPostUri || p.xPostId
+    );
+    if (socialPosts.length > 0 && req) {
+      await Promise.allSettled(
+        socialPosts.map((postDoc) => deleteFromAllSocials(postDoc, req))
+      );
+    }
+
+    // 4. Kaskadowe czyszczenie powiadomień, postów, komentarzy i relacji w MongoDB
+    await Notification.deleteMany({
+      $or: [
+        { senderId: userId },
+        { recipientId: userId },
+        { postId: { $in: userPostIds } },
+      ],
+    });
+
+    await Post.deleteMany({
+      $or: [
+        { authorId: userId },
+        { parentPostId: { $in: userPostIds }, isAbuseReport: true },
+        { parentPostId: { $in: userPostIds }, isFactCheckReport: true },
+      ],
+    });
+
+    // Odpięcie polemik innych autorów od skasowanych artykułów
+    await Post.updateMany(
+      {
+        parentPostId: { $in: userPostIds },
+        isAbuseReport: false,
+        isFactCheckReport: { $ne: true },
+      },
+      { $set: { parentPostId: null } }
+    );
+
+    // Usunięcie komentarzy oraz polubień autora w postach innych użytkowników
+    await Post.updateMany(
+      {},
+      {
+        $pull: {
+          comments: { authorId: userId },
+          likedBy: String(userId),
+        },
+      }
+    );
+
+    // Usunięcie ID użytkownika z list following i blocks innych użytkowników
+    await User.updateMany(
+      {},
+      {
+        $pull: {
+          following: userId,
+          blocks: userId,
+        },
+      }
+    );
+
+    // 5. Usunięcie głównego dokumentu użytkownika
+    await User.findByIdAndDelete(userId);
+
+    return {
+      success: true,
+      deletedUser: {
+        _id: userId,
+        name: user.name,
+        email: user.email,
+      },
+    };
+  } catch (err) {
+    console.error(`[rmUser CRITICAL] Błąd usuwania użytkownika ${id}:`, err);
+    return {
+      error: true,
+      message: "Wystąpił błąd krytyczny podczas kaskadowego usuwania konta.",
+    };
+  }
+}
 
 module.exports = {
   User,
@@ -316,5 +467,6 @@ module.exports = {
   userExists,
   aliasExists,
   addUser,
+  rmUser,
   createVerifiedUser,
 };

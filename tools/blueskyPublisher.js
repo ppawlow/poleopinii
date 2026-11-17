@@ -57,7 +57,7 @@ async function uploadImageBlob(accessJwt, imageUrl) {
     const res = await fetch(`${BSKY_API}/com.atproto.repo.uploadBlob`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessJwt}`,
         "Content-Type": contentType,
       },
       body: fileBuffer,

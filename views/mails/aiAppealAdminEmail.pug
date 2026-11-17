@@ -1,0 +1,15 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#e5a93c'
+
+block email-body
+  h2(style="color: #e5a93c; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") Odwołanie od automatycznego werdyktu AI
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Administratorze,
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Użytkownik #[strong #{authorName}] zakwestionował decyzję algorytmów sztucznej inteligencji i poprosił o manualną weryfikację wpisu: #[strong "#{postTitle}"].
+  p(style="font-size: 14px; color: #65676b; line-height: 1.5; margin: 0 0 20px 0;") Zgłoszenie zostało automatycznie zarejestrowane w rejestrze moderacyjnym. Przejdź do panelu administratora, aby zapoznać się z treścią wpisu i podjąć decyzję:
+  
+  table(cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;")
+    tr
+      td
+        a(href=adminUrl style="display: inline-block; background-color: #1877f2; color: #ffffff; font-weight: bold; padding: 11px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;") Przejdź do Panelu Administratora

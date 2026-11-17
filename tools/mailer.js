@@ -396,6 +396,27 @@ async function sendNewEditorPostNotification(senderUser, savedPost, req) {
     console.error("Krytyczny błąd rozsyłania mailingu do redaktorów:", err);
   }
 }
+
+/**
+ * 16. Wyślij powiadomienie do Administratora o odwołaniu autora od decyzji AI
+ */
+async function sendAiAppealEmail(post, req) {
+  const adminUrl = `${req.protocol}://${req.get("host")}/admin`;
+  const mailContent = renderMail("aiAppealAdminEmail", {
+    authorName: post.author,
+    postTitle: post.title || "Wpis bez tytułu",
+    adminUrl,
+    serviceName: SERVICE_NAME,
+  });
+
+  await sendMail(
+    MAIN_ADMIN_EMAIL,
+    "⚖️ Nowe odwołanie od decyzji AI",
+    mailContent,
+  );
+}
+
+
 module.exports = {
   startNotification,
   sendVerificationEmail,
@@ -413,4 +434,5 @@ module.exports = {
   sendEditorCandidateEmail,
   sendEditorApprovedByBoardEmail,
   sendNewEditorPostNotification,
+  sendAiAppealEmail,
 };

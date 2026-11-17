@@ -6,8 +6,7 @@ const crypto = require("crypto");
 const { User, Post, SystemLog, createLog } = require("../tools/db");
 const { adminControl } = require("../tools/security");
 const { adminApprovalValidationRules } = require("../tools/validation");
-const { deletePostFromFacebook } = require("../tools/facebookPublisher");
-
+const { deleteFromAllSocials } = require("../tools/socialPublisher");
 const { renderPartial } = require("../tools/pug2html");
 module.exports = express
   .Router()
@@ -211,13 +210,19 @@ async function postAcceptAbuseReport(req, res) {
     }
 
     const originalPost = await Post.findById(reportPost.parentPostId);
-
     if (originalPost) {
-      if (originalPost.fbPostId) {
-        deletePostFromFacebook(originalPost, req);
+      if (
+          originalPost.fbPostId ||
+          originalPost.fediPostId ||
+          originalPost.bskyPostUri ||
+          originalPost.xPostId
+        ) {
+        await deleteFromAllSocials(originalPost, req);
         originalPost.fbPostId = null;
+        originalPost.fediPostId = null;
+        originalPost.bskyPostUri = null;
+        originalPost.xPostId = null;
       }
-
       originalPost.visibility = "restricted";
       originalPost.isModeratorLocked = true;
       await originalPost.save();

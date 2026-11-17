@@ -637,9 +637,12 @@ async function postRevert(req, res) {
       return res.status(403).send("Brak uprawnień do modyfikacji tego zasobu.");
     }
     
-    if (post.fbPostId) {
+    if (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) {
       deleteFromAllSocials(post, req);
       post.fbPostId = null;
+      post.fediPostId = null;
+      post.bskyPostUri = null;
+      post.xPostId = null;
     }
     
     post.visibility = "private";
@@ -1050,7 +1053,7 @@ async function postDelete(req, res) {
     );
     // =======================================
 
-    if (post.fbPostId) {
+    if (post.fbPostId || post.fediPostId || post.bskyPostUri || post.xPostId) {
       deleteFromAllSocials(post, req);
     }
     // 2. Bezwzględne usunięcie głównego dokumentu posta
@@ -1109,7 +1112,7 @@ async function postAppeal(req, res) {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (!post.isOwnedBy(req.session.user)) {
+    if (!post.isOwnedBy(req.dbUser)) {
       return res.status(403).send("Brak uprawnień do tego zasobu.");
     }
 
@@ -1142,14 +1145,7 @@ async function postAppeal(req, res) {
     await appealReport.save();
 
     // Wysyłamy powiadomienie mailowe do głównego administratora platformy
-    const mailer = require("../tools/mailer");
-    const adminUrl = `${req.protocol}://${req.get("host")}/admin`;
-    const mailContent = `<p>Użytkownik poprosił o manualny audyt wpisu: <b>"${post.title}"</b>.</p><p><a href="${adminUrl}">Przejdź do Panelu Administratora</a></p>`;
-    await mailer.sendMail(
-      process.env.MAIN_ADMIN_EMAIL || "admin@poleopinii.pl",
-      "⚖️ Nowe odwołanie od decyzji AI",
-      mailContent,
-    );
+    await mailer.sendAiAppealEmail(post, req);
 
     await createLog(
       req,

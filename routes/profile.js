@@ -21,6 +21,7 @@ const {
   canonicalizeEmail,
   createLog,
   userExists,
+  rmUser,
 } = require("../tools/db");
 
 const {
@@ -527,11 +528,8 @@ async function postRequestDeleteAccount(req, res) {
 async function getConfirmDeleteAccount(req, res) {
   try {
     const { token } = req.params;
-
-    // Szukamy użytkownika po unikalnym tokenie bezpieczeństwa
     const user = await User.findOne({ securityToken: token });
 
-    // Weryfikacja obecności i ważności tokenu (getter .token automatycznie sprawdza czas wygaśnięcia)
     if (!user || !user.token) {
       return res
         .status(403)
@@ -540,73 +538,20 @@ async function getConfirmDeleteAccount(req, res) {
         );
     }
 
-    const userId = user._id;
-    const savedUserEmail = user.email;
-    const savedUserName = user.name;
-    const { Notification, Alias, Post } = require("../tools/db");
-    const { deletePostFromFacebook } = require("../tools/facebookPublisher");
+    const result = await rmUser(user._id, req);
 
-    // 1. Kaskadowe czyszczenie wszystkich śladów aktywności w bazie danych
-    await Notification.deleteMany({
-      $or: [{ senderId: userId }, { recipientId: userId }],
-    });
-    await Alias.deleteMany({ userId: userId });
-
-    // Pobieramy posty użytkownika (wraz z fbPostId i title, aby usunąć je z fanpage'a FB)
-    const userPostsList = await Post.find({ authorId: userId }).select(
-      "_id title fbPostId",
-    );
-    const userPostIds = userPostsList.map((p) => p._id);
-
-    // Usuwamy powiązane posty z fanpage'a Facebooka przed ich skasowaniem z MongoDB
-    const fbPostsToDelete = userPostsList.filter((p) => p.fbPostId);
-    if (fbPostsToDelete.length > 0) {
-      await Promise.allSettled(
-        fbPostsToDelete.map((postDoc) => deletePostFromFacebook(postDoc, req)),
-      );
+    if (result.error) {
+      return res.status(500).send(result.message);
     }
 
-    await Post.deleteMany({
-      $or: [
-        { authorId: userId },
-        { parentPostId: { $in: userPostIds }, isAbuseReport: true },
-      ],
-    });
-
-    // Odpinamy relacje nadrzędne w debatach, ustawiając parentPostId na null
-    await Post.updateMany(
-      { parentPostId: { $in: userPostIds }, isAbuseReport: false },
-      { $set: { parentPostId: null } },
-    );
-
-    // Wyciągamy komentarze i polubienia z postów innych autorów
-    await Post.updateMany(
-      {},
-      {
-        $pull: {
-          comments: { authorId: userId },
-          likedBy: String(userId),
-        },
-      },
-    );
-
-    // 2. Bezwzględne usunięcie konta głównego z bazy danych
-    await User.findByIdAndDelete(userId);
-
-    // 3. Wysłanie ostatecznego powiadomienia o pomyślnym usunięciu danych (Koniec potoku)
     await mailer.sendAccountDeletionSuccessNotification(
-      savedUserName,
-      savedUserEmail,
+      result.deletedUser.name,
+      result.deletedUser.email,
     );
 
-    // 4. Zniszczenie aktywnej sesji ciasteczka, jeśli użytkownik klikał będąc zalogowanym
     if (req.session) {
       req.session.destroy((err) => {
-        if (err)
-          console.error(
-            "Błąd niszczenia sesji przy finalnym kasowaniu konta:",
-            err,
-          );
+        if (err) console.error("Błąd niszczenia sesji przy kasowaniu konta:", err);
         res.clearCookie("connect.sid", { path: "/" });
         return res.render("email-verification", {
           verified: true,
@@ -624,10 +569,7 @@ async function getConfirmDeleteAccount(req, res) {
       });
     }
   } catch (err) {
-    console.error(
-      "Krytyczny błąd podczas finalnego kasowania konta RODO:",
-      err,
-    );
+    console.error("Krytyczny błąd podczas finalnego kasowania konta RODO:", err);
     return res
       .status(500)
       .send("Wewnętrzny błąd serwera podczas usuwania danych.");
