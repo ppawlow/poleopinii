@@ -199,6 +199,7 @@ app.use(async (req, res, next) => {
     SERVICE_LOGO,
     FAVICON,
     LOGOTYP,
+    OG_DEFAULT_IMAGE,
     hasPermission,
     generatePostExcerpt,
     RECAPTCHA_SITE_KEY,

@@ -3,7 +3,8 @@ module.exports = {
   SERVICE_LOGO: "/logo.jpeg",
   LOGOTYP: "/logotyp.jpeg",
   FAVICON: "/logo.jpeg",
-
+  OG_DEFAULT_IMAGE: "/banner.jpeg",
+  
   POST_VISIBILITY: ["public", "restricted", "private", "editors"],
 
   routeDir: "./routes",
