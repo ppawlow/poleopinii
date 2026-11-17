@@ -7,7 +7,7 @@ html(lang="pl")
         
         - var metaDescription = (post && post.content && typeof generatePostExcerpt === 'function') ? generatePostExcerpt(post.content, 160) : ("Przeczytaj najnowsze publicystyki i opinie w serwisie " + SERVICE_NAME)
         - var metaTitle = post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME
-        - var metaImage = (post && post.imageUrl) ? (windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl) : (windowOrigin ? windowOrigin + LOGOTYP : LOGOTYP)
+        - var metaImage = (post && post.imageUrl) ? (windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl) : (windowOrigin ? windowOrigin + OG_DEFAULT_IMAGE : OG_DEFAULT_IMAGE)
 
         //- Tagi Open Graph (Facebook, LinkedIn, Messenger)
         meta(property="og:type" content="article")

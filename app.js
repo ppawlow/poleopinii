@@ -35,6 +35,7 @@ const {
   PORT,
   FAVICON,
   LOGOTYP,
+  OG_DEFAULT_IMAGE,
   isDevelopment,
   DEFAULT_USER,
   RECAPTCHA_SITE_KEY,
