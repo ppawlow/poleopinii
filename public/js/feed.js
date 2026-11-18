@@ -21,9 +21,9 @@ const Icons = Quill.import("ui/icons");
 // Icons["lead"] = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(30, 48, 80)" d="M64 432c22.1 0 40 17.9 40 40s-17.9 40-40 40-40-17.9-40-40c0-22.1 17.9-40 40-40zM64 0c26.5 0 48 21.5 48 48 0 .6 0 1.1 0 1.7l-16 304c-.9 17-15 30.3-32 30.3S33 370.7 32 353.7L16 49.7c0-.6 0-1.1 0-1.7 0-26.5 21.5-48 48-48z"/></svg>`;
 
 Icons["lead"] = `<svg xmlns="http://w3.org" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-  <!--! Font Awesome Free style compatible -->
-  <path d="M64 32C28.7 32 0 60.7 0 96V416c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V96c0-35.3-28.7-64-64-64H64zm160 96c17.7 0 32 14.3 32 32V288c0 17.7-14.3 32-32 32s-32-14.3-32-32V160c0-17.7 14.3-32 32-32zM200 368a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"/>
-</svg>`;
+  <path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zm224 48c13.3 0 24 10.7 24 24V280c0 13.3-10.7 24-24 24s-24-10.7-24-24V168c0-13.3 10.7-24 24-24zm-24 192a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"/>
+</svg>
+`;
 
 // Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
 const COMMON_QUILL_MODULES = {
