@@ -17,11 +17,8 @@ Quill.register(LeadBlot);
 const Icons = Quill.import("ui/icons");
 
 Icons["lead"] = `<svg viewBox="0 0 18 18">
-  <rect class="ql-fill" x="3" y="3" width="2.2" height="7" rx="0.6"></rect>
-  <line class="ql-stroke" x1="7" y1="4.5" x2="15" y2="4.5" stroke-width="2"></line>
-  <line class="ql-stroke" x1="7" y1="8.5" x2="13" y2="8.5" stroke-width="2"></line>
-  <line class="ql-stroke" x1="3" y1="12.5" x2="15" y2="12.5"></line>
-  <line class="ql-stroke" x1="3" y1="15" x2="11" y2="15"></line>
+  <path class="ql-stroke" d="M11.5 2.5l4 4-6.5 6.5H5v-4l6.5-6.5z" fill="none"></path>
+  <line class="ql-stroke" x1="3" y1="15.5" x2="15" y2="15.5"></line>
 </svg>`;
 
 // Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
