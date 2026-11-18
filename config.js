@@ -188,7 +188,6 @@ module.exports = {
       color: "#0085ff",
       url: "https://bsky.app/profile/poleopinii.bsky.social",
     },
-/
     {
       id: "x",
       label: "Obserwuj na X",
