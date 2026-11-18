@@ -188,22 +188,22 @@ module.exports = {
       color: "#0085ff",
       url: "https://bsky.app/profile/poleopinii.bsky.social",
     },
-/*
+/
     {
       id: "x",
       label: "Obserwuj na X",
       icon: "fa-brands fa-x-twitter",
       color: "#000000",
-      url: "https://x.com",
+      url: "https://x.com/poleopinii",
     },
     {
       id: "mastodon",
       label: "Obserwuj w Fediversum (Mastodon)",
       icon: "fa-brands fa-mastodon",
       color: "#6364ff",
-      url: "https://mastodon.social",
+      url: "https://mastodon.social/@poleopinii",
     },
-*/
+
   ],
 
   PORT: 3000,
