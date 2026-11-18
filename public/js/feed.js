@@ -15,8 +15,11 @@ class LeadBlot extends Block {
 Quill.register(LeadBlot);
 
 const Icons = Quill.import("ui/icons");
-Icons["lead"] = '<span class="ql-lead-badge">Lead</span>'
-
+Icons["lead"] = `<svg viewBox="0 0 18 18">
+  <rect class="ql-fill" x="3" y="3" width="12" height="3.5" rx="0.8"></rect>
+  <line class="ql-stroke" x1="3" y1="10" x2="15" y2="10"></line>
+  <line class="ql-stroke" x1="3" y1="13.5" x2="11" y2="13.5"></line>
+</svg>`;
 // Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
 const COMMON_QUILL_MODULES = {
   toolbar: {

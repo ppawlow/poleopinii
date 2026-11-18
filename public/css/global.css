@@ -1457,6 +1457,7 @@ footer.site-footer {
 /* =========================================================================
    PRZYCISK I BLOK ZAJAWKI (<lead>) W EDYTORZE QUILL ORAZ ARTYKULE
    ========================================================================= */
+/*
 .ql-snow .ql-toolbar button.ql-lead {
   width: auto !important;
   padding: 2px 6px !important;
@@ -1487,7 +1488,7 @@ footer.site-footer {
   background-color: #1877f2;
   border-color: #1877f2;
 }
-
+*/
 .ql-editor lead,
 .article-text-content lead {
   display: block;
