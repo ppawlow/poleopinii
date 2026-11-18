@@ -195,6 +195,7 @@ app.use(async (req, res, next) => {
   res.locals = {
     csrfToken: req.csrfToken(),
     windowOrigin: req.protocol + "://" + req.get("host"),
+    currentUrl: req.originalUrl.split("?")[0],
     DEFAULT_ASSETS,
     SERVICE_NAME,
     SERVICE_LOGO,

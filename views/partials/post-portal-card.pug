@@ -1,11 +1,5 @@
 - var isEditorPost = post.visibility === 'editors'
-- var rawContent = (post.content || '').trim()
-- var quoteMatch = rawContent.match(/^\s*<(?:lead|blockquote|quote)[^>]*>([\s\S]*?)<\/(?:lead|blockquote|quote)>/i)
-- var leadText = quoteMatch ? quoteMatch[1].replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim() : ''
-- if (!leadText) {
--   var plainFallback = rawContent.replace(/<\/?[^>]+(>|$)/g, ' ').replace(/\s+/g, ' ').trim()
--   leadText = plainFallback.length > 220 ? plainFallback.substring(0, 220) + '...' : plainFallback
-- }
+- var leadText = typeof generatePostExcerpt === 'function' ? generatePostExcerpt(post.content, 220) : ''
 
 article.post-card.portal-news-card(
     id=`post-${post._id}`

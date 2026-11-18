@@ -1459,24 +1459,31 @@ footer.site-footer {
    ========================================================================= */
 .ql-snow .ql-toolbar button.ql-lead {
   width: auto !important;
-  padding: 0 8px !important;
-  font-weight: 700;
-  font-size: 12px;
-  color: #444;
-}
-
-.ql-snow .ql-toolbar button.ql-lead:hover {
-  color: #1877f2;
+  padding: 2px 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 12px !important;
+  color: #444 !important;
+  line-height: 1 !important;
 }
 
 .ql-snow .ql-toolbar button.ql-lead::after {
-  content: "Zajawka";
+  content: "Zajawka" !important;
+  display: inline-block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+.ql-snow .ql-toolbar button.ql-lead:hover {
+  color: #1877f2 !important;
 }
 
 .ql-snow .ql-toolbar button.ql-lead.ql-active {
-  color: #1877f2;
-  background-color: #e7f3ff;
-  border-radius: 4px;
+  color: #1877f2 !important;
+  background-color: #e7f3ff !important;
+  border-radius: 4px !important;
 }
 
 .ql-editor lead,
