@@ -25,7 +25,7 @@ html(lang="pl")
         meta(name="twitter:description" content=metaDescription)
         meta(name="twitter:image" content=metaImage)
 
-        title #{title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME}
+        title #{title ? SERVICE_NAME + ' | ' + title : SERVICE_NAME}
 
         link(rel="stylesheet" href="/quill/quill.snow.css")
         script(src="/quill/quill.js")
