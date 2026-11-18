@@ -1,9 +1,4 @@
-.article-body(style="display: block; font-size: 16px; line-height: 1.6; color: #2c3e50; font-family: sans-serif;")
-    if post.imageUrl
-        .article-featured-image
-            img.post-media(src=post.imageUrl alt=post.title title="Kliknij, aby powiększyć")
-
+.article-body(style="display: block; font-size: 16px; line-height: 1.65; color: #2c3e50; font-family: sans-serif;")
     .article-text-content(lang="pl")!= post.content
     div(id=`content-html-${post._id}` style="display: none;")!= post.content
     div(style="clear: both;")
-    

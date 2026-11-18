@@ -352,8 +352,16 @@
     pointer-events: auto !important;
   }
   .feed-toolbar-row {
-  padding: 4px 16px 0 16px;
-}
+    padding: 4px 16px 0 16px;
+  }
+  .main-container .editorial-article {
+    padding: 0 !important;
+  }
+  .portal-card-header-inner,
+  .portal-single-content-wrapper {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
 }
 
 /* =========================================================================

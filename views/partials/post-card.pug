@@ -1,81 +1,21 @@
 - var isEditorPost = post.visibility === 'editors'
-.post-card.accordion-item(
+- var isSingleView = false
+- var isWorkMode = true
+
+article.post-card.portal-news-card.accordion-item(
     id=`post-${post._id}` 
-    style=isEditorPost ? "padding: 12px 16px; margin-bottom: 12px; overflow: hidden; background-color: #fffdf0; border-left: 4px solid #e5a93c; box-shadow: 0 1px 3px rgba(229,169,60,0.15);" : undefined
+    style=isEditorPost ? "background-color: #fffdf0; border-left: 4px solid #e5a93c;" : undefined
 )
-    .accordion-header(style="cursor: pointer; padding: 4px 0;")
-        .post-author-row
-            a(href=getProfileUrl(post.authorDetails) onclick="event.stopPropagation();")
-                img.nav-avatar(src=(post.authorDetails ? post.authorDetails.avatarUrl : DEFAULT_ASSETS.avatar))
-            .author-info
-                a(href=getProfileUrl(post.authorDetails) style="text-decoration:none; color:inherit;" onclick="event.stopPropagation();")
-                    h4(style="display: inline-flex; align-items: center; gap: 4px; margin: 0;") 
-                        | #{ post.authorDetails ? post.authorDetails.name : post.author }
-                
-                        //- Oznaczenie oficjalnego, zatwierdzonego przez Kolegium Redaktora
-                        if post.authorDetails && post.authorDetails.role === 'editor'
-                            span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-weight: bold; font-size: 13px; margin-left: 2px;") 🌟
-                
-                        if post.authorDetails && (post.authorDetails.isFullyVerified || post.authorDetails.role === 'editor')
-                            sup(title="Profil Zweryfikowany" style="color: #1877f2; display: inline-flex;") 
-                                i.fa-solid.fa-circle-check
-                        else
-                            sup(title="Profil Niezweryfikowany" style="color: #8a8d91; display: inline-flex;") 
-                                i.fa-solid.fa-circle-xmark
-                span.post-time 
-                    | #{post.createdAt ? new Date(post.createdAt).toLocaleDateString('pl-PL') : 'Przed chwilą'} 
-                    if post.visibility === 'public'
-                        span(title="Publiczny")  🌐
-                    else if post.visibility === 'restricted'
-                        span(title="Dla obserwujących")  👥
-                    else if post.visibility === 'private'
-                        span(title="Prywatny")  🔒
-                    else if post.visibility === 'editors'
-                        span(title="Wewnętrzny poufny post redakcyjny" style="color: #e5a93c; font-weight: bold; font-size: 11.5px; background: #fff3d6; padding: 1px 6px; border-radius: 4px; margin-left: 4px;") ⚠️ [Kolegium]
-                    
-                    a.post-direct-link(
-                        href=`/posts/${post._id}` 
-                        title="Otwórz jako osobną stronę" 
-                        onclick="event.stopPropagation();" 
-                        style="margin-left: 8px; color: #65676b; text-decoration: none; transition: color 0.2s;"
-                    )
-                        i.fa-solid.fa-link(style="font-size: 11px;")
+    .accordion-header(style="cursor: pointer; padding: 0 0 16px 0;")
+        include post-header-portal.pug
 
-                    if isAdmin && post.isModeratorLocked
-                        span(id=`unlock-badge-block-${post._id}` style="margin-left: 12px; display: inline-flex; align-items: center; gap: 6px; font-family: sans-serif;")
-                            span(style="background: #fff3f3; color: #bc2525; border: 1px solid #bc2525; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;") 🛡️ Zablokowany przez moderatora
-                            button(type="button" onclick=`executePostUnlock('${post._id}')` style="background: #146c43; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer; transition: background 0.2s;") Cofnij blokadę
-            
-            if user && user.isOwnerOf(post)
-                .author-actions(style="margin-left: auto; display: flex; gap: 12px; align-items: center;" onclick="event.stopPropagation();")
-                    button.edit-btn(
-                        type="button"
-                        data-visibility=post.visibility
-                        data-locked=String(Boolean(post.isModeratorLocked))
-                        data-image=(post.imageUrl || '')
-                        onclick=`window.toggleInlineEdit('${post._id}', event);`
-                        style="background:none; border:none; color:#1877f2; cursor:pointer; font-weight:600; font-size:13px; display:flex; align-items:center; gap:4px;"
-                    )
-                        i.fa-solid.fa-pen(title="Edytuj post")
+    .accordion-content(style=isEditorPost ? "display: none; padding: 0; border-top: 1px solid #dddfe2; background-color: #fffdf5; width: 100%;" : "display: none; padding: 0; border-top: 1px solid #e4e6eb; width: 100%;")
+        if post.imageUrl
+            .portal-card-image-link(style="cursor: zoom-in;" onclick=`window.openLightbox('${post.imageUrl}')`)
+                img.portal-card-image(src=post.imageUrl alt=(post.title || 'Zdjęcie wyróżniające') loading="lazy")
 
-                    form(action=`/posts/${post._id}/delete` method="POST" data-confirm="Czy na pewno chcesz trwale usunąć ten wpis?" style="margin:0;")
-                        input(type="hidden" name="_csrf" value=csrfToken)
-                        button.delete-btn(type="submit" style="background:none; border:none; color:#65676b; cursor:pointer; font-weight:600; font-size:13px; display:flex; align-items:center; gap:4px;")
-                            i.fa-solid.fa-trash(title="Usuń ten post")
-        
-        .post-title-display(style="margin-top: 8px; display: flex; justify-content: space-between; align-items: center;")
-            h2.post-static-title(id=`title-text-${post._id}` style="font-size: 18px; color: #1c1e21; font-weight: 700; margin: 0;") #{post.title || 'Wpis bez tytułu'}
-            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; margin-left: 10px;")
+        div(style="padding: 16px 20px;")
+            .post-view-mode(id=`view-${post._id}`)
+                include post-body.pug
 
-        if post.parentPostId
-            .post-reply-relation(style="margin-top: 6px; margin-bottom: 2px; font-size: 13px; color: #65676b; font-family: sans-serif;" onclick="event.stopPropagation();")
-                i.fa-solid.fa-reply(style="transform: scaleX(-1); margin-right: 6px; color: #1877f2;")
-                | Odpowiedź na artykuł: 
-                a(href=`/posts/${post.parentPostId}` style="color: #1877f2; text-decoration: none; font-weight: 700; transition: text-decoration 0.2s;") 
-                    | "#{post.parentPostTitle}"
-    
-    .accordion-content(style=isEditorPost ? "display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid #dddfe2; background-color: #fffdf5; width: 100%;" : "display: none; padding-top: 12px; margin-top: 12px; border-top: 1px solid #e4e6eb; width: 100%;")
-        .post-view-mode(id=`view-${post._id}`)
-            include post-body.pug
-
-        include post-footer.pug
+            include post-footer.pug

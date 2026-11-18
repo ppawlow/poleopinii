@@ -1,43 +1,15 @@
 - var isEditorPost = post.visibility === 'editors'
+- var isSingleView = false
+- var isWorkMode = false
 - var leadText = typeof generatePostExcerpt === 'function' ? generatePostExcerpt(post.content, 220) : ''
 
 article.post-card.portal-news-card(
     id=`post-${post._id}`
     style=isEditorPost ? "background-color: #fffdf0; border-left: 4px solid #e5a93c;" : undefined
 )
-    if post.imageUrl
-        a.portal-card-image-link(href=`/posts/${post._id}`)
-            img.portal-card-image(src=post.imageUrl alt=(post.title || 'Zdjęcie wyróżniające') loading="lazy")
+    include post-header-portal.pug
 
-    .portal-card-body
-        .portal-card-meta
-            a.portal-author-link(href=getProfileUrl(post.authorDetails))
-                img.portal-author-avatar(src=(post.authorDetails ? post.authorDetails.avatarUrl : DEFAULT_ASSETS.avatar) alt="")
-                span.portal-author-name #{post.authorDetails ? post.authorDetails.name : post.author}
-                if post.authorDetails && post.authorDetails.role === 'editor'
-                    span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-size: 12px;") 🌟
-                if post.authorDetails && (post.authorDetails.isFullyVerified || post.authorDetails.role === 'editor')
-                    i.fa-solid.fa-circle-check(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 12px;")
-
-            span.portal-meta-separator •
-            span.portal-date #{post.createdAt ? new Date(post.createdAt).toLocaleDateString('pl-PL') : 'Przed chwilą'}
-
-            if post.visibility === 'restricted'
-                span(title="Dla obserwujących" style="margin-left: 6px;") 👥
-            else if post.visibility === 'private'
-                span(title="Prywatny" style="margin-left: 6px;") 🔒
-            else if post.visibility === 'editors'
-                span(style="color: #e5a93c; font-weight: bold; font-size: 11px; background: #fff3d6; padding: 1px 6px; border-radius: 4px; margin-left: 6px;") [Kolegium]
-
-        h2.portal-card-title
-            a(href=`/posts/${post._id}`) #{post.title || 'Wpis bez tytułu'}
-
-        if post.parentPostId
-            .portal-reply-badge
-                i.fa-solid.fa-reply(style="transform: scaleX(-1); margin-right: 5px; color: #1877f2;")
-                | Polemika z: 
-                a(href=`/posts/${post.parentPostId}`) "#{post.parentPostTitle}"
-
+    .portal-card-body(style="padding-top: 10px;")
         if leadText
             p.portal-card-lead #{leadText}
 

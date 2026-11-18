@@ -1,0 +1,86 @@
+//- views/partials/post-header-portal.pug
+if post.imageUrl && !isWorkMode
+    if isSingleView
+        .portal-card-image-link(style="cursor: zoom-in;" onclick=`window.openLightbox('${post.imageUrl}')`)
+            img.portal-card-image(src=post.imageUrl alt=(post.title || 'Zdjęcie wyróżniające'))
+    else
+        a.portal-card-image-link(href=`/posts/${post._id}` onclick="event.stopPropagation();")
+            img.portal-card-image(src=post.imageUrl alt=(post.title || 'Zdjęcie wyróżniające') loading="lazy")
+
+.portal-card-header-inner(style=(isSingleView ? "padding: 24px 32px 0 32px;" : "padding: 18px 20px 0 20px;"))
+    .portal-card-meta(style="justify-content: space-between; width: 100%;")
+        div(style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;")
+            a.portal-author-link(href=getProfileUrl(post.authorDetails) onclick="event.stopPropagation();")
+                img.portal-author-avatar(src=(post.authorDetails ? post.authorDetails.avatarUrl : DEFAULT_ASSETS.avatar) alt="")
+                span.portal-author-name #{post.authorDetails ? post.authorDetails.name : post.author}
+                if post.authorDetails && post.authorDetails.role === 'editor'
+                    span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-size: 12px;") 🌟
+                if post.authorDetails && (post.authorDetails.isFullyVerified || post.authorDetails.role === 'editor')
+                    i.fa-solid.fa-circle-check(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 12px;")
+                else
+                    i.fa-solid.fa-circle-xmark(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 12px;")
+
+            span.portal-meta-separator •
+            if isWorkMode
+                span.portal-date #{post.createdAt ? new Date(post.createdAt).toLocaleDateString('pl-PL') : 'Przed chwilą'}
+            else
+                span.portal-date #{post.createdAt ? new Date(post.createdAt).toLocaleDateString('pl-PL', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Przed chwilą'}
+
+            if post.visibility === 'restricted'
+                span(title="Dla obserwujących" style="margin-left: 4px;") 👥
+            else if post.visibility === 'private'
+                span(title="Prywatny" style="margin-left: 4px;") 🔒
+            else if post.visibility === 'editors'
+                span(title="Wewnętrzny poufny post redakcyjny" style="color: #e5a93c; font-weight: bold; font-size: 11px; background: #fff3d6; padding: 1px 6px; border-radius: 4px; margin-left: 4px;") ⚠️ [Kolegium]
+            else if isWorkMode && post.visibility === 'public'
+                span(title="Publiczny" style="margin-left: 4px;") 🌐
+
+            if isWorkMode
+                a.post-direct-link(
+                    href=`/posts/${post._id}`
+                    title="Otwórz jako osobną stronę"
+                    onclick="event.stopPropagation();"
+                    style="margin-left: 6px; color: #65676b; text-decoration: none;"
+                )
+                    i.fa-solid.fa-link(style="font-size: 11px;")
+
+            if isAdmin && post.isModeratorLocked
+                span(id=`unlock-badge-block-${post._id}` style="margin-left: 8px; display: inline-flex; align-items: center; gap: 6px;" onclick="event.stopPropagation();")
+                    span(style="background: #fff3f3; color: #bc2525; border: 1px solid #bc2525; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;") 🛡️ Zablokowany przez moderatora
+                    button(type="button" onclick=`executePostUnlock('${post._id}')` style="background: #146c43; color: white; border: none; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; cursor: pointer;") Cofnij blokadę
+
+        if (isWorkMode || isSingleView) && user && user.isOwnerOf(post)
+            .author-actions(style="display: flex; gap: 12px; align-items: center;" onclick="event.stopPropagation();")
+                if isWorkMode
+                    button.edit-btn(
+                        type="button"
+                        data-visibility=post.visibility
+                        data-locked=String(Boolean(post.isModeratorLocked))
+                        data-image=(post.imageUrl || '')
+                        onclick=`window.toggleInlineEdit('${post._id}', event);`
+                        style="background:none; border:none; color:#1877f2; cursor:pointer; font-weight:600; font-size:13px;"
+                    )
+                        i.fa-solid.fa-pen(title="Edytuj post")
+
+                form(action=`/posts/${post._id}/delete` method="POST" data-confirm="Czy na pewno chcesz trwale usunąć ten wpis?" style="margin:0;")
+                    input(type="hidden" name="_csrf" value=csrfToken)
+                    button.delete-btn(type="submit" style="background:none; border:none; color:#65676b; cursor:pointer; font-weight:600; font-size:13px;")
+                        i.fa-solid.fa-trash(title="Usuń ten post")
+
+    if isSingleView
+        h1.portal-single-title(style="font-size: 32px; font-weight: 800; color: #1c1e21; line-height: 1.25; margin: 14px 0 10px 0; text-align: left;")!= post.title || 'Wpis bez tytułu'
+    else
+        div(style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 10px;")
+            h2.portal-card-title(id=`title-text-${post._id}`)
+                if isWorkMode
+                    span #{post.title || 'Wpis bez tytułu'}
+                else
+                    a(href=`/posts/${post._id}`) #{post.title || 'Wpis bez tytułu'}
+            if isWorkMode
+                i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; margin-top: 6px; flex-shrink: 0;")
+
+    if post.parentPostId
+        .portal-reply-badge(style="margin-top: 6px;" onclick="event.stopPropagation();")
+            i.fa-solid.fa-reply(style="transform: scaleX(-1); margin-right: 5px; color: #1877f2;")
+            | Odpowiedź na artykuł: 
+            a(href=`/posts/${post.parentPostId}`) "#{post.parentPostTitle}"

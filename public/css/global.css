@@ -870,6 +870,15 @@ body {
   border-radius: 12px;
   background: #ffffff;
 }
+
+.editorial-article .portal-card-image-link {
+  max-height: 460px;
+}
+
+.editorial-article .portal-card-image {
+  height: 420px;
+}
+
 .article-header h1 {
   font-size: 38px;
   font-weight: 800;
