@@ -5,18 +5,18 @@ const { publishPostToX, deletePostFromX } = require("./publishers/x");
 
 async function publishToAllSocials(post, req) {
   return Promise.allSettled([
-    // publishPostToFacebook(post, req),
-    // publishPostToBluesky(post, req),
-    // publishPostToX(post, req),
+    publishPostToFacebook(post, req),
+    publishPostToBluesky(post, req),
+    publishPostToX(post, req),
     publishPostToFediverse(post, req),
   ]);
 }
 
 async function deleteFromAllSocials(post, req) {
   return Promise.allSettled([
-    // deletePostFromFacebook(post, req),
-    // deletePostFromBluesky(post, req),
-    // deletePostFromX(post, req),
+    deletePostFromFacebook(post, req),
+    deletePostFromBluesky(post, req),
+    deletePostFromX(post, req),
     deletePostFromFediverse(post, req),
   ]);
 }

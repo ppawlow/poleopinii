@@ -1,6 +1,5 @@
-// tools/fediversePublisher.js
+// tools/publishers/fediverse.js
 const { createLog } = require("../systemLog");
-const { SERVICE_NAME } = require("../../config");
 const { generatePostExcerpt } = require("../excerptHelper");
 const { Post } = require("../db");
 
@@ -33,27 +32,34 @@ async function publishPostToFediverse(post, req) {
     const authorProfileUrl = `${baseUrl}${profilePath}`;
 
     const formattedTitle = (post.title || "").toUpperCase();
-    // Mastodon ma limit 500 znaków na cały status, więc zajawka ~220 znaków mieści się bezpiecznie
-    const excerpt = generatePostExcerpt(post.content, 200);
+
+    const headerAndFooter = [
+      `${formattedTitle}`,
+      `Autor: ${post.author} (${authorProfileUrl})`,
+      `\nCzytaj całość: ${postUrl}`,
+      `\n#PoleOpinii #Publicystyka #Opinie`,
+    ].join("\n");
+
+    // Mastodon ma limit 500 znaków (każdy URL liczy jako 23 znaki)
+    const maxExcerptLen = Math.max(50, 480 - headerAndFooter.length);
+    const excerpt = generatePostExcerpt(post.content, maxExcerptLen);
 
     const statusText = [
-      `📰 ${formattedTitle}`,
-      `✍️ Autor: ${post.author} (${authorProfileUrl})`,
+      `${formattedTitle}`,
+      `Autor: ${post.author} (${authorProfileUrl})`,
       excerpt ? `\n„${excerpt}”` : "",
-      `\n👉 Czytaj całość: ${postUrl}`,
+      `\nCzytaj całość: ${postUrl}`,
       `\n#PoleOpinii #Publicystyka #Opinie`,
     ]
       .filter(Boolean)
-      .join("\n")
-      .slice(0, 495); // Twarde zabezpieczenie przed przekroczeniem limitu 500 znaków
+      .join("\n");
 
     const response = await fetch(`${instanceUrl}/api/v1/statuses`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${accessToken}`,
-        // Idempotency-Key gwarantuje, że ewentualny retry sieciowy nie zdubluje wpisu
-        "Idempotency-Key": `post-${post._id}`,
+        "Idempotency-Key": `post-${post._id}-${Date.now()}`,
       },
       body: JSON.stringify({
         status: statusText,
