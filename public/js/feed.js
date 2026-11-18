@@ -16,16 +16,7 @@ Quill.register(LeadBlot);
 
 const Icons = Quill.import("ui/icons");
 
-// Icons["lead"] = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(30, 48, 80)" d="M461.2 18.9C472.7 24 480 35.4 480 48l0 416c0 12.6-7.3 24-18.8 29.1s-24.8 3.2-34.3-5.1l-46.6-40.7c-43.6-38.1-98.7-60.3-156.4-63l0 95.7c0 17.7-14.3 32-32 32l-32 0c-17.7 0-32-14.3-32-32l0-96C57.3 384 0 326.7 0 256S57.3 128 128 128l84.5 0c61.8-.2 121.4-22.7 167.9-63.3l46.6-40.7c9.4-8.3 22.9-10.2 34.3-5.1zM224 320l0 .2c70.3 2.7 137.8 28.5 192 73.4l0-275.3c-54.2 44.9-121.7 70.7-192 73.4L224 320z"/></svg>`;
-Icons["lead"] = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(30, 48, 80)" d="M64 432c22.1 0 40 17.9 40 40s-17.9 40-40 40-40-17.9-40-40c0-22.1 17.9-40 40-40zM64 0c26.5 0 48 21.5 48 48 0 .6 0 1.1 0 1.7l-16 304c-.9 17-15 30.3-32 30.3S33 370.7 32 353.7L16 49.7c0-.6 0-1.1 0-1.7 0-26.5 21.5-48 48-48z"/></svg>
-`;
-// Icons["lead"] = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(30, 48, 80)" d="M64 432c22.1 0 40 17.9 40 40s-17.9 40-40 40-40-17.9-40-40c0-22.1 17.9-40 40-40zM64 0c26.5 0 48 21.5 48 48 0 .6 0 1.1 0 1.7l-16 304c-.9 17-15 30.3-32 30.3S33 370.7 32 353.7L16 49.7c0-.6 0-1.1 0-1.7 0-26.5 21.5-48 48-48z"/></svg>`;
-
-// Icons["lead"] = `<svg xmlns="http://w3.org" viewBox="0 0 448 512" width="1em" height="1em" fill="currentColor">
-//   <path d="M64 80c-8.8 0-16 7.2-16 16V416c0 8.8 7.2 16 16 16H384c8.8 0 16-7.2 16-16V96c0-8.8-7.2-16-16-16H64zM0 96C0 60.7 28.7 32 64 32H384c35.3 0 64 28.7 64 64V416c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V96zm224 48c13.3 0 24 10.7 24 24V280c0 13.3-10.7 24-24 24s-24-10.7-24-24V168c0-13.3 10.7-24 24-24zm-24 192a24 24 0 1 1 48 0 24 24 0 1 1 -48 0z"/>
-// </svg>
-// `;
+Icons["lead"] = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(30, 48, 80)" d="M64 432c22.1 0 40 17.9 40 40s-17.9 40-40 40-40-17.9-40-40c0-22.1 17.9-40 40-40zM64 0c26.5 0 48 21.5 48 48 0 .6 0 1.1 0 1.7l-16 304c-.9 17-15 30.3-32 30.3S33 370.7 32 353.7L16 49.7c0-.6 0-1.1 0-1.7 0-26.5 21.5-48 48-48z"/></svg>`;
 
 // Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
 const COMMON_QUILL_MODULES = {
@@ -79,13 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       modules: COMMON_QUILL_MODULES, // Użycie wspólnej konfiguracji
     });
 
-    // const createPostFormBlock = document.getElementById('editForm-new');
-    // if (createPostFormBlock) {
-    //     const cancelBtn = createPostFormBlock.querySelector('button[type="button"]');
-    //     if (cancelBtn) {
-    //         cancelBtn.style.display = 'none';
-    //     }
-    // }
+    window.initFormChangeTracker("editForm-new", "new");
   }
 
   // Podgląd grafiki dla nowego posta
@@ -241,6 +226,8 @@ window.toggleInlineEdit = async function (postId, event) {
     quillInstance.clipboard.dangerouslyPasteHTML(contentSource.innerHTML);
   }
 
+  window.resetFormDirtyState("editForm-new");
+
   // Obsługa podglądu aktualnego zdjęcia zapisanego w bazie
   window.cancelSelectedImage("new");
   const currentImgContainer = document.getElementById("current-image-preview-new");
@@ -265,6 +252,9 @@ window.toggleInlineEdit = async function (postId, event) {
 
 window.previewEditImage = function (input, postId) {
   if (input.files && input.files[0]) {
+    const form = document.getElementById(`editForm-${postId}`);
+    if (form) form.dataset.isDirty = "true";
+
     const file = input.files[0];
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -401,6 +391,7 @@ window.prepareEditSubmit = async function (event, postId) {
 
             if (data.status === "success" && isNewPost) {
               if (loadingModal) loadingModal.style.display = "none";
+              window.resetFormDirtyState("editForm-new");
               window.closeCreatePostModal();
               window.location.reload(true);
               return;
@@ -408,6 +399,7 @@ window.prepareEditSubmit = async function (event, postId) {
 
             if (data.status === "edit_success") {
               if (loadingModal) loadingModal.style.display = "none";
+              window.resetFormDirtyState("editForm-new");
               window.closeCreatePostModal();
               window.location.reload(true);
               return;
@@ -441,6 +433,8 @@ window.prepareEditSubmit = async function (event, postId) {
             const parentIdField = document.getElementById("edit-parent-id-new");
             if (parentIdField) parentIdField.value = "";
 
+            window.cancelSelectedImage("new");
+            window.resetFormDirtyState("editForm-new");
             window.cancelSelectedImage("new");
             window.closeCreatePostModal();
 
@@ -653,8 +647,10 @@ window.removePostImage = async function (postId) {
     if (response.ok) {
       // Ukrywamy podgląd aktualnego zdjęcia w modalu i czyścimy atrybut na karcie
       const modalPreview = document.getElementById("current-image-preview-new");
+      const currentImgTag = document.getElementById("current-image-img-new");
       if (modalPreview) modalPreview.style.display = "none";
-
+      if (currentImgTag) currentImgTag.src = "";
+      
       const postCard = document.getElementById(`post-${postId}`);
       if (postCard) {
         const editBtn = postCard.querySelector(".edit-btn");
@@ -825,6 +821,20 @@ window.cancelSelectedImage = function (postId) {
   ) {
     currentPreview.style.display = "block";
   }
+
+  // Jeśli nie wpisano żadnego tekstu ani nie zmieniono tytułu, zerujemy flagę zmian
+  const form = document.getElementById(`editForm-${postId}`);
+  const titleField = document.getElementById(`edit-title-${postId}`);
+  const instance = activeQuillInstances[postId];
+  const isEditingExisting = Boolean(editingIdField && editingIdField.value);
+
+  if (form && !isEditingExisting) {
+    const hasTitle = titleField && titleField.value.trim().length > 0;
+    const hasContent = instance && instance.getText().trim().length > 0;
+    if (!hasTitle && !hasContent) {
+      form.dataset.isDirty = "false";
+    }
+  }
 };
 
 /**
@@ -832,41 +842,14 @@ window.cancelSelectedImage = function (postId) {
  * Sprawdza, czy w formularzu znajdują się niezapisane zmiany i ostrzega użytkownika.
  */
 window.safeCancelInlineEdit = async function (postId) {
+  const formEl = document.getElementById(`editForm-${postId}`);
   const titleField = document.getElementById(`edit-title-${postId}`);
   const instance = activeQuillInstances[postId];
+  const fileInput = document.getElementById(`editPostImage-${postId}`);
+  const selectEl = document.getElementById("visibility-select-node");
   const editingIdField = document.getElementById("edit-post-id-new");
-  const existingPostId =
-    postId === "new" && editingIdField && editingIdField.value
-      ? editingIdField.value
-      : null;
 
-  let hasChanges = false;
-
-  if (existingPostId) {
-    const staticTitle = document.getElementById(`title-text-${existingPostId}`);
-    const staticContent = document.getElementById(`content-html-${existingPostId}`);
-
-    const isTitleChanged =
-      titleField &&
-      staticTitle &&
-      titleField.value.trim() !== staticTitle.innerText.trim();
-
-    const isContentChanged =
-      instance &&
-      staticContent &&
-      instance.getSemanticHTML().trim() !== staticContent.innerHTML.trim();
-
-    if (isTitleChanged || isContentChanged) {
-      hasChanges = true;
-    }
-  } else {
-    const hasTitle = titleField && titleField.value.trim().length > 0;
-    const hasContent = instance && instance.getText().trim().length > 0;
-
-    if (hasTitle || hasContent) {
-      hasChanges = true;
-    }
-  }
+  const hasChanges = Boolean(formEl && formEl.dataset.isDirty === "true");
 
   if (hasChanges) {
     const message =
@@ -879,7 +862,8 @@ window.safeCancelInlineEdit = async function (postId) {
     if (!confirmed) return;
   }
 
-  // Pełny reset modalu do czystego stanu tworzenia nowego posta
+  // Pełny reset modalu i wyzerowanie flagi zmian
+  window.resetFormDirtyState(`editForm-${postId}`);
   if (editingIdField) editingIdField.value = "";
 
   if (titleField) {
@@ -896,7 +880,6 @@ window.safeCancelInlineEdit = async function (postId) {
   const previewContainer = document.getElementById("edit-image-preview-container-new");
   if (previewContainer) previewContainer.style.display = "none";
 
-  const fileInput = document.getElementById("editPostImage-new");
   if (fileInput) fileInput.value = "";
 
   const contextSubtitle = document.getElementById("create-post-context-time");
@@ -906,11 +889,10 @@ window.safeCancelInlineEdit = async function (postId) {
     contextSubtitle.style.fontWeight = "normal";
   }
 
-  const selectResetEl = document.getElementById("visibility-select-node");
   const warningResetEl = document.getElementById("public-debate-warning-badge");
-  if (selectResetEl && warningResetEl) {
-    selectResetEl.disabled = false;
-    selectResetEl.value = "";
+  if (selectEl && warningResetEl) {
+    selectEl.disabled = false;
+    selectEl.value = "";
     warningResetEl.style.display = "none";
   }
 
@@ -961,6 +943,8 @@ window.initAiTopicDiscussion = function (title, summary) {
   if (quillInstance) {
     const formattedHtml = `<lead>${summary.trim()}</lead><p><br></p>`;
     quillInstance.clipboard.dangerouslyPasteHTML(formattedHtml);
+    const formEl = document.getElementById("editForm-new");
+    if (formEl) formEl.dataset.isDirty = "true";
 
     setTimeout(() => {
       quillInstance.focus();
@@ -1203,3 +1187,58 @@ window.setFeedViewMode = function (mode, event) {
   document.cookie = `feedView=${validMode}; path=/; max-age=${30 * 24 * 60 * 60}; SameSite=Lax`;
   window.location.reload();
 };
+
+/**
+ * Rejestruje nasłuchiwanie rzeczywistych zmian użytkownika na wszystkich polach formularza
+ * oraz na instancji edytora Quill (ignorując programowe wczytywanie treści przez API).
+ */
+window.initFormChangeTracker = function (formId, quillKey) {
+  const form = document.getElementById(formId);
+  if (!form || form.dataset.trackerAttached === "true") return;
+
+  form.dataset.isDirty = "false";
+
+  const markAsDirty = () => {
+    form.dataset.isDirty = "true";
+  };
+
+  // Nasłuchujemy zarówno 'input' (wpisywanie na żywo w tytule), jak i 'change' (select widoczności, wybór pliku)
+  form.addEventListener("input", markAsDirty);
+  form.addEventListener("change", markAsDirty);
+
+  // Nasłuchujemy wyłącznie zmian wykonanych przez człowieka w edytorze Quill (source === 'user')
+  const quillInstance = activeQuillInstances[quillKey];
+  if (quillInstance) {
+    quillInstance.on("text-change", function (delta, oldDelta, source) {
+      if (source === "user") {
+        markAsDirty();
+      }
+    });
+  }
+
+  form.dataset.trackerAttached = "true";
+};
+
+window.resetFormDirtyState = function (formId) {
+  const form = document.getElementById(formId);
+  if (form) {
+    form.dataset.isDirty = "false";
+  }
+};
+
+/**
+ * Ostrzeżenie przeglądarki przed zamknięciem karty / odświeżeniem strony,
+ * gdy modal edytora jest otwarty i zawiera niezapisane zmiany.
+ */
+window.addEventListener("beforeunload", function (event) {
+  const modal = document.getElementById("create-post-modal");
+  const form = document.getElementById("editForm-new");
+
+  const isModalOpen = modal && modal.style.display !== "none";
+  const hasUnsavedChanges = form && form.dataset.isDirty === "true";
+
+  if (isModalOpen && hasUnsavedChanges) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
