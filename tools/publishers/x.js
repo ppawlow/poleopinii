@@ -4,9 +4,9 @@ const { createLog } = require("../systemLog");
 const { generatePostExcerpt } = require("../excerptHelper");
 const { Post } = require("../db");
 
-const X_API_TWEETS = "https://api.x.com/2/tweets";
+const X_API_TWEETS = "https://x.com";
 const MAX_TWEET_LENGTH = 280;
-const X_TCO_URL_LENGTH = 23; // X zawsze liczy każdy URL jako 23 znaki
+const X_TCO_URL_LENGTH = 23; // X zawsze liczy każdy poprawny URL jako 23 znaki
 
 /**
  * Kodowanie zgodne ze standardem RFC 3986 wymaganym przez OAuth 1.0a
@@ -62,7 +62,23 @@ function buildOAuth1Header(method, url) {
 }
 
 /**
+ * Oblicza przybliżoną długość tweeta zgodnie z zasadami platformy X.
+ * URL (http/https) liczy się jako 23 znaki, a znaki spoza BMP (np. emoji w treści posta) jako 2 znaki.
+ */
+function getXTweetLength(text) {
+  const urlRegex = /https?:\/\/[^\s)]+/g;
+  const textWithShortUrls = text.replace(urlRegex, "X".repeat(X_TCO_URL_LENGTH));
+
+  let length = 0;
+  for (const char of textWithShortUrls) {
+    length += char.codePointAt(0) > 0xffff ? 2 : 1;
+  }
+  return length;
+}
+
+/**
  * Publikuje post publiczny na platformie X (Twitter API v2).
+ * Format: wyłącznie zajawka + kompletny link do artykułu.
  */
 async function publishPostToX(post, req) {
   if (
@@ -88,35 +104,29 @@ async function publishPostToX(post, req) {
   try {
     const baseUrl = `${req.protocol}://${req.get("host")}`;
     const postUrl = `${baseUrl}/posts/${post._id}`;
-    const profilePath = req.dbUser?.profileUrl || `/profile/${post.authorId}`;
-    const authorProfileUrl = `${baseUrl}${profilePath}`;
 
-    const formattedTitle = (post.title || "").toUpperCase();
-    const authorLine = `✍️ Autor: ${post.author} (${authorProfileUrl})`;
-    const tagsLine = `#PoleOpinii #Publicystyka`;
+    // Zostawiamy 3 znaki bufora na wypadek nietypowych znaków Unicode w treści artykułu
+    const SAFE_MAX_LENGTH = MAX_TWEET_LENGTH - 3;
 
-    // Obliczamy dostępną liczbę znaków na tytuł i zajawkę (2 URL-e = 2 * 23 = 46 znaków)
-    const fixedEffectiveLen =
-      `📰 \n`.length +
-      `✍️ Autor: ${post.author} ()\n\n`.length +
-      `\n\n${tagsLine}\n`.length +
-      X_TCO_URL_LENGTH * 2;
+    const buildTweet = (excerptText) =>
+      excerptText ? `${excerptText}\n\n${postUrl}` : postUrl;
 
-    const remainingBudget = MAX_TWEET_LENGTH - fixedEffectiveLen;
+    // Obliczamy budżet znaków dostępny dla samej zajawki (po odjęciu linku i \n\n)
+    const emptyTweetLen = getXTweetLength(buildTweet(""));
+    let currentBudget = Math.max(0, SAFE_MAX_LENGTH - emptyTweetLen);
 
-    let bodyBlock = "";
-    if (formattedTitle.length + 20 < remainingBudget) {
-      const excerptBudget = remainingBudget - formattedTitle.length - 4; // 4 znaki na \n„”
-      const excerpt = generatePostExcerpt(post.content, excerptBudget);
-      bodyBlock = excerpt ? `${formattedTitle}\n„${excerpt}”` : formattedTitle;
-    } else {
-      bodyBlock =
-        formattedTitle.length > remainingBudget
-          ? formattedTitle.slice(0, Math.max(15, remainingBudget - 1)).trim() + "…"
-          : formattedTitle;
+    let excerpt = generatePostExcerpt(post.content, currentBudget);
+
+    // Bezpiecznik: jeśli w zajawce były emoji ważące 2 znaki w X, zmniejszamy budżet i ponownie tniemy do pełnego słowa
+    while (
+      excerpt.length > 0 &&
+      getXTweetLength(buildTweet(excerpt)) > SAFE_MAX_LENGTH
+    ) {
+      currentBudget = Math.max(0, currentBudget - 2);
+      excerpt = truncateToWord(excerpt, currentBudget);
     }
 
-    const tweetText = `📰 ${bodyBlock}\n${authorLine}\n\n${tagsLine}\n${postUrl}`;
+    const tweetText = buildTweet(excerpt);
 
     const authHeader = buildOAuth1Header("POST", X_API_TWEETS);
 
