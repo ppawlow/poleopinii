@@ -101,21 +101,21 @@ async function publishPostToBluesky(post, req) {
     const excerpt = generatePostExcerpt(post.content, 160);
 
     // Zwięzły, estetyczny tekst bez surowych adresów URL (linki są podpięte pod nazwisko i kartę)
-    const authorLine = `✍️ Autor: ${authorName}`;
+    const authorLine = `Autor: ${authorName}`;
     const tagsLine = `\n\n#PoleOpinii #Publicystyka #Opinie`;
 
-    let fullText = `📰 ${formattedTitle}\n${authorLine}${tagsLine}`;
+    let fullText = `${formattedTitle}\n${authorLine}${tagsLine}`;
     if (fullText.length > MAX_BSKY_LENGTH) {
       const allowedTitleLen = Math.max(
         20,
         MAX_BSKY_LENGTH - (`📰 …\n${authorLine}${tagsLine}`).length
       );
-      fullText = `📰 ${formattedTitle.slice(0, allowedTitleLen).trim()}…\n${authorLine}${tagsLine}`;
+      fullText = `${formattedTitle.slice(0, allowedTitleLen).trim()}…\n${authorLine}${tagsLine}`;
     }
 
     // Obliczanie pozycji bajtowych UTF-8 dokładnie dla samego imienia i nazwiska autora
     const encoder = new TextEncoder();
-    const authorIndex = fullText.indexOf(authorName, fullText.indexOf("✍️ Autor: "));
+    const authorIndex = fullText.indexOf(authorName, fullText.indexOf("Autor: "));
     const byteStart = encoder.encode(fullText.slice(0, authorIndex)).length;
     const byteEnd = byteStart + encoder.encode(authorName).length;
 
