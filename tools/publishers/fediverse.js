@@ -35,25 +35,21 @@ async function publishPostToFediverse(post, req) {
 
     const headerAndFooter = [
       `${formattedTitle}`,
-      `Autor: ${post.author} (${authorProfileUrl})`,
-      `\nCzytaj całość: ${postUrl}`,
+      `\n${postUrl}`,
       `\n#PoleOpinii #Publicystyka #Opinie`,
     ].join("\n");
 
-    // Mastodon ma limit 500 znaków (każdy URL liczy jako 23 znaki)
     const maxExcerptLen = Math.max(50, 480 - headerAndFooter.length);
     const excerpt = generatePostExcerpt(post.content, maxExcerptLen);
 
     const statusText = [
       `${formattedTitle}`,
-      `Autor: ${post.author} (${authorProfileUrl})`,
       excerpt ? `\n„${excerpt}”` : "",
-      `\nCzytaj całość: ${postUrl}`,
+      `\n${postUrl}`,
       `\n#PoleOpinii #Publicystyka #Opinie`,
     ]
       .filter(Boolean)
       .join("\n");
-
     const response = await fetch(`${instanceUrl}/api/v1/statuses`, {
       method: "POST",
       headers: {
