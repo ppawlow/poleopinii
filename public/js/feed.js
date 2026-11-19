@@ -38,6 +38,26 @@ window.setCropperAspect = function (postId, ratio, btnEl) {
   }
 };
 
+window.openEditorPreviewLightbox = function (postId) {
+  const cropper = activeCropperInstances[postId];
+  if (cropper) {
+    const canvas = cropper.getCroppedCanvas({
+      maxWidth: 1600,
+      maxHeight: 1600,
+    });
+    if (canvas) {
+      window.openLightbox(canvas.toDataURL("image/jpeg", 0.92));
+      return;
+    }
+  }
+
+  const previewImg = document.getElementById(`edit-image-preview-${postId}`);
+  if (previewImg && previewImg.src) {
+    window.openLightbox(previewImg.src);
+  }
+};
+
+
 function getCroppedImageBlob(postId, originalFile) {
   return new Promise((resolve) => {
     const cropper = activeCropperInstances[postId];

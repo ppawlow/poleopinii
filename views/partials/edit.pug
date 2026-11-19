@@ -29,21 +29,35 @@ form(id=`editForm-${activePost._id}` data-csrf=csrfToken onsubmit=`prepareEditSu
     input(id=`edit-hidden-content-${activePost._id}` type="hidden" name="content")
     
     //- Kontener na aktualne zdjęcie z bazy (pokazywany dynamicznie podczas reedycji w modalu)
-    div(id=`current-image-preview-${activePost._id}` style=(activePost.imageUrl ? "display:block;" : "display:none;") + " margin-bottom:10px; max-height:150px; overflow:hidden; border-radius:6px; border: 1px solid #dddfe2; position: relative;")
-        span(style="display:block; font-size:12px; color:#65676b; padding:4px 8px; background:#f0f2f5;") Aktualne zdjęcie:
-        img(id=`current-image-img-${activePost._id}` src=(activePost.imageUrl || "") style="width:100%; height:auto; object-fit:cover; max-height:120px;")
-        button#remove-current-image-btn(type="button" style="position: absolute; top: 28px; right: 8px; background: rgba(188, 37, 37, 0.85); color: white; border: none; width: 28px; height: 28px; border-radius: 50%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 14px; z-index: 10;" title="Usuń tę grafikę") &times;
+    div(id=`current-image-preview-${activePost._id}` style=(activePost.imageUrl ? "display:block;" : "display:none;") + " margin-bottom:10px; border-radius:6px; border: 1px solid #dddfe2; overflow: hidden; position: relative; background: #f8f9fa;")
+        div(style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#f0f2f5; border-bottom: 1px solid #dddfe2;")
+            span(style="font-size:12px; color:#65676b; font-weight:600;") Aktualne zdjęcie (kliknij, aby powiększyć):
+            button#remove-current-image-btn(type="button" style="background: rgba(188, 37, 37, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;" title="Usuń tę grafikę") &times;
+        img(
+            id=`current-image-img-${activePost._id}`
+            src=(activePost.imageUrl || "")
+            onclick="if(this.src) window.openLightbox(this.src)"
+            style="display:block; width:100%; height:auto; max-height:360px; object-fit:contain; cursor:zoom-in; margin:0 auto;"
+        )
     
     //- Kontener podglądu i kadrowania nowego pliku wybranego z dysku
     div(id=`edit-image-preview-container-${activePost._id}` style="display:none; margin-bottom:10px; border-radius:6px; border: 1px solid #45bd62; overflow: hidden; background: #1a2536;")
         div(style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#45bd62; color:#fff; font-size:12px; flex-wrap:wrap; gap:6px;")
-            span(style="font-weight:600;") Kadrowanie i dopasowanie obrazu:
-            div(style="display:flex; align-items:center; gap:6px;")
+            span(style="font-weight:600;") Kadrowanie i podgląd:
+            div(style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;")
                 button.crop-ratio-btn.active(type="button" onclick=`setCropperAspect('${activePost._id}', 16/9, this)` style="background:#0f5132; color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;") Baner 16:9
                 button.crop-ratio-btn(type="button" onclick=`setCropperAspect('${activePost._id}', NaN, this)` style="background:rgba(255,255,255,0.2); color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;") Pełny obraz
-                button(type="button" onclick=`cancelSelectedImage('${activePost._id}')` style="background: rgba(188, 37, 37, 0.9); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; margin-left:4px;" title="Usuń wybrane zdjęcie") &times;
-        div(style="max-height: 320px; width: 100%; background: #111; display: flex; justify-content: center; align-items: center;")
-            img(id=`edit-image-preview-${activePost._id}` src="" style="display:block; max-width:100%; max-height:320px;")
+                button(type="button" onclick=`window.openEditorPreviewLightbox('${activePost._id}')` style="background:rgba(0,0,0,0.25); color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;" title="Powiększ podgląd na pełny ekran")
+                    i.fa-solid.fa-magnifying-glass-plus(style="margin-right:4px;")
+                    | Powiększ
+                button(type="button" onclick=`cancelSelectedImage('${activePost._id}')` style="background: rgba(188, 37, 37, 0.9); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; margin-left:2px;" title="Usuń wybrane zdjęcie") &times;
+        div(style="max-height: 420px; width: 100%; background: #111; display: flex; justify-content: center; align-items: center;")
+            img(
+                id=`edit-image-preview-${activePost._id}`
+                src=""
+                onclick="if(typeof Cropper === 'undefined' && this.src) window.openLightbox(this.src)"
+                style="display:block; max-width:100%; max-height:420px; cursor:zoom-in;"
+            )
     
     div(style="display:flex; gap:8px; align-items:center; margin-top:8px; justify-content: space-between; flex-wrap: wrap; width: 100%;")
         div(style="display:flex; gap:8px; align-items:center; flex: 1;")
