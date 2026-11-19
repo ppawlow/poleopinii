@@ -64,6 +64,8 @@ app.use(
           "https://datatables.net",
           "https://*.datatables.net",
           "https://*.googleapis.com",
+          "https://cloudflare.com",
+          "https://*.cloudflare.com",
         ],
 
         "script-src-elem": [
@@ -79,6 +81,8 @@ app.use(
           "https://*.gstatic.com",
           "https://datatables.net",
           "https://*.datatables.net",
+          "https://cloudflare.com",
+          "https://*.cloudflare.com",
         ],
 
         "script-src-attr": ["'unsafe-inline'"],
@@ -121,6 +125,7 @@ app.use(
         "img-src": [
           "'self'",
           "data:",
+          "blob:",
           "https:",
           "https://*.gstatic.com",
           "https://google.com",

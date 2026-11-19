@@ -4,6 +4,71 @@ if (window.Alert === undefined) window.Alert = window.alert;
 // REJESTRACJA GLOBALNYCH INSTANCJI I KONFIGURACJI QUILL
 // ==========================================
 const activeQuillInstances = {};
+const activeCropperInstances = {};
+
+function destroyCropperInstance(postId) {
+  if (activeCropperInstances[postId]) {
+    activeCropperInstances[postId].destroy();
+    delete activeCropperInstances[postId];
+  }
+}
+
+window.setCropperAspect = function (postId, ratio, btnEl) {
+  const cropper = activeCropperInstances[postId];
+  if (!cropper) return;
+
+  cropper.setAspectRatio(ratio);
+
+  if (Number.isNaN(ratio)) {
+    const imageData = cropper.getImageData();
+    cropper.setCropBoxData({
+      left: 0,
+      top: 0,
+      width: imageData.width,
+      height: imageData.height,
+    });
+  }
+
+  const container = document.getElementById(`edit-image-preview-container-${postId}`);
+  if (container && btnEl) {
+    container.querySelectorAll(".crop-ratio-btn").forEach((b) => {
+      b.style.background = "rgba(255,255,255,0.2)";
+    });
+    btnEl.style.background = "#0f5132";
+  }
+};
+
+function getCroppedImageBlob(postId, originalFile) {
+  return new Promise((resolve) => {
+    const cropper = activeCropperInstances[postId];
+    if (!cropper) return resolve(originalFile || null);
+
+    const canvas = cropper.getCroppedCanvas({
+      maxWidth: 1600,
+      maxHeight: 1600,
+      imageSmoothingEnabled: true,
+      imageSmoothingQuality: "high",
+    });
+
+    if (!canvas) return resolve(originalFile || null);
+
+    const outputMime =
+      originalFile && originalFile.type === "image/png"
+        ? "image/png"
+        : "image/jpeg";
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return resolve(originalFile || null);
+        const ext = outputMime === "image/png" ? ".png" : ".jpg";
+        const baseName = (originalFile?.name || "image").replace(/\.[^/.]+$/, "");
+        resolve(new File([blob], `${baseName}${ext}`, { type: outputMime }));
+      },
+      outputMime,
+      0.9
+    );
+  });
+}
 
 const Block = Quill.import("blots/block");
 
@@ -91,36 +156,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-// // Dedykowana funkcja do otwierania/zamykania akordeonu tworzenia postów
-// window.toggleCreatePostAccordion = function () {
-//   const header = document.querySelector("#post-new .accordion-header");
-//   const content = document.querySelector(".create-accordion-content");
-//   const icon = document.querySelector(".create-accordion-icon");
-//   if (!content || !header) return;
-// 
-//   const isOpen = content.style.display === "block";
-// 
-//   // Zamykamy inne otwarte akordeony zwykłych postów
-//   document
-//     .querySelectorAll(".accordion-content")
-//     .forEach((c) => (c.style.display = "none"));
-//   document.querySelectorAll(".accordion-icon").forEach((i) => {
-//     if (i) i.style.transform = "rotate(0deg)";
-//   });
-// 
-//   if (!isOpen) {
-//     // Po aktywacji: ukrywamy nagłówek i pokazujemy pełny formularz
-//     header.style.display = "none";
-//     content.style.display = "block";
-//     if (icon) icon.style.transform = "rotate(180deg)";
-//   } else {
-//     // Przy zamykaniu: przywracamy widoczność nagłówka
-//     header.style.display = "flex";
-//     content.style.display = "none";
-//     if (icon) icon.style.transform = "rotate(0deg)";
-//   }
-// };
 
 window.openCreatePostModal = function () {
   const modal = document.getElementById("create-post-modal");
@@ -251,29 +286,46 @@ window.toggleInlineEdit = async function (postId, event) {
 };
 
 window.previewEditImage = function (input, postId) {
-  if (input.files && input.files[0]) {
+  if (input?.files?.item(0)) {
     const form = document.getElementById(`editForm-${postId}`);
     if (form) form.dataset.isDirty = "true";
 
     const file = input.files[0];
+    const isAnimatedGif = file.type === "image/gif";
+
     const reader = new FileReader();
     reader.onload = function (e) {
-      const previewImg = document.getElementById(
-        `edit-image-preview-${postId}`,
-      );
+      const previewImg = document.getElementById(`edit-image-preview-${postId}`);
       const previewContainer = document.getElementById(
-        `edit-image-preview-container-${postId}`,
+        `edit-image-preview-container-${postId}`
       );
       const currentPreview = document.getElementById(
-        `current-image-preview-${postId}`,
+        `current-image-preview-${postId}`
       );
 
       if (previewImg && previewContainer) {
+        destroyCropperInstance(postId);
         previewImg.src = e.target.result;
         previewContainer.style.display = "block";
 
         if (currentPreview) {
           currentPreview.style.display = "none";
+        }
+
+        // Reset przycisków trybu do domyślnego Baner 16:9
+        const ratioBtns = previewContainer.querySelectorAll(".crop-ratio-btn");
+        ratioBtns.forEach((b, idx) => {
+          b.style.background = idx === 0 ? "#0f5132" : "rgba(255,255,255,0.2)";
+        });
+
+        if (!isAnimatedGif && typeof Cropper !== "undefined") {
+          activeCropperInstances[postId] = new Cropper(previewImg, {
+            aspectRatio: 16 / 9,
+            viewMode: 1,
+            autoCropArea: 1,
+            responsive: true,
+            background: false,
+          });
         }
       }
     };
@@ -314,15 +366,18 @@ window.prepareEditSubmit = async function (event, postId) {
   }
 
   const fileInput = document.getElementById(`editPostImage-${postId}`);
+  const rawFile = fileInput?.files?.item(0) || null;  
+  const finalFileToUpload = rawFile ? await getCroppedImageBlob(postId, rawFile) : null;
+
   if (isNewPost) {
     formData.delete("editPostImage");
-    if (fileInput && fileInput.files && fileInput.files[0]) {
-      formData.set("postImage", fileInput.files[0]);
+    if (finalFileToUpload) {
+      formData.set("postImage", finalFileToUpload, finalFileToUpload.name);
     }
-  } else if (fileInput && fileInput.files && fileInput.files[0]) {
-    formData.set("editPostImage", fileInput.files[0]);
+  } else if (finalFileToUpload) {
+    formData.set("editPostImage", finalFileToUpload, finalFileToUpload.name);
   }
-
+  
   const selectNode = form.querySelector('select[name="visibility"]');
   const currentVis = selectNode ? selectNode.value : "";
   const isPublicVerificationTriggered = currentVis === "public";
@@ -816,6 +871,8 @@ window.submitAbuseModalForm = async function (event) {
  * Obsługuje zarówno kreator 'new', jak i reedycję istniejących szkiców.
  */
 window.cancelSelectedImage = function (postId) {
+  destroyCropperInstance(postId);
+
   const inputId =
     postId === "new" ? "editPostImage-new" : `editPostImage-${postId}`;
   const fileInput = document.getElementById(inputId);
@@ -836,7 +893,6 @@ window.cancelSelectedImage = function (postId) {
     previewImg.src = "";
   }
 
-  // Przywracamy podgląd aktualnego zdjęcia z bazy, jeśli modal jest w trybie reedycji i post ma zdjęcie
   const editingIdField = document.getElementById("edit-post-id-new");
   const currentPreview = document.getElementById("current-image-preview-new");
   const currentImgTag = document.getElementById("current-image-img-new");
@@ -851,7 +907,6 @@ window.cancelSelectedImage = function (postId) {
     currentPreview.style.display = "block";
   }
 
-  // Jeśli nie wpisano żadnego tekstu ani nie zmieniono tytułu, zerujemy flagę zmian
   const form = document.getElementById(`editForm-${postId}`);
   const titleField = document.getElementById(`edit-title-${postId}`);
   const instance = activeQuillInstances[postId];
