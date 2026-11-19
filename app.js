@@ -140,9 +140,7 @@ app.use(
       },
     },
     crossOriginOpenerPolicy: isDevelopment ? false : { policy: "same-origin" },
-    crossOriginResourcePolicy: isDevelopment
-      ? false
-      : { policy: "same-origin" },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
     hsts: false,
   }),
 );
