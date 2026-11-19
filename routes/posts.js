@@ -89,6 +89,7 @@ module.exports = express
   .use("/:id/comments", require("./comments"));
 
 // OŚ CZASU / ARTYKUŁ SINGLE
+// OŚ CZASU / ARTYKUŁ SINGLE
 async function getId(req, res) {
   try {
     const postId = req.params.id;
@@ -111,22 +112,11 @@ async function getId(req, res) {
     const post = posts[0];
     const authorBio = (await getProfile(post.authorId)).bio || "";
 
-    // 2. Pobranie innych postów tego samego autora dla sekcji bocznej
-    const { posts: authorPosts } = await getScopedPosts(req, {
-      scope: "profile",
-      targetUserId: post.authorId,
-      limit: 10,
-    });
-
-    const otherPosts = (authorPosts || [])
-      .filter((p) => String(p._id) !== String(post._id))
-      .slice(0, 5);
-
-    // 3. Pobranie powiązanych postów polemicznych (debaty) oraz zgłoszeń nadużyć
+    // 2. Pobranie powiązanych postów polemicznych (debaty) oraz zgłoszeń nadużyć
     const abuseAndReplyPostsRaw = await Post.find({ parentPostId: post._id })
       .sort({ createdAt: -1 })
       .lean();
-      
+
     const factCheckReports = abuseAndReplyPostsRaw.filter(
       (p) => p.isFactCheckReport === true,
     );
@@ -134,6 +124,30 @@ async function getId(req, res) {
     const debatePosts = abuseAndReplyPostsRaw.filter(
       (p) => !p.isAbuseReport && !p.isFactCheckReport,
     );
+
+    // Zbieramy ID autopolemik autora oraz ewentualnego artykułu nadrzędnego,
+    // aby nie dublować ich w sekcji "Tego samego autora"
+    const excludedAuthorPostIds = new Set(
+      debatePosts
+        .filter((d) => String(d.authorId) === String(post.authorId))
+        .map((d) => String(d._id)),
+    );
+    excludedAuthorPostIds.add(String(post._id));
+    if (post.parentPostId) {
+      excludedAuthorPostIds.add(String(post.parentPostId));
+    }
+
+    // 3. Pobranie innych postów tego samego autora dla sekcji bocznej
+    const { posts: authorPosts } = await getScopedPosts(req, {
+      scope: "profile",
+      targetUserId: post.authorId,
+      limit: 15,
+    });
+
+    const otherPosts = (authorPosts || [])
+      .filter((p) => !excludedAuthorPostIds.has(String(p._id)))
+      .slice(0, 5);
+
     const hasAiReport = factCheckReports.length > 0;
     const userIsAdmin = isAdminId(req.dbUser?.id) || false;
 
@@ -148,7 +162,7 @@ async function getId(req, res) {
             createdAt: report.createdAt,
             parentPostId: report.parentPostId,
             abuseCategory: report.abuseCategory,
-            author: "Anonimowy Użytkownik", // Usunięto authorDetails oraz authorEmail
+            author: "Anonimowy Użytkownik",
           };
         }
         return report; // Administrator widzi pełny raport audytowy
@@ -196,13 +210,16 @@ async function postCreate(req, res) {
 
   try {
     const dbUser = req.dbUser;
+    let isSelfContinuation = false;
+    let parentPostTitle = "Wpis bez tytułu";
+    let parentPostAuthorId = null;
 
     if (parentPostId) {
       if (!hasPermission(dbUser, visibility, "CREATE")) {
         return sendAccessDenied(
           req,
           res,
-          'Brak uprawnień: Aby odpowiadać na posty publiczne musisz zweryfikować profil. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>',
+          'Brak uprawnień: Brak wystarczających uprawnień do publikacji wpisu na tym poziomie widoczności. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>',
         );
       }
     }
@@ -222,10 +239,14 @@ async function postCreate(req, res) {
           );
       }
 
+      parentPostTitle = originalPost.title || "Wpis bez tytułu";
+      parentPostAuthorId = originalPost.authorId;
+      isSelfContinuation = String(originalPost.authorId) === String(dbUser._id);
+
       const originalAuthor = await User.findById(originalPost.authorId);
 
       if (hasPermission(dbUser, "user", "canReplyWithPost", originalAuthor)) {
-        if (!dbUser.isVerified) {
+        if (!dbUser.isPublicAllowed) {
           visibility = "restricted";
         }
       } else {
@@ -291,7 +312,15 @@ async function postCreate(req, res) {
       .replace(/&nbsp;/g, " ");
 
     const isReport = req.body.isAbuseReport === "true";
-    const isReplyOrReport = parentPostId && ObjectId.isValid(parentPostId);
+    const isReplyOrReport = Boolean(parentPostId && ObjectId.isValid(parentPostId));
+
+    // Dla kontynuacji własnego wątku zachowujemy wybraną widoczność (np. private, restricted, public, editors),
+    // natomiast zewnętrzna polemika lub zgłoszenie nadużycia otrzymuje status publiczny.
+    const finalVisibility = isReplyOrReport
+      ? isSelfContinuation
+        ? visibility
+        : "public"
+      : visibility;
 
     const newPost = new Post({
       title: decodedTitle,
@@ -300,7 +329,7 @@ async function postCreate(req, res) {
       authorId: dbUser._id,
       authorAvatar: dbUser.avatarUrl,
       content: cleanContent,
-      visibility: isReplyOrReport ? "public" : visibility,
+      visibility: finalVisibility,
       imageUrl: finalImageName ? "/uploads/" + finalImageName : null,
       parentPostId: isReplyOrReport ? parentPostId : null,
       hasAiReport: false,
@@ -309,7 +338,7 @@ async function postCreate(req, res) {
     });
 
     const savedPost = await newPost.save();
-    await createLog(req, `Utworzono post (${visibility}): ${title}`);
+    await createLog(req, `Utworzono post (${finalVisibility}): ${title}`);
 
     if (savedPost.visibility === "public" && !savedPost.isAbuseReport) {
       publishToAllSocials(savedPost, req);
@@ -319,17 +348,7 @@ async function postCreate(req, res) {
       mailer.sendNewEditorPostNotification(dbUser, savedPost, req);
     }
 
-    let parentPostTitle = "Wpis bez tytułu";
-    if (savedPost.parentPostId) {
-      const parentDoc = await Post.findById(savedPost.parentPostId).select(
-        "title authorId",
-      );
-      if (parentDoc) {
-        parentPostTitle = parentDoc.title || "Wpis bez tytułu";
-      }
-    }
-
-    if (savedPost.parentPostId) {
+    if (savedPost.parentPostId && !isSelfContinuation) {
       const originalPost = await Post.findById(savedPost.parentPostId);
 
       if (
@@ -366,6 +385,7 @@ async function postCreate(req, res) {
       createdAt: savedPost.createdAt,
       parentPostId: savedPost.parentPostId,
       parentPostTitle: parentPostTitle,
+      parentPostAuthorId: parentPostAuthorId,
       likesCount: 0,
       isLikedByMe: false,
       comments: [],

@@ -9,10 +9,10 @@ async function publishToAllSocials(post, req) {
   const settings = await getSocialShareSettings();
   const tasks = [];
 
-  if (settings.facebook) tasks.push(publishPostToFacebook(post, req));
-  if (settings.bluesky) tasks.push(publishPostToBluesky(post, req));
-  if (settings.x) tasks.push(publishPostToX(post, req));
-  if (settings.mastodon) tasks.push(publishPostToFediverse(post, req));
+  if (settings.Facebook) tasks.push(publishPostToFacebook(post, req));
+  if (settings.Bluesky) tasks.push(publishPostToBluesky(post, req));
+  if (settings.X) tasks.push(publishPostToX(post, req));
+  if (settings.Mastodon) tasks.push(publishPostToFediverse(post, req));
 
   if (tasks.length === 0) return [];
   return Promise.allSettled(tasks);

@@ -138,11 +138,15 @@ module.exports = {
 
     canReplyWithPost: (actingUser, targetUser) =>
       actingUser && targetUser &&
-      !actingUser.isBlocking(targetUser) &&
-      !targetUser.isBlocking(actingUser) &&
-      (actingUser.isPublicAllowed || targetUser.isFollowing(actingUser)),
+      (
+        actingUser._id.equals(targetUser._id) ||
+        (
+          !actingUser.isBlocking(targetUser) &&
+          !targetUser.isBlocking(actingUser) &&
+          (actingUser.isPublicAllowed || targetUser.isFollowing(actingUser))
+        )
+      ),
   },
-
   PASSWORD_REGEX: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/,
 
   BANK_TRANSFER_DATA: {

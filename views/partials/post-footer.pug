@@ -25,10 +25,15 @@
             i.fa-regular.fa-comment
             span.btn-text Skomentuj
 
-        if !post.isAbuseReport && !post.isFactCheckReport && String(user.id) !== String(post.authorId)
-            button.action-btn.reply-post-btn(type="button" onclick=`window.openReplyPostModal('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Polemizuj")
-                i.fa-regular.fa-comments
-                span.btn-text Polemizuj
+        if !post.isAbuseReport && !post.isFactCheckReport
+            - var isOwnPost = String(user.id) === String(post.authorId)
+            button.action-btn.reply-post-btn(
+                type="button" 
+                onclick=`window.openReplyPostModal('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}', ${isOwnPost})` 
+                title=(isOwnPost ? "Kontynuuj wątek w nowym wpisie" : "Polemizuj")
+            )
+                i(class=(isOwnPost ? "fa-solid fa-code-branch" : "fa-regular fa-comments"))
+                span.btn-text #{isOwnPost ? 'Kontynuuj wątek' : 'Polemizuj'}
 
         //- DEDYKOWANY PRZYCISK DLA CZYTELNIKA: Uruchomienie Fact-Checkingu (Widoczny w obu widokach, jeśli brak raportu AI)
         if post.visibility === 'public' && !post.isAbuseReport && !post.isFactCheckReport && !post.hasAiReport

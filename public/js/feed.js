@@ -414,6 +414,10 @@ window.prepareEditSubmit = async function (event, postId) {
     if (response.ok) {
       if (loadingModal) loadingModal.style.display = "none";
 
+      // Natychmiast zerujemy flagę niezapisanych zmian, aby żaden reload nie wyzwolił beforeunload
+      window.resetFormDirtyState("editForm-new");
+      form.dataset.submitting = "true";
+
       const contentType = response.headers.get("content-type");
       if (contentType && contentType.includes("application/json")) {
         const responseData = await response.json();
@@ -435,13 +439,14 @@ window.prepareEditSubmit = async function (event, postId) {
 
             window.cancelSelectedImage("new");
             window.resetFormDirtyState("editForm-new");
-            window.cancelSelectedImage("new");
+            form.dataset.submitting = "false";
             window.closeCreatePostModal();
 
             if (typeof window.refreshAccordionListeners === "function") {
               window.refreshAccordionListeners();
             }
           } else {
+            window.closeCreatePostModal();
             window.location.reload(true);
           }
         } else {
@@ -454,6 +459,7 @@ window.prepareEditSubmit = async function (event, postId) {
       }
     } else {
       if (loadingModal) loadingModal.style.display = "none";
+      form.dataset.submitting = "false";
       const responseText = await response.text();
       await window.Alert(responseText, "Błąd walidacji");
     }
@@ -560,7 +566,11 @@ async function revertToDraft(postId, skipConfirm = false) {
   }
 }
 
-window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
+window.openReplyPostModal = async function (
+  parentPostId,
+  parentPostTitle,
+  isSelfContinuation = false,
+) {
   const postCard =
     document.getElementById(`post-${parentPostId}`) ||
     document.querySelector(".editorial-article");
@@ -569,7 +579,12 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
     (postCard.innerHTML.includes('title="Publiczny"') ||
       postCard.innerHTML.includes("🌐"));
 
-  if (window.appUser && !window.appUser.isVerified && isPublicPost) {
+  if (
+    !isSelfContinuation &&
+    window.appUser &&
+    !window.appUser.isVerified &&
+    isPublicPost
+  ) {
     await window.Alert(
       `
                 <div style="text-align: left; line-height: 1.5;">
@@ -595,14 +610,22 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
   const titleField = document.getElementById("edit-title-new");
   if (titleField) {
     titleField.value = "";
-    titleField.placeholder = "Dodaj tytuł polemiki";
+    titleField.placeholder = isSelfContinuation
+      ? "Dodaj tytuł kolejnej części wątku"
+      : "Dodaj tytuł polemiki";
   }
 
   const contextSubtitle = document.getElementById("create-post-context-time");
   if (contextSubtitle) {
-    contextSubtitle.innerText = `Polemika z "${decodedTitle}"`;
-    contextSubtitle.style.color = "#bc2525";
-    contextSubtitle.style.fontWeight = "600";
+    if (isSelfContinuation) {
+      contextSubtitle.innerText = `W nawiązaniu do "${decodedTitle}"`;
+      contextSubtitle.style.color = "#0f5132";
+      contextSubtitle.style.fontWeight = "600";
+    } else {
+      contextSubtitle.innerText = `Polemika z "${decodedTitle}"`;
+      contextSubtitle.style.color = "#bc2525";
+      contextSubtitle.style.fontWeight = "600";
+    }
   }
 
   const parentIdHiddenInput = document.getElementById("edit-parent-id-new");
@@ -613,11 +636,17 @@ window.openReplyPostModal = async function (parentPostId, parentPostTitle) {
   const selectEl = document.getElementById("visibility-select-node");
   const warningEl = document.getElementById("public-debate-warning-badge");
   if (selectEl && warningEl) {
-    selectEl.value = "public";
-    selectEl.disabled = true;
-    warningEl.innerText =
-      "📢 Uwaga: Polemika z postem publicznym będzie widoczna dla wszystkich użytkowników serwisu.";
-    warningEl.style.display = "inline-block";
+    if (isSelfContinuation) {
+      selectEl.disabled = false;
+      selectEl.value = "";
+      warningEl.style.display = "none";
+    } else {
+      selectEl.value = "public";
+      selectEl.disabled = true;
+      warningEl.innerText =
+        "📢 Uwaga: Polemika z postem publicznym będzie widoczna dla wszystkich użytkowników serwisu.";
+      warningEl.style.display = "inline-block";
+    }
   }
 
   window.openCreatePostModal();
@@ -1235,9 +1264,10 @@ window.addEventListener("beforeunload", function (event) {
   const form = document.getElementById("editForm-new");
 
   const isModalOpen = modal && modal.style.display !== "none";
+  const isSubmitting = form && form.dataset.submitting === "true";
   const hasUnsavedChanges = form && form.dataset.isDirty === "true";
 
-  if (isModalOpen && hasUnsavedChanges) {
+  if (isModalOpen && hasUnsavedChanges && !isSubmitting) {
     event.preventDefault();
     event.returnValue = "";
   }

@@ -80,7 +80,12 @@ if post.imageUrl && !isWorkMode
                 i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; margin-top: 6px; flex-shrink: 0;")
 
     if post.parentPostId
+        - var isSameAuthorThread = post.parentPostAuthorId && String(post.parentPostAuthorId) === String(post.authorId)
         .portal-reply-badge(style="margin-top: 6px;" onclick="event.stopPropagation();")
-            i.fa-solid.fa-reply(style="transform: scaleX(-1); margin-right: 5px; color: #1877f2;")
-            | Odpowiedź na artykuł: 
+            if isSameAuthorThread
+                i.fa-solid.fa-code-branch(style="margin-right: 5px; color: #0f5132;")
+                | W nawiązaniu do artykułu: 
+            else
+                i.fa-solid.fa-reply(style="transform: scaleX(-1); margin-right: 5px; color: #1877f2;")
+                | Odpowiedź na artykuł: 
             a(href=`/posts/${post.parentPostId}`) "#{post.parentPostTitle}"

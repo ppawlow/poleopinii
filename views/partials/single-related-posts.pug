@@ -1,0 +1,54 @@
+//- Podział powiązanych artykułów na kontynuacje wątku autora oraz polemiki innych użytkowników
+if debatePosts && debatePosts.length > 0
+    - var visibleRelated = debatePosts.filter(d => d.visibility !== 'private' || (user && String(d.authorId) === String(user.id)))
+    - var authorContinuations = visibleRelated.filter(d => String(d.authorId) === String(post.authorId))
+    - var externalDebates = visibleRelated.filter(d => String(d.authorId) !== String(post.authorId))
+
+    if authorContinuations.length > 0
+        section.debate-posts-box(style="margin-top: 32px; padding: 20px 0; border-top: 1px dashed #e4e6eb;")
+            h3(style="font-size: 18px; font-weight: 700; color: #0f5132; margin-bottom: 12px; font-family: sans-serif;") W NAWIĄZANIU DO TEGO ARTYKUŁU
+            ul(style="list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif;")
+                each cont in authorContinuations
+                    li(style="display: flex; align-items: center; gap: 8px; font-size: 15px;")
+                        if cont.visibility === 'public'
+                            span(title="Publiczny" style="font-size: 12px;") 🌐
+                        else if cont.visibility === 'restricted'
+                            span(title="Dla obserwujących" style="font-size: 12px;") 👥
+                        else if cont.visibility === 'private'
+                            span(title="Prywatny" style="font-size: 12px;") 🔒
+                        
+                        a(href=`/posts/${cont._id}` style="color: #0f5132; text-decoration: none; font-weight: 600; transition: color 0.2s;") #{cont.title || 'Kontynuacja wątku'}
+                        span(style="color: #65676b; font-size: 12px;") — #{cont.createdAt ? new Date(cont.createdAt).toLocaleDateString('pl-PL') : ''}
+
+    if externalDebates.length > 0
+        section.debate-posts-box(style="margin-top: 32px; padding: 20px 0; border-top: 1px dashed #e4e6eb;")
+            h3(style="font-size: 18px; font-weight: 700; color: #bc2525; margin-bottom: 12px; font-family: sans-serif;") POLEMIKA
+            ul(style="list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif;")
+                each debate in externalDebates
+                    li(style="display: flex; align-items: center; gap: 8px; font-size: 15px;")
+                        if debate.visibility === 'public'
+                            span(title="Publiczny" style="font-size: 12px;") 🌐
+                        else if debate.visibility === 'restricted'
+                            span(title="Dla obserwujących" style="font-size: 12px;") 👥
+                        else if debate.visibility === 'private'
+                            span(title="Prywatny" style="font-size: 12px;") 🔒
+                        
+                        a(href=`/posts/${debate._id}` style="color: #bc2525; text-decoration: none; font-weight: 600; transition: color 0.2s;") #{debate.title || 'Odpowiedź bez tytułu'}
+                        span(style="color: #65676b; font-size: 12px;") — autor: #{debate.authorDetails ? debate.authorDetails.name : debate.author} (#{debate.createdAt ? new Date(debate.createdAt).toLocaleDateString('pl-PL') : ''})
+
+//- Sekcja "Tego samego autora"
+if otherPosts && otherPosts.length > 0
+    section.other-posts-box(style="margin-top: 16px; padding: 20px 0; border-top: 1px dashed #e4e6eb;")
+        h3(style="font-size: 18px; font-weight: 700; color: #1c1e21; margin-bottom: 12px; font-family: sans-serif;") TEGO SAMEGO AUTORA
+        ul(style="list-style: none; padding-left: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; font-family: sans-serif;")
+            each other in otherPosts
+                li(style="display: flex; align-items: center; gap: 8px; font-size: 15px;")
+                    if other.visibility === 'public'
+                        span(title="Publiczny" style="font-size: 12px;") 🌐
+                    else if other.visibility === 'restricted'
+                        span(title="Dla obserwujących" style="font-size: 12px;") 👥
+                    else if other.visibility === 'private'
+                        span(title="Prywatny" style="font-size: 12px;") 🔒
+                    
+                    a(href=`/posts/${other._id}` style="color: #1877f2; text-decoration: none; font-weight: 600; transition: color 0.2s;") #{other.title || 'Wpis bez tytułu'}
+                    span(style="color: #65676b; font-size: 12px;") — #{other.createdAt ? new Date(other.createdAt).toLocaleDateString('pl-PL') : ''}

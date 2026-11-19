@@ -38,11 +38,11 @@ async function updateSocialShareSetting(platformId, isEnabled) {
   const current = await getSocialShareSettings();
   current[platformId] = Boolean(isEnabled);
 
-  await SystemSetting.findOneAndUpdate(
+    await SystemSetting.findOneAndUpdate(
     { key: "social_auto_share" },
     { $set: { value: current, updatedAt: new Date() } },
-    { upsert: true, new: true }
-  );
+    { upsert: true, returnDocument: "after" }
+    );
 
   return current;
 }
