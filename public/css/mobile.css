@@ -400,7 +400,6 @@
     padding: 16px !important;
   }
 }
-
 /* =========================================================================
    3. OPTYMALIZACJE DOTYKOWE (Ekran < 600px)
    ========================================================================= */
@@ -409,16 +408,17 @@
   .profile-guest-actions-mobile {
     flex-wrap: nowrap !important;
     gap: 8px !important;
-    margin-left: 0 !important;
     width: 100% !important;
     justify-content: center !important;
     margin: 16px auto !important;
   }
+
   .profile-actions-mobile .btn-text,
   .profile-guest-actions-mobile .btn-text,
   .post-actions .action-btn .btn-text {
     display: none !important;
   }
+
   .profile-actions-mobile .upload-action-btn,
   .profile-guest-actions-mobile button,
   .profile-guest-actions-mobile .profile-block-main-btn,
@@ -436,6 +436,7 @@
     font-size: 18px !important;
     box-sizing: border-box !important;
   }
+
   .profile-guest-actions-mobile i {
     font-size: 16px !important;
     margin: 0 !important;
@@ -443,21 +444,51 @@
     display: inline-block !important;
     color: #ffffff !important;
   }
-  
-  /* SKORYGOWANIE MARGINESÓW DLA JEDNOSZPAŁTOWEGO ARTYKUŁU */
+
+  /* UJEDNOLICENIE MARGINESÓW POJEDYNCZEGO ARTYKUŁU (SINGLE-POST) */
   .main-container:has(.editorial-article) {
     padding: 0 !important;
-    margin: 0 auto !important;
-    width: 100vw !important;
+    margin: 0 !important;
+    width: 100% !important;
     max-width: 100% !important;
   }
 
   .main-container .editorial-article {
-    padding: 20px 16px !important;
+    padding: 0 0 24px 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
   }
-    /* WYŚRODKOWANIE ZAWARTOSCI STOPKI NA URZĄDZENIACH MOBILNYCH */
+
+  .editorial-article .portal-card-header-inner,
+  .editorial-article .portal-single-content-wrapper {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .editorial-article .portal-card-header-inner {
+    padding-top: 14px !important;
+  }
+
+  .editorial-article .portal-single-content-wrapper {
+    padding-top: 12px !important;
+  }
+
+  .editorial-article .article-bottom-sections {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .editorial-article .article-author-box {
+    margin-top: 24px !important;
+    padding: 14px !important;
+  }
+
+  .editorial-article h1.portal-single-title {
+    font-size: 24px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* WYŚRODKOWANIE ZAWARTOŚCI STOPKI */
   footer.site-footer .footer-container {
     flex-direction: column !important;
     justify-content: center !important;
@@ -473,7 +504,6 @@
     width: 100% !important;
   }
 
-  /* Wyśrodkowanie i delikatne odseparowanie grupy linków prawnych */
   footer.site-footer .footer-container div:nth-child(2) {
     display: flex !important;
     justify-content: center !important;
