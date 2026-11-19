@@ -1,7 +1,7 @@
 list:	
 	./list.sh *.js  routes tools views public > list.txt
 
-update:	
+update:	list
 	ssh ubuntu@poleopinii "bin/update poleopinii"
 	
 %:	list
