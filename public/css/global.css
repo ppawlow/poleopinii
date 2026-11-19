@@ -1467,38 +1467,6 @@ footer.site-footer {
 /* =========================================================================
    PRZYCISK I BLOK ZAJAWKI (<lead>) W EDYTORZE QUILL ORAZ ARTYKULE
    ========================================================================= */
-/*
-.ql-snow .ql-toolbar button.ql-lead {
-  width: auto !important;
-  padding: 2px 6px !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-}
-
-.ql-snow .ql-toolbar button.ql-lead .ql-lead-badge {
-  font-size: 12px;
-  font-weight: 700;
-  color: #444;
-  line-height: 1;
-  padding: 2px 5px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  background: #fff;
-  transition: all 0.15s ease;
-}
-
-.ql-snow .ql-toolbar button.ql-lead:hover .ql-lead-badge {
-  color: #1877f2;
-  border-color: #1877f2;
-}
-
-.ql-snow .ql-toolbar button.ql-lead.ql-active .ql-lead-badge {
-  color: #ffffff;
-  background-color: #1877f2;
-  border-color: #1877f2;
-}
-*/
 .ql-editor lead,
 .article-text-content lead {
   display: block;
@@ -1531,4 +1499,37 @@ footer.site-footer {
   transform: translateY(-1px);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
   background-color: #f8f9fa;
+}
+
+/* =========================================================================
+   DOPASOWANIE ZDJĘĆ I INFOGRAFIK W POSTACH (MOBILE + DESKTOP)
+   ========================================================================= */
+.portal-card-image-link,
+.editorial-article .portal-card-image-link {
+  display: block;
+  width: 100%;
+  max-height: none;
+  overflow: hidden;
+  background: #f8f9fa;
+}
+
+.portal-card-image,
+.editorial-article .portal-card-image {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto;
+  transition: transform 0.3s ease;
+}
+
+/* Ograniczenie maksymalnej wysokości na komputerach, aby wysokie pionowe obrazy nie zajmowały całego ekranu */
+@media (min-width: 901px) {
+  .portal-card-image {
+    max-height: 520px;
+  }
+
+  .editorial-article .portal-card-image {
+    max-height: 650px;
+  }
 }
