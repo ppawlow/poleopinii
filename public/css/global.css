@@ -876,7 +876,7 @@ body {
 }
 
 .editorial-article .portal-card-image {
-  height: 420px;
+  max-height: 420px;
 }
 
 .article-header h1 {
