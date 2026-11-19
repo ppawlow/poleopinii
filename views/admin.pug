@@ -70,7 +70,7 @@ block content
                             | Dystrybucja w mediach społecznościowych (Auto-Share)
                         div(style="display: flex; align-items: center; gap: 12px;")
                             - var activeSocialsCount = Object.values(socialSettings || {}).filter(Boolean).length
-                            span#active-socials-badge(style="background: #f0fdf4; color: #146c43; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #b1f2c2;") #{activeSocialsCount}
+                            span#active-socials-badge(style="background: #f0fdf4; color: #146c43; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #b1f2c2;") #{activeSocialsCount} #{"/"} #{SERVICE_SOCIALS.length}
                             i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
                     .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
                         include partials/admin-socials.pug
