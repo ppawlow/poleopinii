@@ -415,3 +415,57 @@ window.toggleEditorSlider = async function (checkbox, userId) {
     checkbox.disabled = false;
   }
 };
+
+/**
+ * Asynchroniczne włączanie/wyłączanie auto-publikacji w serwisach społecznościowych
+ */
+window.toggleSocialShareSlider = async function (checkbox, platformId) {
+  if (!platformId) return;
+
+  checkbox.disabled = true;
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    .getAttribute("content");
+
+  const statusLabel = document.getElementById(`social-status-${platformId}`);
+  const badge = document.getElementById("active-socials-badge");
+
+  try {
+    const response = await fetch("/admin/socials/toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({
+        platformId,
+        enabled: checkbox.checked,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (statusLabel) {
+        statusLabel.textContent = checkbox.checked ? "AKTYWNE" : "WYŁĄCZONE";
+        statusLabel.style.color = checkbox.checked ? "#146c43" : "#bc2525";
+      }
+      if (badge && data.settings) {
+        const allValues = Object.values(data.settings);
+        const activeCount = allValues.filter(Boolean).length;
+        badge.textContent = `${activeCount} / ${allValues.length}`;
+      }
+    } else {
+      checkbox.checked = !checkbox.checked;
+      const errText = await response.text();
+      if (typeof window.Alert === "function") {
+        window.Alert(`Błąd zapisu ustawień: ${errText}`, "Błąd serwera");
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy przełącznika social media:", err);
+    checkbox.checked = !checkbox.checked;
+  } finally {
+    checkbox.disabled = false;
+  }
+};
