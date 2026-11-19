@@ -3,6 +3,7 @@ list:
 
 update:	
 	ssh ubuntu@poleopinii "bin/update poleopinii"
+	
 %:	list
 	git add .
 	git commit -m "$@"
