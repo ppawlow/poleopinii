@@ -362,6 +362,43 @@
     padding-left: 16px !important;
     padding-right: 16px !important;
   }
+    .main-container:has(.editorial-article) {
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .main-container .editorial-article {
+    padding: 0 0 24px 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .editorial-article .portal-card-header-inner,
+  .editorial-article .portal-single-content-wrapper {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  .editorial-article .portal-card-header-inner {
+    padding-top: 16px !important;
+  }
+
+  .editorial-article .portal-single-content-wrapper {
+    padding-top: 14px !important;
+  }
+
+  /* Likwidacja podwójnego wcięcia dla sekcji "O autorze" */
+  .editorial-article .article-bottom-sections {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .editorial-article .article-author-box {
+    margin-top: 24px !important;
+    padding: 16px !important;
+  }
 }
 
 /* =========================================================================
