@@ -872,12 +872,13 @@ body {
 }
 
 .editorial-article .portal-card-image-link {
-  max-height: 460px;
+  max-height: none;
 }
 
 .editorial-article .portal-card-image {
-  max-height: 420px;
-  width:100%;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
 }
 
 .article-header h1 {
