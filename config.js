@@ -177,29 +177,29 @@ module.exports = {
 
     SERVICE_SOCIALS: [
     {
-      id: "facebook",
-      label: "Obserwuj na Facebooku",
+      id: "Facebook",
+      label: "Obserwuj nas na Facebooku",
       icon: "fa-brands fa-facebook",
       color: "#1877f2",
       url: "https://facebook.com/poleopinii",
     },
     {
-      id: "bluesky",
+      id: "Bluesky",
       label: "Obserwuj nas na Bluesky",
       icon: "fa-brands fa-bluesky",
       color: "#0085ff",
       url: "https://bsky.app/profile/poleopinii.bsky.social",
     },
     {
-      id: "x",
-      label: "Obserwuj na X",
+      id: "X",
+      label: "Obserwuj nas na X",
       icon: "fa-brands fa-x-twitter",
       color: "#000000",
       url: "https://x.com/poleopinii",
     },
     {
-      id: "mastodon",
-      label: "Obserwuj w Fediversum (Mastodon)",
+      id: "Mastodon",
+      label: "Obserwuj nas w Fediversum (Mastodon)",
       icon: "fa-brands fa-mastodon",
       color: "#6364ff",
       url: "https://mastodon.social/@poleopinii",
