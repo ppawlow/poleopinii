@@ -48,7 +48,7 @@
           
     if post.visibility === 'public'
         button.action-btn.share-btn(type="button" onclick=`window.sharePost('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Udostępnij")
-            i.fa-regular.fa-share-from-square
+            i.fa-regular.fa-share-nodes
             span.btn-text Udostępnij
 
     if post.visibility === 'public' && (!user || String(user.id) !== String(post.authorId))

@@ -1,3 +1,5 @@
+const ADMINS = require("./admins");
+
 module.exports = {
   SERVICE_NAME: "Pole Opinii",
   SERVICE_LOGO: "/logo.jpeg",
@@ -44,7 +46,7 @@ module.exports = {
     { minLikes: 5, name: "🌱 Aktywny Autor", color: "#42b72a", bg: "#f0fdf4" },
     { minLikes: 0, name: "🔰 Nowicjusz", color: "#65676b", bg: "#f0f2f5" },
   ],
-  ADMINS: ["6adeff567d07c910c127ed5d"],
+  ADMINS,
 
   MAIN_ADMIN_EMAIL: `admin@poleopinii.pl`,
 

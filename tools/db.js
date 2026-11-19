@@ -9,6 +9,7 @@ const dbModules = Object.assign(
   require("./systemLog"),
   require("./notification"),
   require("./topics"),
+  require("./settings"),
 );
 
 mongoose

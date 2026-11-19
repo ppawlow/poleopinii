@@ -3,16 +3,25 @@ const express = require("express");
 const { ObjectId } = require("mongodb");
 const mailer = require("../tools/mailer");
 const crypto = require("crypto");
-const { User, Post, SystemLog, createLog } = require("../tools/db");
+const { 
+  User, 
+  Post, 
+  SystemLog, 
+  createLog, 
+  getSocialShareSettings, 
+  updateSocialShareSetting 
+} = require("../tools/db");
 const { adminControl } = require("../tools/security");
 const { adminApprovalValidationRules } = require("../tools/validation");
 const { deleteFromAllSocials } = require("../tools/socialPublisher");
 const { renderPartial } = require("../tools/pug2html");
-module.exports = express
-  .Router()
+const { SERVICE_SOCIALS } =  require("../config");
+
+module.exports = express.Router()
   .use(adminControl)
   .get("/", main)
   .get("/logs/api", getLogsApi)
+  .post("/socials/toggle", postToggleSocialShare)
   .post("/:reportId/accept", postAcceptAbuseReport)
   .post("/:reportId/reject", postRejectAbuseReport)
   .post("/posts/:postId/unlock", postUnlockModeratorFlag)
@@ -47,6 +56,7 @@ function mapLogDocument(log) {
 
 async function main(req, res) {
   try {
+    
     const reports = await Post.find({ isAbuseReport: true })
       .sort({ createdAt: -1 })
       .populate("authorId", "name avatarUrl")
@@ -57,6 +67,7 @@ async function main(req, res) {
       verificationTransferStatus: "processing",
     }).lean();
 
+    const socialSettings = await getSocialShareSettings();
     // DOMYŚLNY FILTR: Ostatnie 24 godziny dla widoku startowego
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const logs = await SystemLog.find({
@@ -144,6 +155,8 @@ async function main(req, res) {
       queryError: req.query.error || null,
       queryMsg: req.query.msg || null,
       customMsg: req.query.customMsg || null,
+      SERVICE_SOCIALS, 
+      socialSettings,
     });
   } catch (err) {
     console.error(err);
@@ -464,5 +477,26 @@ async function postDemoteFromEditor(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).send("Błąd serwera.");
+  }
+}
+
+async function postToggleSocialShare(req, res) {
+  try {
+    const { platformId, enabled } = req.body;
+    const isEnabled = enabled === true || enabled === "true" || enabled === "on";
+
+    const updated = await updateSocialShareSetting(platformId, isEnabled);
+    const platformObj = SERVICE_SOCIALS.find((s) => s.id === platformId);
+    const platformName = platformObj ? platformObj.label : platformId;
+
+    await createLog(
+      req,
+      `[ADMIN - SOCIAL MEDIA] ${isEnabled ? "Włączono" : "Wyłączono"} automatyczną publikację dla: ${platformName} (${platformId})`,
+    );
+
+    return res.json({ success: true, settings: updated });
+  } catch (err) {
+    console.error("Błąd zmiany ustawień social media:", err);
+    return res.status(400).send(err.message || "Błąd zapisu ustawień.");
   }
 }
