@@ -1562,3 +1562,79 @@ footer.site-footer {
   border: 1.5px solid #ffffff;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
 }
+
+/* =========================================================================
+   ANIMACJE POWIADOMIEŃ NA ŻYWO (GDY DŹWIĘK JEST WYCISZONY)
+   ========================================================================= */
+.nav-bell-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unread-events-dot {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  background-color: #bc2525;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+/* Rozchodząca się czerwona fala wokół kropki nieprzeczytanych powiadomień */
+.unread-events-dot.is-pulsing::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid #bc2525;
+  animation: notifDotRipple 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+/* Złoty błysk i podskok ikony dzwoneczka / menu */
+.notif-attention-ring {
+  animation: notifBellRing 0.9s ease-in-out 2;
+  color: #e5a93c !important;
+}
+
+/* Pulsująca obwódka przycisku menu na ekranach mobilnych */
+.nav-dropdown-btn.has-new-notif {
+  box-shadow: 0 0 0 0 rgba(188, 37, 37, 0.7);
+  animation: notifBtnPulse 1.4s ease-out 3;
+}
+
+@keyframes notifDotRipple {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes notifBellRing {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  15% { transform: rotate(18deg) scale(1.2); }
+  30% { transform: rotate(-16deg) scale(1.2); }
+  45% { transform: rotate(12deg) scale(1.15); }
+  60% { transform: rotate(-10deg) scale(1.1); }
+  75% { transform: rotate(5deg) scale(1.05); }
+}
+
+@keyframes notifBtnPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(188, 37, 37, 0.75);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(188, 37, 37, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(188, 37, 37, 0);
+  }
+}

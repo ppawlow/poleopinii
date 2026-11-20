@@ -1100,6 +1100,92 @@ window.submitAiAppeal = async function (postId, buttonElement) {
   }
 };
 
+// =========================================================================
+// SYGNAŁ DŹWIĘKOWY (WEB AUDIO API) + ANIMACJA WIZUALNA POWIADOMIEŃ
+// =========================================================================
+let sharedAudioCtx = null;
+
+function unlockAudioContext() {
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtx) return;
+  if (!sharedAudioCtx) {
+    sharedAudioCtx = new AudioCtx();
+  }
+  if (sharedAudioCtx.state === "suspended") {
+    sharedAudioCtx.resume().catch(() => {});
+  }
+}
+
+// Odblokowanie audio przy pierwszej interakcji użytkownika ze stroną
+["click", "touchstart", "keydown"].forEach((evt) => {
+  document.addEventListener(evt, unlockAudioContext, { once: true, passive: true });
+});
+
+function playNotificationSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!sharedAudioCtx) sharedAudioCtx = new AudioCtx();
+    if (sharedAudioCtx.state === "suspended") {
+      sharedAudioCtx.resume().catch(() => {});
+    }
+
+    const now = sharedAudioCtx.currentTime;
+    // Przyjemny, miękki dwutonowy dzwonek (C6 -> E6)
+    const notes = [1046.5, 1318.51];
+
+    notes.forEach((freq, idx) => {
+      const osc = sharedAudioCtx.createOscillator();
+      const gain = sharedAudioCtx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + idx * 0.11);
+
+      gain.gain.setValueAtTime(0.0001, now + idx * 0.11);
+      gain.gain.exponentialRampToValueAtTime(0.12, now + idx * 0.11 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + idx * 0.11 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(sharedAudioCtx.destination);
+
+      osc.start(now + idx * 0.11);
+      osc.stop(now + idx * 0.11 + 0.36);
+    });
+  } catch (e) {
+    // Ignorujemy blokadę autoodtwarzania, jeśli użytkownik nie wszedł jeszcze w interakcję
+  }
+}
+
+function triggerVisualNotificationAttention() {
+  // 1. Czerwona kropka + pulsująca fala (w pasku nawigacji oraz wewnątrz menu)
+  if (window.location.pathname !== "/events") {
+    document.querySelectorAll(".unread-events-dot").forEach((dot) => {
+      dot.style.display = "block";
+      dot.classList.add("is-pulsing");
+    });
+  }
+
+  // 2. Animacja dzwoneczka (restartuje animację przy każdym kolejnym powiadomieniu)
+  document.querySelectorAll('a[href="/events"] i.fa-bell').forEach((bellIcon) => {
+    bellIcon.classList.remove("notif-attention-ring");
+    void bellIcon.offsetWidth; // Wymuszenie przeliczenia stylu do restartu animacji CSS
+    bellIcon.classList.add("notif-attention-ring");
+  });
+
+  // 3. Animacja przycisku menu (⋮) na urządzeniach mobilnych, gdzie pasek środkowy jest ukryty
+  const mobileMenuBtn = document.getElementById("navDropdownBtn");
+  if (mobileMenuBtn) {
+    mobileMenuBtn.classList.remove("has-new-notif");
+    void mobileMenuBtn.offsetWidth;
+    mobileMenuBtn.classList.add("has-new-notif");
+  }
+
+  // 4. Delikatna wibracja na urządzeniach mobilnych (jeśli przeglądarka wspiera)
+  if (navigator.vibrate) {
+    navigator.vibrate([120, 60, 120]);
+  }
+}
+
 function initGlobalWebSocket() {
   // Łączymy się tylko dla zalogowanych użytkowników
   if (!window.appUser) return;
@@ -1228,21 +1314,11 @@ function initGlobalWebSocket() {
       }
 
       // ===========================================================
-      // 3. POWIADOMIENIE W CZASIE RZECZYWISTYM (Dzwoneczek + /events)
+      // 3. POWIADOMIENIE W CZASIE RZECZYWISTYM (Dźwięk + Animacja + /events)
       // ===========================================================
       if (data.type === "NEW_NOTIFICATION") {
-        if (window.location.pathname !== "/events") {
-          document.querySelectorAll(".unread-events-dot").forEach((dot) => {
-            dot.style.display = "block";
-          });
-        }
-
-        document
-          .querySelectorAll('a[href="/events"] i.fa-bell')
-          .forEach((bellIcon) => {
-            bellIcon.classList.add("fa-shake");
-            setTimeout(() => bellIcon.classList.remove("fa-shake"), 1500);
-          });
+        playNotificationSound();
+        triggerVisualNotificationAttention();
 
         if (window.location.pathname === "/events") {
           fetch("/events/api")
