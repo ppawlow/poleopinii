@@ -71,8 +71,13 @@ async function postCommentEdit(req, res) {
     comment.content = cleanContent;
     await post.save();
 
-    req.app.get("ws
-        // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
+    req.ws?.broadcastCommentEdited({
+      postId: post._id,
+      commentId: comment._id,
+      content: comment.content,
+    });
+    
+    // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
         return res.json({
           success: true,
           content: comment.content,

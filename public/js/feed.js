@@ -152,10 +152,19 @@ document.addEventListener("DOMContentLoaded", () => {
     activeQuillInstances["new"] = new Quill("#edit-quill-new", {
       theme: "snow",
       placeholder: "O czym myślisz?",
-      modules: COMMON_QUILL_MODULES, // Użycie wspólnej konfiguracji
+      modules: COMMON_QUILL_MODULES,
     });
 
     window.initFormChangeTracker("editForm-new", "new");
+  }
+
+  // Obsługa zmiany koloru okna edytora przy zmianie widoczności
+  const visSelect = document.getElementById("visibility-select-node");
+  if (visSelect) {
+    window.applyEditorVisibilityTheme(visSelect.value);
+    visSelect.addEventListener("change", function () {
+      window.applyEditorVisibilityTheme(this.value);
+    });
   }
 
   // Podgląd grafiki dla nowego posta
@@ -180,6 +189,12 @@ document.addEventListener("DOMContentLoaded", () => {
 window.openCreatePostModal = function () {
   const modal = document.getElementById("create-post-modal");
   if (!modal) return;
+
+  const selectEl = document.getElementById("visibility-select-node");
+  if (selectEl) {
+    window.applyEditorVisibilityTheme(selectEl.value);
+  }
+
   modal.style.display = "flex";
   document.body.style.overflow = "hidden";
 
@@ -260,6 +275,7 @@ window.toggleInlineEdit = async function (postId, event) {
   const warningEl = document.getElementById("public-debate-warning-badge");
   if (selectEl) {
     selectEl.value = visibility;
+    window.applyEditorVisibilityTheme(visibility);
     if (visibility === "editors") {
       selectEl.disabled = true;
       if (warningEl) {
@@ -714,10 +730,12 @@ window.openReplyPostModal = async function (
     if (isSelfContinuation) {
       selectEl.disabled = false;
       selectEl.value = "";
+      window.applyEditorVisibilityTheme("");
       warningEl.style.display = "none";
     } else {
       selectEl.value = "public";
       selectEl.disabled = true;
+      window.applyEditorVisibilityTheme("public");
       warningEl.innerText =
         "📢 Uwaga: Polemika z postem publicznym będzie widoczna dla wszystkich użytkowników serwisu.";
       warningEl.style.display = "inline-block";
@@ -998,6 +1016,7 @@ window.safeCancelInlineEdit = async function (postId) {
   if (selectEl && warningResetEl) {
     selectEl.disabled = false;
     selectEl.value = "";
+    window.applyEditorVisibilityTheme("");
     warningResetEl.style.display = "none";
   }
 
@@ -1529,3 +1548,37 @@ window.addEventListener("beforeunload", function (event) {
     event.returnValue = "";
   }
 });
+
+window.applyEditorVisibilityTheme = function (visibility) {
+  const modalBox = document.querySelector("#create-post-modal .custom-modal-box");
+  if (!modalBox) return;
+
+  modalBox.classList.remove(
+    "vis-theme-public",
+    "vis-theme-restricted",
+    "vis-theme-private",
+    "vis-theme-editors",
+    "vis-theme-users",
+  );
+
+  if (visibility) {
+    modalBox.classList.add(`vis-theme-${visibility}`);
+  }
+};
+
+window.applyEditorVisibilityTheme = function (visibility) {
+  const modalBox = document.querySelector("#create-post-modal .custom-modal-box");
+  if (!modalBox) return;
+
+  modalBox.classList.remove(
+    "vis-theme-public",
+    "vis-theme-restricted",
+    "vis-theme-private",
+    "vis-theme-editors",
+    "vis-theme-users",
+  );
+
+  if (visibility) {
+    modalBox.classList.add(`vis-theme-${visibility}`);
+  }
+};

@@ -1542,28 +1542,6 @@ footer.site-footer {
 }
 
 /* =========================================================================
-   CZERWONA KROPKA NIEPRZECZYTANYCH POWIADOMIEŃ
-   ========================================================================= */
-.nav-bell-wrapper {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.unread-events-dot {
-  position: absolute;
-  top: -2px;
-  right: -3px;
-  width: 9px;
-  height: 9px;
-  background-color: #bc2525;
-  border-radius: 50%;
-  border: 1.5px solid #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-}
-
-/* =========================================================================
    ANIMACJE POWIADOMIEŃ NA ŻYWO (GDY DŹWIĘK JEST WYCISZONY)
    ========================================================================= */
 .nav-bell-wrapper {
@@ -1637,4 +1615,68 @@ footer.site-footer {
   100% {
     box-shadow: 0 0 0 0 rgba(188, 37, 37, 0);
   }
+}
+
+/* =========================================================================
+   KOLORYSTYKA PASTELOWA WIDOCZNOŚCI POSTÓW (LISTA POSTÓW + OKNO EDYTORA)
+   ========================================================================= */
+.post-card.vis-theme-public {
+  background-color: #ffffff !important;
+}
+
+.post-card.vis-theme-restricted {
+  background-color: #f0f7ff !important;
+  border-left: 4px solid #1877f2 !important;
+}
+.post-card.vis-theme-restricted .accordion-content {
+  background-color: #f7fbff !important;
+}
+
+.post-card.vis-theme-private {
+  background-color: #fff5f5 !important;
+  border-left: 4px solid #dc3545 !important;
+}
+.post-card.vis-theme-private .accordion-content {
+  background-color: #fffafa !important;
+}
+
+.post-card.vis-theme-editors {
+  background-color: #fffdf0 !important;
+  border-left: 4px solid #e5a93c !important;
+}
+.post-card.vis-theme-editors .accordion-content {
+  background-color: #fffdf5 !important;
+}
+
+.post-card.vis-theme-users {
+  background-color: #f0fdf4 !important;
+  border-left: 4px solid #198754 !important;
+}
+.post-card.vis-theme-users .accordion-content {
+  background-color: #f7fef9 !important;
+}
+
+/* Okno modalu edytora dopasowujące tło do wybranej widoczności */
+#create-post-modal .custom-modal-box {
+  transition: background-color 0.25s ease, border-top-color 0.25s ease;
+}
+#create-post-modal .custom-modal-box.vis-theme-public {
+  background-color: #ffffff;
+  border-top: 5px solid #e4e6eb;
+}
+#create-post-modal .custom-modal-box.vis-theme-restricted {
+  background-color: #f0f7ff;
+  border-top: 5px solid #1877f2;
+}
+#create-post-modal .custom-modal-box.vis-theme-private {
+  background-color: #fff5f5;
+  border-top: 5px solid #dc3545;
+}
+#create-post-modal .custom-modal-box.vis-theme-editors {
+  background-color: #fffdf0;
+  border-top: 5px solid #e5a93c;
+}
+#create-post-modal .custom-modal-box.vis-theme-users {
+  background-color: #f0fdf4;
+  border-top: 5px solid #198754;
 }

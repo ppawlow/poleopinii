@@ -9,7 +9,6 @@ const { initWebSocket } = require("./tools/ws");
 const server = http.createServer(app);
 // Inicjalizacja serwera WebSocket oraz rejestracja lokalnych funkcji na app i req.ws
 initWebSocket(server);
-//app.use(initWebSocket(server, app));
 
 const PORT_APP = PORT || process.env.PORT || 3000;
 server.listen(PORT_APP, async () => {

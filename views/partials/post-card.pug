@@ -1,18 +1,15 @@
-- var isEditorPost = post.visibility === 'editors'
-- var isUsersPost = post.visibility === 'users'
 - var isSingleView = false
 - var isWorkMode = true
-- var cardCustomStyle = isEditorPost ? "background-color: #fffdf0; border-left: 4px solid #e5a93c;" : (isUsersPost ? "background-color: #f0fdf4; border-left: 4px solid #198754;" : undefined)
-- var contentBgStyle = isEditorPost ? "background-color: #fffdf5;" : (isUsersPost ? "background-color: #f7fef9;" : "")
+- var visClass = `vis-theme-${post.visibility || 'public'}`
 
 article.post-card.portal-news-card.accordion-item(
     id=`post-${post._id}` 
-    style=cardCustomStyle
+    class=visClass
 )
     .accordion-header(style="cursor: pointer; padding: 0 0 16px 0;")
         include post-header-portal.pug
 
-    .accordion-content(style=`display: none; padding: 0; border-top: 1px solid #dddfe2; ${contentBgStyle} width: 100%;`)
+    .accordion-content(style="display: none; padding: 0; border-top: 1px solid #dddfe2; width: 100%;")
         if post.imageUrl
             .portal-card-image-link(style="cursor: zoom-in;" onclick=`window.openLightbox('${post.imageUrl}')`)
                 img.portal-card-image(src=post.imageUrl alt=(post.title || 'Zdjęcie wyróżniające') loading="lazy")
