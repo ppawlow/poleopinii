@@ -501,7 +501,7 @@ window.prepareEditSubmit = async function (event, postId) {
       return;
     }
 
-    // SCENARIUSZ B: WPISY PRYWATNE / RESTRICTED / EDITORS
+    // SCENARIUSZ B: WPISY PRYWATNE / RESTRICTED / EDITORS / USERS
     if (response.ok) {
       if (loadingModal) loadingModal.style.display = "none";
 
@@ -524,9 +524,31 @@ window.prepareEditSubmit = async function (event, postId) {
 
             if (instance) instance.setContents([]);
             const titleField = document.getElementById("edit-title-new");
-            if (titleField) titleField.value = "";
+            if (titleField) {
+              titleField.value = "";
+              titleField.placeholder = "Dodaj tytuł postu";
+            }
             const parentIdField = document.getElementById("edit-parent-id-new");
             if (parentIdField) parentIdField.value = "";
+
+            const contextSubtitle = document.getElementById("create-post-context-time");
+            if (contextSubtitle) {
+              contextSubtitle.innerText = "Tworzenie nowego wpisu";
+              contextSubtitle.style.color = "#65676b";
+              contextSubtitle.style.fontWeight = "normal";
+            }
+
+            // Reset selektora widoczności i motywu kolorystycznego okna edytora
+            const defaultVis = window.location.pathname === "/editors" ? "editors" : "";
+            const warningEl = document.getElementById("public-debate-warning-badge");
+            if (selectNode) {
+              selectNode.disabled = false;
+              selectNode.value = defaultVis;
+            }
+            if (warningEl) warningEl.style.display = "none";
+            if (typeof window.applyEditorVisibilityTheme === "function") {
+              window.applyEditorVisibilityTheme(defaultVis);
+            }
 
             window.cancelSelectedImage("new");
             window.resetFormDirtyState("editForm-new");
