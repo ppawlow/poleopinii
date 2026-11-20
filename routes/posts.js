@@ -15,6 +15,7 @@ const {
   upload,
   getScopedPosts,
   rmPost,
+  countAuthorPublicLikes,
 } = require("../tools/db");
 
 const { POST_VISIBILITY, DEFAULT_ASSETS, SERVICE_NAME } = require("../config");
