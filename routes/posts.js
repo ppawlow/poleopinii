@@ -1105,7 +1105,7 @@ async function postDeleteImage(req, res) {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (!post.isOwnedBy(req.session.user)) {
+    if (!post.isOwnedBy(req.dbUser)) {
       return res.status(403).send("Brak uprawnień do edycji tego zasobu.");
     }
     if (post.visibility === "public") {
@@ -1113,7 +1113,7 @@ async function postDeleteImage(req, res) {
         .status(400)
         .send("Nie można modyfikować postów publicznych bezpośrednio.");
     }
-
+    
     if (post.imageUrl) {
       const imagePath = path.join(__dirname, "../public", post.imageUrl);
       const resolvedPath = path.resolve(imagePath);

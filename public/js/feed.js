@@ -749,18 +749,19 @@ window.removePostImage = async function (postId) {
       },
     });
     if (response.ok) {
-      // Ukrywamy podgląd aktualnego zdjęcia w modalu i czyścimy atrybut na karcie
+      // 1. Ukrywamy podgląd aktualnego zdjęcia w modalu edycji
       const modalPreview = document.getElementById("current-image-preview-new");
       const currentImgTag = document.getElementById("current-image-img-new");
       if (modalPreview) modalPreview.style.display = "none";
       if (currentImgTag) currentImgTag.src = "";
-      
+
+      // 2. Usuwamy miniaturę z karty posta w DOM i czyścimy atrybut data-image
       const postCard = document.getElementById(`post-${postId}`);
       if (postCard) {
         const editBtn = postCard.querySelector(".edit-btn");
         if (editBtn) editBtn.setAttribute("data-image", "");
 
-        const imgWrap = postCard.querySelector(".article-featured-image");
+        const imgWrap = postCard.querySelector(".portal-card-image-link");
         if (imgWrap) imgWrap.remove();
       }
 

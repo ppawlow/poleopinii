@@ -534,12 +534,12 @@ document.addEventListener("submit", function (e) {
   }
 
   // 5. Blokowanie użytkownika
-  if (form.classList.contains("dynamic-block-form")) {
-    e.preventDefault();
-    e.stopPropagation();
-    handleAsyncBlockUserSubmit(form, csrfToken);
-    return;
-  }
+  // if (form.classList.contains("dynamic-block-form")) {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   handleAsyncBlockUserSubmit(form, csrfToken);
+  //   return;
+  // }
 
   // 6. Usuwanie zasobów (Zunifikowana asynchroniczna kaskada dla postów oraz komentarzy)
   if (form.action.includes("/delete")) {

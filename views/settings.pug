@@ -1,7 +1,7 @@
 extends layout
 block head
     script(src="/js/profileApi.js")
-    
+    script(src="/js/authApi.js")
 block content
     .main-container(style="grid-template-columns: 1fr; max-width: 600px; margin: 0 auto;")
         main.feed
@@ -83,9 +83,10 @@ block content
             .create-post(style="padding: 24px; margin-top: 16px; border-top: 3px solid #1877f2;")
                 h3(style="font-size: 16px; font-weight: 700; color: #1c1e21; margin-bottom: 8px;") Bezpieczeństwo konta
                 p(style="font-size: 13px; color: #65676b; margin-bottom: 16px; line-height: 1.4;") Chcesz zmienić swoje hasło dostępu? Kliknij poniższy przycisk, aby wygenerować bezpieczny link autoryzacyjny bezpośrednio na Twój zarejestrowany adres e-mail.
-                
+
                 form#passwordResetRequestForm(action="/auth/forgot-password" method="POST" style="margin:0; display: block;")
                     input(type="hidden" name="_csrf" value=csrfToken)
+                    input#forgotRecaptchaToken(type="hidden" name="recaptchaToken")
                     input(type="hidden" name="email" value=user.email)
                     button(type="submit" style="background: #42b72a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; width: auto;") 🔑 Wyślij link do zmiany hasła
 

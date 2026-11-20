@@ -54,11 +54,15 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2. FORMULARZ ZAPOMNIANEGO HASŁA
-  const forgotPasswordForm = document.getElementById("forgotPasswordForm");
+  // 2. FORMULARZ ZAPOMNIANEGO HASŁA (ekran logowania oraz ustawienia konta)
+  const forgotPasswordForm =
+    document.getElementById("forgotPasswordForm") ||
+    document.getElementById("passwordResetRequestForm");
+
   if (forgotPasswordForm) {
     forgotPasswordForm.addEventListener("submit", async function (e) {
-      if (document.getElementById("forgotRecaptchaToken").value) {
+      const tokenInput = document.getElementById("forgotRecaptchaToken");
+      if (tokenInput && tokenInput.value) {
         return;
       }
 
@@ -70,8 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const token = await getCaptchaToken("forgot_password_auth");
-        if (token) {
-          document.getElementById("forgotRecaptchaToken").value = token;
+        if (token && tokenInput) {
+          tokenInput.value = token;
           HTMLFormElement.prototype.submit.call(forgotPasswordForm);
         } else {
           if (submitBtn) submitBtn.disabled = false;
@@ -137,4 +141,20 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  // 4. PRZEŁĄCZNIK WIDOCZNOŚCI HASŁA (IKONA OKA)
+  const bindPasswordToggle = (toggleId, inputId) => {
+    const toggle = document.getElementById(toggleId);
+    const input = document.getElementById(inputId);
+    if (!toggle || !input) return;
+    toggle.addEventListener("click", () => {
+      const isHidden = input.type === "password";
+      input.type = isHidden ? "text" : "password";
+      toggle.classList.toggle("fa-eye", !isHidden);
+      toggle.classList.toggle("fa-eye-slash", isHidden);
+    });
+  };
+  bindPasswordToggle("toggleLoginPassword", "loginPasswordField");
+  bindPasswordToggle("toggleResetPassword", "resetPasswordField");
+  bindPasswordToggle("toggleConfirmPassword", "confirmPasswordField");
 });

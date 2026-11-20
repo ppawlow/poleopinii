@@ -702,3 +702,55 @@ window.togglePrivateEmailsSlider = async function (checkbox) {
   }
 };
 
+window.openContactMailModal = function (targetUserId, targetName) {
+  const modal = document.getElementById("contact-mail-modal");
+  const idInput = document.getElementById("contactTargetId");
+  const nameSpan = document.getElementById("contactModalTargetName");
+  if (!modal || !idInput) return;
+
+  idInput.value = targetUserId;
+  if (nameSpan) nameSpan.textContent = targetName || "";
+  const form = modal.querySelector("form");
+  if (form) form.reset();
+  idInput.value = targetUserId;
+  modal.style.display = "flex";
+};
+
+window.submitContactEmail = async function (event) {
+  event.preventDefault();
+  const form = event.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Wysyłanie...";
+  }
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": csrfToken,
+      },
+      body: new URLSearchParams(new FormData(form)).toString(),
+    });
+
+    if (response.ok) {
+      document.getElementById("contact-mail-modal").style.display = "none";
+      form.reset();
+      await window.Alert("Wiadomość prywatna została wysłana.", "✉️ Poczta");
+    } else {
+      const errText = await response.text();
+      await window.Alert(errText || "Nie udało się wysłać wiadomości.", "Błąd");
+    }
+  } catch (err) {
+    await window.Alert("Błąd połączenia z serwerem.", "Błąd sieci");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Wyślij e-mail";
+    }
+  }
+};
