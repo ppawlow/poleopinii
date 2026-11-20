@@ -1200,12 +1200,35 @@ function initGlobalWebSocket() {
     const myCsrf = document
       .querySelector('meta[name="csrf-token"]')
       ?.getAttribute("content");
-    if (!myCsrf || !containerElement) return;
-    containerElement
-      .querySelectorAll('input[name="_csrf"]')
-      .forEach((input) => {
-        input.value = myCsrf;
+    if (!containerElement) return;
+
+    if (myCsrf) {
+      containerElement
+        .querySelectorAll('input[name="_csrf"]')
+        .forEach((input) => {
+          input.value = myCsrf;
+        });
+    }
+
+    // Dopasowanie przycisków Edytuj / Usuń do tożsamości odbiorcy WebSocket
+    if (window.appUser && window.appUser.id) {
+      const myId = String(window.appUser.id);
+      containerElement.querySelectorAll(".comment-card").forEach((card) => {
+        const editBtn = card.querySelector(".comment-edit-trigger");
+        const delForm = card.querySelector(".comment-delete-form");
+        const cAuthorId =
+          editBtn?.getAttribute("data-author-id") ||
+          delForm?.getAttribute("data-comment-author-id");
+        const pAuthorId = delForm?.getAttribute("data-post-author-id");
+
+        if (editBtn && cAuthorId && cAuthorId !== myId) {
+          editBtn.remove();
+        }
+        if (delForm && cAuthorId !== myId && pAuthorId !== myId) {
+          delForm.remove();
+        }
       });
+    }
   }
 
   socket.onmessage = function (event) {
@@ -1309,6 +1332,85 @@ function initGlobalWebSocket() {
 
           if (typeof window.refreshAccordionListeners === "function") {
             window.refreshAccordionListeners();
+          }
+        }
+      }
+      
+      // ===========================================================
+      // 2b. USUNIĘCIE KOMENTARZA NA ŻYWO (U innych czytających wątek)
+      // ===========================================================
+      if (data.type === "DELETE_COMMENT" && data.postId && data.commentId) {
+        const commentCard = document.getElementById(`comment-${data.commentId}`);
+        const commentsWrapper = document.getElementById(
+          `comments-wrapper-${data.postId}`,
+        );
+
+        if (commentCard) {
+          commentCard.style.transition = "opacity 0.2s ease, transform 0.2s ease";
+          commentCard.style.opacity = "0";
+          commentCard.style.transform = "scale(0.98)";
+
+          setTimeout(() => {
+            commentCard.remove();
+
+            if (commentsWrapper) {
+              const freshCommentsCount =
+                commentsWrapper.querySelectorAll(".comment-card").length;
+
+              const commentsCountEl = document.getElementById(
+                `comments-text-${data.postId}`,
+              );
+              if (commentsCountEl && typeof liczebnik === "function") {
+                commentsCountEl.innerHTML = liczebnik(freshCommentsCount, [
+                  "komentarz",
+                  "komentarze",
+                  "komentarzy",
+                ]);
+              }
+
+              const discussionHeadingEl = document.getElementById(
+                `discussion-heading-${data.postId}`,
+              );
+              if (discussionHeadingEl) {
+                discussionHeadingEl.innerHTML = `Dyskusja (${freshCommentsCount})`;
+              }
+
+              const commentsListContainer = document.getElementById(
+                `comments-list-${data.postId}`,
+              );
+              if (
+                freshCommentsCount === 0 &&
+                commentsListContainer &&
+                !document.getElementById(`no-comments-notice-${data.postId}`)
+              ) {
+                commentsListContainer.insertAdjacentHTML(
+                  "afterbegin",
+                  `<div class="no-comments-placeholder" id="no-comments-notice-${data.postId}" style="font-size: 13px; color: #65676b; font-style: italic; padding: 8px 12px; margin-bottom: 12px;">💬 Brak komentarzy. Rozpocznij dyskusję jako pierwszy!</div>`,
+                );
+              }
+            }
+          }, 200);
+        }
+      }
+      
+      // ===========================================================
+      // 2c. EDYCJA KOMENTARZA NA ŻYWO (U innych czytających wątek)
+      // ===========================================================
+      if (data.type === "EDIT_COMMENT" && data.commentId && typeof data.content === "string") {
+        const commentTextEl = document.getElementById(`comment-text-${data.commentId}`);
+        if (commentTextEl && commentTextEl.textContent !== data.content) {
+          commentTextEl.textContent = data.content;
+
+          const commentBubble = document.getElementById(
+            `comment-content-container-${data.commentId}`,
+          );
+          if (commentBubble) {
+            commentBubble.style.transition = "background-color 0.4s ease";
+            const originalBg = commentBubble.style.backgroundColor;
+            commentBubble.style.backgroundColor = "#e7f3ff";
+            setTimeout(() => {
+              commentBubble.style.backgroundColor = originalBg;
+            }, 1200);
           }
         }
       }

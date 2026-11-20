@@ -50,13 +50,16 @@
                             else
                                 button.restricted-feature-trigger(type="button" data-reason="comment_public" style="background: none; border: none; color: inherit; font-weight: bold; cursor: pointer; font-size: inherit; padding: 0;") Odpowiedz
                             
-                            if user && (user._id.equals(comment.authorId) || user.id === String(comment.authorId))
-                                button(type="button" onclick=`toggleCommentEdit('${comment._id}')` style="background: none; border: none; color: inherit; cursor: pointer; font-size: inherit; padding: 0;") Edytuj
+                            - var isCommentAuthor = comment.authorId && String(user.id) === String(comment.authorId)
+                            - var isPostAuthor = post.authorId && String(user.id) === String(post.authorId)
+
+                            if isCommentAuthor
+                                button.comment-edit-trigger(type="button" data-author-id=String(comment.authorId) onclick=`toggleCommentEdit('${comment._id}')` style="background: none; border: none; color: inherit; cursor: pointer; font-size: inherit; padding: 0;") Edytuj
                             
-                                if user.isOwnerOf(post) || user._id.equals(comment.authorId) || user.id === String(comment.authorId)
-                                    form(action=`/posts/${post._id}/comments/${comment._id}/delete` method="POST" style="display: inline; margin: 0;" data-confirm="Czy na pewno chcesz usunąć ten komentarz?")
-                                        input(type="hidden" name="_csrf" value=csrfToken)
-                                        button(type="submit" style="background: none; border: none; color: #bc2525; cursor: pointer; font-size: inherit; padding: 0;") Usuń
+                            if isPostAuthor || isCommentAuthor
+                                form.comment-delete-form(action=`/posts/${post._id}/comments/${comment._id}/delete` method="POST" data-comment-author-id=String(comment.authorId || '') data-post-author-id=String(post.authorId || '') style="display: inline; margin: 0;" data-confirm="Czy na pewno chcesz usunąć ten komentarz?")
+                                    input(type="hidden" name="_csrf" value=csrfToken)
+                                    button(type="submit" style="background: none; border: none; color: #bc2525; cursor: pointer; font-size: inherit; padding: 0;") Usuń
                 
                         if comment.likedBy && comment.likedBy.length > 0
                             span.comment-likes-counter(style="color: #1877f2; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;")

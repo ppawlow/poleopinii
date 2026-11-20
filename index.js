@@ -129,6 +129,35 @@ app.set(
       postId: postId.toString(),
       senderId: senderIdStr,
     });
+    
+    app.set("wsBroadcastCommentDeleted", ({ postId, commentId }) => {
+      const payload = JSON.stringify({
+        type: "DELETE_COMMENT",
+        postId: postId.toString(),
+        commentId: commentId.toString(),
+      });
+
+      activeConnections.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(payload);
+        }
+      });
+    });
+
+    app.set("wsBroadcastCommentEdited", ({ postId, commentId, content }) => {
+      const payload = JSON.stringify({
+        type: "EDIT_COMMENT",
+        postId: postId.toString(),
+        commentId: commentId.toString(),
+        content,
+      });
+
+      activeConnections.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(payload);
+        }
+      });
+    });
 
     activeConnections.forEach((client) => {
       if (client.readyState !== WebSocket.OPEN) return;

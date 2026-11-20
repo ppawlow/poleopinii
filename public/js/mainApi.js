@@ -358,7 +358,7 @@ async function handleAsyncDeleteSubmit(form, csrfToken) {
     });
 
     if (response.ok) {
-      const targetCard = form.closest(".comment-card, .post-card");
+      const targetCard = form.closest(".comment-card") ||   form.closest(".post-card");
       const postCard = form.closest(".post-card, .editorial-article");
       const isComment = Boolean(targetCard && targetCard.classList.contains("comment-card"));
 
@@ -532,14 +532,6 @@ document.addEventListener("submit", function (e) {
     handleAsyncPostLikeSubmit(form, csrfToken);
     return;
   }
-
-  // 5. Blokowanie użytkownika
-  // if (form.classList.contains("dynamic-block-form")) {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  //   handleAsyncBlockUserSubmit(form, csrfToken);
-  //   return;
-  // }
 
   // 6. Usuwanie zasobów (Zunifikowana asynchroniczna kaskada dla postów oraz komentarzy)
   if (form.action.includes("/delete")) {
