@@ -1,3 +1,5 @@
+.PHONY:	list update
+
 list:	
 	./list.sh *.js  routes tools views public > list.txt
 
