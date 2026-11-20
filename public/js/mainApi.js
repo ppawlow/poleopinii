@@ -506,16 +506,14 @@ document.addEventListener("submit", function (e) {
     handleAsyncCommentEditSubmit(form, csrfToken);
     return;
   }
-
   // 2. Lajkowanie komentarza
-  if (form.classList.contains("comment-like-form") || form.action.includes("/comments/") && form.action.includes("/like")) {
+  if (
+    form.classList.contains("comment-like-form") ||
+    (form.action.includes("/comments/") && form.action.includes("/like"))
+  ) {
     e.preventDefault();
     e.stopPropagation();
-    // Przekierowujemy bezpośrednio do wbudowanego mechanizmu, który obsłuży to bez przeładowania
-    fetch(form.action, {
-      method: "POST",
-      headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "XMLHttpRequest" }
-    }).then(() => window.location.reload()); // Najprostszy, stabilny przeładunek dbający o spójność stanów
+    handleAsyncCommentLikeSubmit(form, csrfToken);
     return;
   }
 
@@ -735,3 +733,65 @@ document.addEventListener("click", (e) => {
     "🛡️ Wymagana weryfikacja profilu"
   );
 });
+
+/**
+ * Obsługa asynchronicznego lajkowania komentarzy (.comment-like-form)
+ */
+async function handleAsyncCommentLikeSubmit(form, csrfToken) {
+  if (form.dataset.loading === "true") return;
+  form.dataset.loading = "true";
+
+  const button = form.querySelector('button[type="submit"]');
+  if (button) button.disabled = true;
+
+  try {
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        if (button) {
+          button.textContent = data.liked ? "Cofnij lajk" : "Lubię to";
+        }
+
+        const actionsBar = form.closest(".comment-actions-links");
+        if (actionsBar) {
+          let counterSpan = actionsBar.querySelector(".comment-likes-counter");
+          // Jeśli licznik istniał przed zmianą bez klasy, znajdź go po ikonie fa-thumbs-up
+          if (!counterSpan) {
+            const thumbIcon = actionsBar.querySelector(".fa-thumbs-up");
+            if (thumbIcon) counterSpan = thumbIcon.closest("span");
+          }
+
+          if (data.likesCount > 0) {
+            if (!counterSpan) {
+              counterSpan = document.createElement("span");
+              counterSpan.className = "comment-likes-counter";
+              counterSpan.style.cssText =
+                "color: #1877f2; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;";
+              actionsBar.appendChild(counterSpan);
+            }
+            counterSpan.innerHTML = `<i class="fa-solid fa-thumbs-up"></i> ${data.likesCount}`;
+          } else if (counterSpan) {
+            counterSpan.remove();
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas lajkowania komentarza:", err);
+  } finally {
+    form.dataset.loading = "false";
+    if (button) {
+      button.disabled = false;
+      button.blur();
+    }
+  }
+}
