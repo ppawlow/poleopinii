@@ -1539,3 +1539,25 @@ footer.site-footer {
 #custom-lightbox-modal {
   z-index: 10030 !important;
 }
+
+/* =========================================================================
+   CZERWONA KROPKA NIEPRZECZYTANYCH POWIADOMIEŃ
+   ========================================================================= */
+.nav-bell-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.unread-events-dot {
+  position: absolute;
+  top: -2px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  background-color: #bc2525;
+  border-radius: 50%;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}

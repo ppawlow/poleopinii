@@ -110,10 +110,9 @@ app.set("wsBroadcastPost", ({ html, post, authorBlocks = [] }) => {
     } else if (post.visibility === "restricted") {
       if (!client.following.includes(authorIdStr)) return;
       if (client.currentPath === "/editors") return;
-    } else if (post.visibility === "public") {
+    } else if (post.visibility === "public" || post.visibility === "users") {
       if (client.currentPath === "/editors") return;
     }
-
     client.send(payload);
   });
 });
@@ -162,6 +161,19 @@ app.set("wsSendNotification", (recipientId, notificationData) => {
       client.readyState === WebSocket.OPEN &&
       client.userId === targetIdStr
     ) {
+      client.send(payload);
+    }
+  });
+});
+
+app.set("wsBroadcastAnnouncement", (notificationData) => {
+  const payload = JSON.stringify({
+    type: "NEW_NOTIFICATION",
+    ...notificationData,
+  });
+
+  activeConnections.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN) {
       client.send(payload);
     }
   });

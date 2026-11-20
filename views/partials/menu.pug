@@ -34,7 +34,7 @@
             if user.isAdmin
                 a.dropdown-item(href="/admin" style="color: #bc2525; font-weight: 600;")
                     i.fa-solid.fa-shield-halved(style="color: #bc2525;")
-                    | Panel Administratora
+                    | Administracja
 
             if !user.isFullyVerified
                 a.dropdown-item(href="/verify")
@@ -47,8 +47,10 @@
                 | Obserwowani
                 
             a.dropdown-item(href=`/events`)
-                i.fa-solid.fa-bell
-                | Reakcje
+                span.nav-bell-wrapper
+                    i.fa-solid.fa-bell
+                    span.unread-events-dot(style=(hasUnreadEvents ? "display: block;" : "display: none;"))
+                | Powiadomienia
                 
             hr.dropdown-divider
             a.dropdown-item.logout-link(href="/auth/logout")

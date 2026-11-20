@@ -5,6 +5,7 @@ const { ObjectId } = require("mongodb");
 const mailer = require("../tools/mailer");
 const { renderPartial } = require("../tools/pug2html"); 
 const { publishToAllSocials, deleteFromAllSocials } = require("../tools/socialPublisher");
+const { generatePostExcerpt } = require("../tools/excerptHelper");
 
 const {
   User,
@@ -214,16 +215,16 @@ async function postCreate(req, res) {
     let parentPostTitle = "Wpis bez tytułu";
     let parentPostAuthorId = null;
 
-    if (parentPostId) {
-      if (!hasPermission(dbUser, visibility, "CREATE")) {
-        return sendAccessDenied(
-          req,
-          res,
-          'Brak uprawnień: Brak wystarczających uprawnień do publikacji wpisu na tym poziomie widoczności. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>',
-        );
-      }
+    // 1. Walidacja uprawnień tworzenia na wybranym poziomie widoczności (np. public, editors, users)
+    if (!hasPermission(dbUser, visibility, "CREATE")) {
+      return sendAccessDenied(
+        req,
+        res,
+        'Brak uprawnień: Nie posiadasz wystarczających uprawnień do publikacji wpisu na wybranym poziomie widoczności. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>',
+      );
     }
 
+    // 2. Obsługa powiązań z istniejącym wpisem (polemika / kontynuacja wątku)
     if (parentPostId && ObjectId.isValid(parentPostId)) {
       const originalPost = await Post.findById(parentPostId);
 
@@ -243,10 +244,19 @@ async function postCreate(req, res) {
       parentPostAuthorId = originalPost.authorId;
       isSelfContinuation = String(originalPost.authorId) === String(dbUser._id);
 
+      // Blokada zewnętrznych polemik pod ogłoszeniami systemowymi (users)
+      if (originalPost.visibility === "users" && !isSelfContinuation) {
+        return res
+          .status(403)
+          .send(
+            "Operacja niedozwolona: Nie można tworzyć polemik w odpowiedzi na komunikaty i ogłoszenia systemowe.",
+          );
+      }
+
       const originalAuthor = await User.findById(originalPost.authorId);
 
       if (hasPermission(dbUser, "user", "canReplyWithPost", originalAuthor)) {
-        if (!dbUser.isPublicAllowed) {
+        if (!dbUser.isPublicAllowed && visibility === "public") {
           visibility = "restricted";
         }
       } else {
@@ -314,7 +324,7 @@ async function postCreate(req, res) {
     const isReport = req.body.isAbuseReport === "true";
     const isReplyOrReport = Boolean(parentPostId && ObjectId.isValid(parentPostId));
 
-    // Dla kontynuacji własnego wątku zachowujemy wybraną widoczność (np. private, restricted, public, editors),
+    // Dla kontynuacji własnego wątku zachowujemy wybraną widoczność (np. private, restricted, public, editors, users),
     // natomiast zewnętrzna polemika lub zgłoszenie nadużycia otrzymuje status publiczny.
     const finalVisibility = isReplyOrReport
       ? isSelfContinuation
@@ -340,12 +350,30 @@ async function postCreate(req, res) {
     const savedPost = await newPost.save();
     await createLog(req, `Utworzono post (${finalVisibility}): ${title}`);
 
+    // Wypychamy do mediów społecznościowych WYŁĄCZNIE posty publiczne (ogłoszenia 'users' są pomijane)
     if (savedPost.visibility === "public" && !savedPost.isAbuseReport) {
       publishToAllSocials(savedPost, req);
     }
 
     if (savedPost.visibility === "editors") {
       mailer.sendNewEditorPostNotification(dbUser, savedPost, req);
+    }
+    if (savedPost.visibility === "users") {
+      await createNotification({
+        senderId: dbUser._id,
+        recipientId: null,
+        type: "announcement",
+        postId: savedPost._id,
+      });
+
+      const broadcastNotifFn = req.app.get("wsBroadcastAnnouncement");
+      if (typeof broadcastNotifFn === "function") {
+        broadcastNotifFn({
+          senderName: dbUser.displayName,
+          postId: savedPost._id.toString(),
+          postTitle: savedPost.title || "Nowy komunikat",
+        });
+      }
     }
 
     if (savedPost.parentPostId && !isSelfContinuation) {
@@ -371,6 +399,22 @@ async function postCreate(req, res) {
               originalPost,
               savedPost,
             );
+            await createNotification({
+              senderId: dbUser._id,
+              recipientId: originalPost.authorId,
+              type: "reply_post",
+              postId: savedPost._id,
+            });
+
+            const sendNotifFn = req.app.get("wsSendNotification");
+            if (typeof sendNotifFn === "function") {
+              sendNotifFn(originalPost.authorId, {
+                notificationType: "reply_post",
+                senderName: dbUser.displayName,
+                postId: savedPost._id.toString(),
+                postTitle: savedPost.title || "Nowa polemika",
+              });
+            }
           }
         }
       }
@@ -402,17 +446,21 @@ async function postCreate(req, res) {
       },
     };
 
-    const { getProfileUrl, urlAliases } = res.locals;
+    const { getProfileUrl, urlAliases, feedView } = res.locals;
     const isUserAdmin =
       typeof isAdminId === "function" ? isAdminId(dbUser._id) : false;
 
+    const cardTemplate =
+      feedView === "portal" ? "post-portal-card" : "post-card";
+
     try {
-      const htmlSnippet = renderPartial("post-card", {
+      const htmlSnippet = renderPartial(cardTemplate, {
         post: renderPost,
         csrfToken: req.csrfToken(),
         user: res.locals.user,
         userBlocks: (dbUser.blocks || []).map((id) => id.toString()),
         hasPermission,
+        generatePostExcerpt,
         isAdmin: isUserAdmin,
         DEFAULT_ASSETS,
         getProfileUrl,
@@ -420,7 +468,7 @@ async function postCreate(req, res) {
         SERVICE_NAME,
       });
 
-      // GLOBALNA TRANSMISJA WEBSOCKET DLA POSTÓW NIEPRYWATNYCH
+      // GLOBALNA TRANSMISJA WEBSOCKET DLA POSTÓW NIEPRYWATNYCH (w tym ogłoszeń 'users')
       const authorBlocksStr = (dbUser.blocks || []).map((id) => id.toString());
       const broadcastPostFn = req.app.get("wsBroadcastPost");
       if (
@@ -445,7 +493,7 @@ async function postCreate(req, res) {
       return res.json({ success: true, html: htmlSnippet });
     } catch (renderErr) {
       console.error(
-        "[PUG RENDER ERROR] Błąd kompilacji post-card w postCreate:",
+        "[PUG RENDER ERROR] Błąd kompilacji karty posta w postCreate:",
         renderErr,
       );
       if (visibility === "public") {
@@ -480,7 +528,8 @@ async function postEdit(req, res) {
     // =========================================================================
     // KRYTYCZNA BLOKADA POUFNOŚCI: Zakaz wyprowadzania postów ze strefy editors
     // =========================================================================
-    if (post.visibility === "editors" && visibility && visibility !== "editors") {
+    // if (post.visibility === "editors" && visibility && visibility !== "editors") {
+    if (["users", "editors"].includes(post.visibility) && visibility && visibility !== post.visibility) {
       return res
         .status(400)
         .send("Naruszenie poufności: Wewnętrzne artykuły redakcyjne nie mogą zostać upublicznione ani zmienione na inny format.");
@@ -605,7 +654,7 @@ async function postEdit(req, res) {
     post.authorEmail = dbUser.email;
 
     // POPRAWKA: Zmianę widoczności przypisujemy tylko wtedy, gdy stary post nie był postem redakcyjnym
-    if (post.visibility !== "editors" && visibility && POST_VISIBILITY.includes(visibility)) {
+    if (!["users", "editors"].includes(post.visibility) && visibility && POST_VISIBILITY.includes(visibility)) {
       post.visibility = visibility;
     }
 

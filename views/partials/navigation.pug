@@ -16,7 +16,9 @@ if user
         i.fa-solid.fa-rss
         
     a.nav-icon(href="/events" title="Powiadomienia i zdarzenia" class=(currentTab === 'events' ? 'active' : ''))
-        i.fa-solid.fa-bell
+        span.nav-bell-wrapper
+            i.fa-solid.fa-bell
+            span.unread-events-dot(style=(hasUnreadEvents ? "display: block;" : "display: none;"))
 
     if user.isAdmin
         a.nav-icon(href="/admin" title="Panel administratora" class=(currentTab === 'admin' ? 'active' : ''))

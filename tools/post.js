@@ -157,6 +157,11 @@ async function getScopedPosts(req, options = {}) {
       },
       { visibility: "private", authorId: currentUserId },
     ];
+    
+    // Komunikaty wewnętrzne widoczne dla każdego zalogowanego użytkownika
+    if (currentUserId) {
+      matchConditions.$or.push({ visibility: "users" });
+    }
 
     if (dbUser && dbUser.role === "editor") {
       matchConditions.$or.push({ visibility: "editors" });

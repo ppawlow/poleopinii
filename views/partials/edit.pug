@@ -17,6 +17,8 @@ form(id=`editForm-${activePost._id}` data-csrf=csrfToken onsubmit=`prepareEditSu
             option(value="public" selected=(selectedVis === 'public')) 🌐 Publiczne
             option(value="restricted" selected=(selectedVis === 'restricted')) 👥 Dla obserwujących
             option(value="private" selected=(selectedVis === 'private')) 🔒 Prywatne
+            if user && (user.role === 'editor' || user.isAdmin)
+                option(value="users" selected=(selectedVis === 'users')) 📢 Ogłoszenie (Tylko dla zalogowanych)
             if user && user.role === 'editor'
                 option(value="editors" selected=(selectedVis === 'editors')) 📝 Wewnętrzne (Tylko dla Redaktorów)
 

@@ -1,13 +1,13 @@
 {
-  "name": "medi",
+  "name": "Pole Opinii",
   "version": "2.0.0",
-  "description": "",
+  "description": "Portal publicystyki obywatelskiej",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
+  "author": "Piotr Pawłowski",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {

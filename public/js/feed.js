@@ -1230,16 +1230,19 @@ function initGlobalWebSocket() {
       // 3. POWIADOMIENIE W CZASIE RZECZYWISTYM (Dzwoneczek + /events)
       // ===========================================================
       if (data.type === "NEW_NOTIFICATION") {
-        // Podświetlenie ikony dzwoneczka w górnym menu i dropdownie
+        if (window.location.pathname !== "/events") {
+          document.querySelectorAll(".unread-events-dot").forEach((dot) => {
+            dot.style.display = "block";
+          });
+        }
+
         document
           .querySelectorAll('a[href="/events"] i.fa-bell')
           .forEach((bellIcon) => {
-            bellIcon.style.color = "#bc2525";
             bellIcon.classList.add("fa-shake");
             setTimeout(() => bellIcon.classList.remove("fa-shake"), 1500);
           });
 
-        // Jeśli użytkownik ma akurat otwartą zakładkę /events, odśwież listę przez API
         if (window.location.pathname === "/events") {
           fetch("/events/api")
             .then((res) => res.json())

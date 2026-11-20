@@ -32,6 +32,8 @@ if post.imageUrl && !isWorkMode
                 span(title="Prywatny" style="margin-left: 4px;") 🔒
             else if post.visibility === 'editors'
                 span(title="Wewnętrzny poufny post redakcyjny" style="color: #e5a93c; font-weight: bold; font-size: 11px; background: #fff3d6; padding: 1px 6px; border-radius: 4px; margin-left: 4px;") ⚠️ [Kolegium]
+            else if post.visibility === 'users'
+                span(title="Komunikat wewnętrzny dla zalogowanych użytkowników" style="color: #146c43; font-weight: bold; font-size: 11px; background: #d1e7dd; padding: 1px 6px; border-radius: 4px; margin-left: 4px;") 📢 [Ogłoszenie]
             else if isWorkMode && post.visibility === 'public'
                 span(title="Publiczny" style="margin-left: 4px;") 🌐
 

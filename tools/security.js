@@ -1,4 +1,4 @@
-const { User, createLog } = require("./db");
+const { User, createLog, Notification } = require("./db");
 const {
   POST_PERMISSIONS,
   USER_PERMISSIONS,
@@ -63,11 +63,29 @@ toolbox.isGuest = function (req, res, next) {
 toolbox.userData = async function (req, res, next) {
   req.dbUser = await userData(LoggedUserId(req));
   if (req.dbUser) {
+    req.dbUser.isAdmin = toolbox.isAdminId(req.dbUser.id);
     res.locals.user = safeUser(req.dbUser);
-    res.locals.user.isAdmin = toolbox.isAdminId(req.dbUser.id);
+    res.locals.user.isAdmin = req.dbUser.isAdmin;
+    await updateEvents(req, res);
   }
   next();
 };
+
+async function updateEvents(req, res){
+    try {
+      const lastSeen = req.dbUser.lastEventsSeenAt || new Date(0);
+      const unreadCount = await Notification.countDocuments({
+        createdAt: { $gt: lastSeen },
+        $or: [
+          { recipientId: req.dbUser._id },
+          { type: "announcement", senderId: { $ne: req.dbUser._id } },
+        ],
+      });
+      res.locals.hasUnreadEvents = unreadCount > 0;
+    } catch (err) {
+      res.locals.hasUnreadEvents = false;
+    }
+}
 
 /**
  * Middleware blokujący niezalogowanych użytkowników

@@ -7,7 +7,7 @@ module.exports = {
   FAVICON: "/logo.jpeg",
   OG_DEFAULT_IMAGE: "/banner.jpeg",
   
-  POST_VISIBILITY: ["public", "restricted", "private", "editors"],
+POST_VISIBILITY: ["public", "restricted", "private", "editors", "users"],
 
   routeDir: "./routes",
 
@@ -108,6 +108,11 @@ module.exports = {
       CREATE:   (user) => user?.isEditor,
       LIKE:     (user) => user?.isEditor,
       COMMENT:  (user) => user?.isEditor,
+    },
+    users: {
+      CREATE:  (user) => Boolean(user?.isEditor || user?.isAdmin),
+      LIKE:    (user) => Boolean(user),
+      COMMENT: (user) => Boolean(user),
     },
   },
   

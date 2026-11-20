@@ -71,6 +71,7 @@ const userSchema = new mongoose.Schema({
   },
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   blocks: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  lastEventsSeenAt: { type: Date, default: Date.now },
   createdAt: {
     type: Date,
     default: Date.now,

@@ -284,50 +284,48 @@ async function getSearchApi(req, res) {
   }
 }
 
-async function getEvents(req, res) {
-  try {
-    const currentUserId = req.dbUser._id;
+// Wspólny helper pobierający i formatujący zdarzenia konta oraz ogłoszenia systemowe z ostatnich 7 dni
+async function fetchFormattedEvents(currentUserId) {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-    // Filtrujemy zdarzenia z ostatnich 7 dni powiązane z zalogowanym użytkownikiem
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const { Notification } = require("../tools/db");
 
-    const { Notification } = require("../tools/db");
-
-    const events = await Notification.aggregate([
-      {
-        $match: {
-          recipientId: currentUserId,
-          createdAt: { $gt: sevenDaysAgo },
-        },
+  const events = await Notification.aggregate([
+    {
+      $match: {
+        createdAt: { $gt: sevenDaysAgo },
+        $or: [
+          { recipientId: currentUserId },
+          { type: "announcement" },
+        ],
       },
-      { $sort: { createdAt: -1 } },
-      { $limit: 50 },
-      // Łączymy z tabelą użytkowników, aby pobrać dane nadawcy (KTO)
-      {
-        $lookup: {
-          from: "users",
-          localField: "senderId",
-          foreignField: "_id",
-          as: "sender",
-        },
+    },
+    { $sort: { createdAt: -1 } },
+    { $limit: 50 },
+    {
+      $lookup: {
+        from: "users",
+        localField: "senderId",
+        foreignField: "_id",
+        as: "sender",
       },
-      { $unwind: "$sender" },
-      // Łączymy z tabelą postów, aby pobrać tytuł (Z CZYM)
-      {
-        $lookup: {
-          from: "posts",
-          localField: "postId",
-          foreignField: "_id",
-          as: "post",
-        },
+    },
+    { $unwind: "$sender" },
+    {
+      $lookup: {
+        from: "posts",
+        localField: "postId",
+        foreignField: "_id",
+        as: "post",
       },
-      { $unwind: { path: "$post", preserveNullAndEmptyArrays: true } },
-    ]);
+    },
+    { $unwind: { path: "$post", preserveNullAndEmptyArrays: true } },
+  ]);
 
-    // Mapujemy surowe dokumenty do postaci czytelnej dla widoku
-    const formattedEvents = events.map((ev) => {
-      // Bezpieczne ustalenie nazwy wyświetlanej nadawcy (DRY)
+  return events
+    .filter((ev) => ev.type === "follow" || ev.post !== null) // Pomijamy powiadomienia dla usuniętych w międzyczasie postów
+    .map((ev) => {
       const senderName =
         ev.sender.nickname && ev.sender.nickname.trim().length > 0
           ? ev.sender.nickname.trim()
@@ -337,12 +335,24 @@ async function getEvents(req, res) {
         _id: ev._id,
         createdAt: ev.createdAt,
         senderId: ev.senderId,
-        senderName: senderName,
+        senderName,
+        senderUrl: User.getProfileUrl(ev.sender),
         type: ev.type,
         postId: ev.postId,
+        commentId: ev.commentId,
         postTitle: ev.post ? ev.post.title || "Wpis bez tytułu" : "Twój post",
       };
     });
+}
+
+async function getEvents(req, res) {
+  try {
+    const formattedEvents = await fetchFormattedEvents(req.dbUser._id);
+
+    // Oznaczamy powiadomienia jako przeczytane i wygaszamy czerwoną kropkę
+    req.dbUser.lastEventsSeenAt = new Date();
+    await req.dbUser.save();
+    res.locals.hasUnreadEvents = false;
 
     res.render("events", {
       title: "Twoje powiadomienia",
@@ -357,66 +367,13 @@ async function getEvents(req, res) {
 
 async function getEventsApi(req, res) {
   try {
-    const currentUserId = req.dbUser._id;
-    const sevenDaysAgo = new Date();
-    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const formattedEvents = await fetchFormattedEvents(req.dbUser._id);
+    const eventsWithHtml = formattedEvents.map((evContext) => ({
+      _id: evContext._id,
+      html: renderPartial("event-row", { ev: evContext }),
+    }));
 
-    const { Notification } = require("../tools/db");
-    const events = await Notification.aggregate([
-      {
-        $match: { recipientId: currentUserId, createdAt: { $gt: sevenDaysAgo } },
-      },
-      { $sort: { createdAt: -1 } },
-      { $limit: 50 },
-      {
-        $lookup: {
-          from: "users",
-          localField: "senderId",
-          foreignField: "_id",
-          as: "sender",
-        },
-      },
-      { $unwind: "$sender" },
-      {
-        $lookup: {
-          from: "posts",
-          localField: "postId",
-          foreignField: "_id",
-          as: "post",
-        },
-      },
-      { $unwind: { path: "$post", preserveNullAndEmptyArrays: true } },
-    ]);
-
-    const { urlAliases } = res.locals;
-    const formattedEvents = [];
-
-    for (const ev of events) {
-      const senderName =
-        ev.sender.nickname && ev.sender.nickname.trim().length > 0
-          ? ev.sender.nickname.trim()
-          : ev.sender.name;
-      const senderIdStr = ev.senderId.toString();
-      const senderUrl =
-        urlAliases && urlAliases[senderIdStr]
-          ? `/profile/${urlAliases[senderIdStr]}`
-          : `/profile/${senderIdStr}`;
-
-      const evContext = {
-        _id: ev._id,
-        createdAt: ev.createdAt,
-        senderName,
-        senderUrl,
-        type: ev.type,
-        postId: ev.postId,
-        commentId: ev.commentId,
-        postTitle: ev.post ? ev.post.title || "Wpis bez tytułu" : "Twój post",
-      };
-
-      const htmlSnippet = renderPartial("event-row", { ev: evContext });
-      formattedEvents.push({ _id: ev._id, html: htmlSnippet });
-    }
-    return res.json({ success: true, events: formattedEvents });
+    return res.json({ success: true, events: eventsWithHtml });
   } catch (err) {
     console.error("Błąd API powiadomień:", err);
     return res.status(500).json({ error: "Błąd wczytywania zdarzeń." });
