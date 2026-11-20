@@ -47,6 +47,7 @@ const {
 // Narzędzia
 const { User, Alias, createLog, createVerifiedUser } = require("./tools/db");
 const { generatePostExcerpt } = require("./tools/excerptHelper");
+const { attachWsMiddleware } = require("./tools/ws");
 
 const app = express();
 
@@ -248,6 +249,8 @@ function setupEndpoints(app) {
     }
   }
 }
+
+app.use(attachWsMiddleware);
 
 setupEndpoints(app);
 

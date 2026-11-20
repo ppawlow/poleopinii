@@ -1,4 +1,3 @@
-// === routes/comments.js ===
 const express = require("express");
 
 const {
@@ -72,20 +71,13 @@ async function postCommentEdit(req, res) {
     comment.content = cleanContent;
     await post.save();
 
-    const broadcastEditFn = req.app.get("wsBroadcastCommentEdited");
-    if (typeof broadcastEditFn === "function") {
-      broadcastEditFn({
-        postId: post._id,
-        commentId: comment._id,
-        content: comment.content,
-      });
-    }
+    req.app.get("ws
+        // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
+        return res.json({
+          success: true,
+          content: comment.content,
+        });
 
-    // Zwracamy status sukcesu oraz nową treść komentarza do bezprzeładowaniowego wstrzyknięcia w DOM
-    return res.json({
-      success: true,
-      content: comment.content,
-    });
   } catch (err) {
     console.error("Błąd edycji komentarza:", err);
     return res
@@ -187,13 +179,10 @@ async function postCommentDelete(req, res) {
 
     post.comments.pull(req.params.commentId);
     await post.save();
-    const broadcastDeleteFn = req.app.get("wsBroadcastCommentDeleted");
-    if (typeof broadcastDeleteFn === "function") {
-      broadcastDeleteFn({
-        postId: post._id,
-        commentId: req.params.commentId,
-      });
-    }
+    req.ws?.broadcastCommentDeleted({
+      postId: post._id,
+      commentId: req.params.commentId,
+    });
 
     await createLog(
       req,

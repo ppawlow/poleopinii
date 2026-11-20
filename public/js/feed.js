@@ -1275,7 +1275,7 @@ function initGlobalWebSocket() {
       }
 
       // ===========================================================
-      // 2. NOWY KOMENTARZ NA ŻYWO (W dowolnym widoku z tym postem)
+      // 2a. NOWY KOMENTARZ NA ŻYWO (W dowolnym widoku z tym postem)
       // ===========================================================
       if (data.type === "NEW_COMMENT" && data.html && data.postId) {
         const postCard = document.getElementById(`post-${data.postId}`);

@@ -367,14 +367,11 @@ async function postCreate(req, res) {
         postId: savedPost._id,
       });
 
-      const broadcastNotifFn = req.app.get("wsBroadcastAnnouncement");
-      if (typeof broadcastNotifFn === "function") {
-        broadcastNotifFn({
-          senderName: dbUser.displayName,
-          postId: savedPost._id.toString(),
-          postTitle: savedPost.title || "Nowy komunikat",
-        });
-      }
+      req.ws?.broadcastAnnouncement({
+        senderName: dbUser.displayName,
+        postId: savedPost._id.toString(),
+        postTitle: savedPost.title || "Nowy komunikat",
+      });      
     }
 
     if (savedPost.parentPostId && !isSelfContinuation) {
@@ -407,15 +404,12 @@ async function postCreate(req, res) {
               postId: savedPost._id,
             });
 
-            const sendNotifFn = req.app.get("wsSendNotification");
-            if (typeof sendNotifFn === "function") {
-              sendNotifFn(originalPost.authorId, {
-                notificationType: "reply_post",
-                senderName: dbUser.displayName,
-                postId: savedPost._id.toString(),
-                postTitle: savedPost.title || "Nowa polemika",
-              });
-            }
+            req.ws?.sendNotification(originalPost.authorId, {
+              notificationType: "reply_post",
+              senderName: dbUser.displayName,
+              postId: savedPost._id.toString(),
+              postTitle: savedPost.title || "Nowa polemika",
+            });
           }
         }
       }
@@ -471,13 +465,9 @@ async function postCreate(req, res) {
 
       // GLOBALNA TRANSMISJA WEBSOCKET DLA POSTÓW NIEPRYWATNYCH (w tym ogłoszeń 'users')
       const authorBlocksStr = (dbUser.blocks || []).map((id) => id.toString());
-      const broadcastPostFn = req.app.get("wsBroadcastPost");
-      if (
-        typeof broadcastPostFn === "function" &&
-        savedPost.visibility !== "private" &&
-        !savedPost.isAbuseReport
-      ) {
-        broadcastPostFn({
+      
+      if (savedPost.visibility !== "private" && !savedPost.isAbuseReport) {
+        req.ws?.broadcastPost({
           html: htmlSnippet,
           post: savedPost,
           authorBlocks: authorBlocksStr,
@@ -858,32 +848,27 @@ async function postComment(req, res) {
 
       // GLOBALNA TRANSMISJA WEBSOCKET DLA KOMENTARZY
       const authorBlocksStr = (dbUser.blocks || []).map((id) => id.toString());
-      const broadcastCommentFn = req.app.get("wsBroadcastComment");
-      if (typeof broadcastCommentFn === "function") {
-        broadcastCommentFn({
-          html: htmlSnippet,
-          postId: post._id,
-          visibility: post.visibility,
-          postAuthorId: post.authorId,
-          senderId: dbUser._id,
-          authorBlocks: authorBlocksStr,
-        });
-      }
+      
+      req.ws?.broadcastComment({
+        html: htmlSnippet,
+        postId: post._id,
+        visibility: post.visibility,
+        postAuthorId: post.authorId,
+        senderId: dbUser._id,
+        authorBlocks: authorBlocksStr,
+      });
 
       // POWIADOMIENIE NA ŻYWO (DZWONECZEK) DLA ADRESATA KOMENTARZA / ODPOWIEDZI
       if (
         post.visibility !== "editors" &&
         String(recipientId) !== String(dbUser._id)
       ) {
-        const sendNotifFn = req.app.get("wsSendNotification");
-        if (typeof sendNotifFn === "function") {
-          sendNotifFn(recipientId, {
-            notificationType,
-            senderName: dbUser.displayName,
-            postId: post._id.toString(),
-            postTitle: post.title || "Twój wpis",
-          });
-        }
+        req.ws?.sendNotification(recipientId, {
+          notificationType,
+          senderName: dbUser.displayName,
+          postId: post._id.toString(),
+          postTitle: post.title || "Twój wpis",
+        });
       }
 
       if (
@@ -963,15 +948,12 @@ async function postLike(req, res) {
         });
 
         // POWIADOMIENIE NA ŻYWO (DZWONECZEK) DLA AUTORA POSTA
-        const sendNotifFn = req.app.get("wsSendNotification");
-        if (typeof sendNotifFn === "function") {
-          sendNotifFn(post.authorId, {
-            notificationType: "like_post",
-            senderName: dbUser.displayName,
-            postId: post._id.toString(),
-            postTitle: post.title || "Twój wpis",
-          });
-        }
+        req.ws?.sendNotification(post.authorId, {
+          notificationType: "like_post",
+          senderName: dbUser.displayName,
+          postId: post._id.toString(),
+          postTitle: post.title || "Twój wpis",
+        });
       }
     } else {
       post.likedBy.splice(index, 1);
