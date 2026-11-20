@@ -464,7 +464,8 @@ body {
 }
 
 .post-like-form {
-  display: contents;
+  display: inline-flex;
+  margin: 0;
 }
 
 .action-btn {

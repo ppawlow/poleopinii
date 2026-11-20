@@ -182,7 +182,8 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
         const postCard = form.closest(".post-card, .editorial-article");
         if (postCard) {
           // Dynamiczna aktualizacja licznika lajków na profilu lub osi czasu (ID dodane w post-footer.pug)
-          const postId = form.action.split("/")[2];
+          const postIdMatch = form.action.match(/\/posts\/([a-f0-9]{24})\/like/i);
+          const postId = postIdMatch ? postIdMatch[1] : "";
           const dynamicLikesEl = document.getElementById(
             `likes-text-${postId}`,
           );
@@ -702,3 +703,35 @@ window.executeReaderFactCheckPayload = async function (postId, buttonElement) {
     window.Alert("Wystąpił błąd połączenia z serwerem operacyjnym.", "Błąd sieci");
   }
 };
+
+// Obsługa kliknięcia w funkcje wymagające weryfikacji konta (gwiazdki, komentarze, wiadomości)
+document.addEventListener("click", (e) => {
+  const trigger = e.target.closest(".restricted-feature-trigger");
+  if (!trigger) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const reason = trigger.getAttribute("data-reason");
+  let message = "Ta funkcja wymaga pełnej weryfikacji tożsamości.";
+
+  if (reason === "like_public") {
+    message = "Docenianie wpisów publicznych (przyznawanie gwiazdek) jest dostępne wyłącznie dla użytkowników ze zweryfikowanym profilem.";
+  } else if (reason === "comment_public") {
+    message = "Komentowanie i odpowiadanie pod wpisami publicznymi wymaga pełnej weryfikacji konta.";
+  } else if (reason === "like_comment") {
+    message = "Ocenianie komentarzy pod wpisami publicznymi wymaga pełnej weryfikacji konta.";
+  } else if (reason === "private_mail_unverified") {
+    message = "Wysyłanie prywatnych wiadomości e-mail do innych autorów wymaga pełnej weryfikacji konta.";
+  }
+
+  window.Alert(
+    `<div style="text-align: left; line-height: 1.5;">
+      <p style="margin-bottom: 14px;">${message}</p>
+      <p style="text-align: center; margin: 0;">
+        <a href="/verify" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Zweryfikuj swoje konto</a>
+      </p>
+    </div>`,
+    "🛡️ Wymagana weryfikacja profilu"
+  );
+});
