@@ -653,3 +653,22 @@
     background-color: #161b22 !important;
   }
 }
+/* =========================================================================
+   USUNIĘCIE WKLEJONEGO BIAŁEGO TŁA SPOD WIERSZY TEKSTU (GLOBALNIE + DARK MODE)
+   ========================================================================= */
+.article-text-content,
+.article-text-content *,
+.post-content-html,
+.post-content-html * {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .article-text-content,
+  .article-text-content *,
+  .post-content-html,
+  .post-content-html * {
+    color: #e6edf3 !important;
+  }
+}
