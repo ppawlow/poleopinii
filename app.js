@@ -49,6 +49,18 @@ const { User, Alias, createLog, createVerifiedUser } = require("./tools/db");
 const { generatePostExcerpt } = require("./tools/excerptHelper");
 const { attachWsMiddleware } = require("./tools/ws");
 
+const pkg = require("./package.json");
+const APP_INFO = {
+  name: pkg.name,
+  version: pkg.version,
+  description: pkg.description,
+  author:
+    typeof pkg.author === "object"
+      ? pkg.author.name || JSON.stringify(pkg.author)
+      : pkg.author,
+  license: pkg.license,
+};
+
 const app = express();
 
 app.use(
@@ -203,6 +215,7 @@ app.use(async (req, res, next) => {
     currentUrl: req.originalUrl.split("?")[0],
     DEFAULT_ASSETS,
     SERVICE_NAME,
+    APP_INFO,
     SERVICE_LOGO,
     FAVICON,
     LOGOTYP,

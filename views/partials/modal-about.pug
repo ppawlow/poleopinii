@@ -1,0 +1,31 @@
+//- Okno modalne "O aplikacji" (metadane z package.json)
+#custom-about-modal.custom-modal-backdrop(style="display: none;" onclick="window.closeAboutModal()")
+    .custom-modal-box(style="max-width: 440px;" onclick="event.stopPropagation()")
+        .custom-modal-header(style="display: flex; justify-content: space-between; align-items: center;")
+            h3(style="display: inline-flex; align-items: center; gap: 8px; margin: 0;")
+                i.fa-solid.fa-circle-info(style="color: #1877f2;")
+                | O aplikacji
+            span(onclick="window.closeAboutModal()" style="cursor: pointer; font-size: 22px; font-weight: bold; color: var(--text-muted); line-height: 1;") &times;
+
+        .custom-modal-body(style="padding: 16px; font-family: sans-serif;")
+            if APP_INFO && APP_INFO.description
+                p(style="font-size: 14px; color: var(--text-body); line-height: 1.5; margin-bottom: 14px;")
+                    | #{APP_INFO.description}
+
+            table(style="width: 100%; border-collapse: collapse; font-size: 13.5px;")
+                tr(style="border-bottom: 1px solid var(--border-color);")
+                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600; width: 110px;") Aplikacja:
+                    td(style="padding: 8px 4px; font-family: monospace; color: var(--text-main); font-weight: 600;") #{APP_INFO ? APP_INFO.name : SERVICE_NAME}
+                tr(style="border-bottom: 1px solid var(--border-color);")
+                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Wersja:
+                    td(style="padding: 8px 4px;")
+                        span.admin-code-chip v#{APP_INFO ? APP_INFO.version : '1.0.0'}
+                tr(style="border-bottom: 1px solid var(--border-color);")
+                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Autor:
+                    td(style="padding: 8px 4px; color: var(--text-main);") #{APP_INFO ? APP_INFO.author : ''}
+                tr
+                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Licencja:
+                    td(style="padding: 8px 4px; font-family: monospace; color: var(--color-primary); font-weight: 700;") #{APP_INFO ? APP_INFO.license : ''}
+
+        .custom-modal-footer
+            button.modal-btn-primary(type="button" onclick="window.closeAboutModal()") Zamknij

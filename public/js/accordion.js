@@ -305,6 +305,17 @@ window.closeLightbox = function () {
   }
 };
 
+window.openAboutModal = function () {
+  const modal = document.getElementById("custom-about-modal");
+  if (modal) modal.style.display = "flex";
+};
+
+window.closeAboutModal = function () {
+  const modal = document.getElementById("custom-about-modal");
+  if (modal) modal.style.display = "none";
+};
+
+
 document.addEventListener("DOMContentLoaded", () => {
   document.body.addEventListener(
     "click",

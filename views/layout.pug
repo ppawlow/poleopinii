@@ -118,6 +118,7 @@ html(lang="pl")
                 div(style="display: flex; gap: 20px; align-items: center; justify-content: center;")
                     a(href="/regulamin" style="font-size: 12px; color: #1877f2; text-decoration: none; font-weight: 600;") ⚖️ Regulamin
                     a(href="/polityka-prywatnosci" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600;") 🛡️ Polityka prywatności
+                    a(href="#" onclick="event.preventDefault(); window.openAboutModal();" style="font-size: 13px; color: #1877f2; text-decoration: none; font-weight: 600;") ⓘ O aplikacji
                 if useRecaptcha
                     div(style="font-size: 12px; color: var(--text-muted); text-align: center; width: 100%; margin-top: 6px; line-height: 1.4; font-family: sans-serif;")
                         | Witryna jest chroniona mechanizmem reCAPTCHA Enterprise. Obowiązuje 
