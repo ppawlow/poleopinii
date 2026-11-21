@@ -8,7 +8,7 @@ div(style="font-family: sans-serif;")
                 - var isEnabled = socialSettings && socialSettings[soc.id] === true
                 .admin-social-row
                     div(style="display: flex; align-items: center; gap: 12px;")
-                        a..social-pill-link(href=soc.url title="Przejdź do serwisu " + soc.id target="_blank" style=`color: ${soc.color};`)
+                        a.social-pill-link(href=soc.url title="Przejdź do serwisu " + soc.id target="_blank" style=`color: ${soc.color};`)
                             i(class=soc.icon)
                         div
                             div(style="font-size: 14.5px; font-weight: 700; color: var(--text-main); text-transform: capitalize;") #{soc.id}
