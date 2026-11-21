@@ -265,7 +265,7 @@
 
   #create-post-modal .custom-modal-header {
     flex: 0 0 auto !important;
-    background: #ffffff;
+    background: inherit;
     z-index: 10;
     padding: 10px 14px !important;
   }
@@ -508,5 +508,139 @@
     display: flex !important;
     justify-content: center !important;
     gap: 24px !important;
+  }
+}
+
+/* =========================================================================
+   4. TRYB CIEMNY DLA WIDOKU MOBILNEGO (Ekran < 900px + prefers-color-scheme: dark)
+   ========================================================================= */
+@media (max-width: 900px) and (prefers-color-scheme: dark) {
+  body {
+    background-color: #0d1117 !important;
+    color: #e6edf3 !important;
+  }
+
+  .fb-navbar,
+  .site-footer,
+  .nav-dropdown-content,
+  .create-post,
+  .post-card,
+  .login-prompt,
+  .info-box,
+  .editorial-article,
+  .login-box,
+  .main-container:not(:has(.editorial-article)) .left-sidebar,
+  .main-container:not(:has(.editorial-article)) .right-sidebar {
+    background-color: #161b22 !important;
+    color: #e6edf3 !important;
+    border-color: #30363d !important;
+  }
+
+  /* Pastelowe kolory widoczności dostosowane do ciemnego tła */
+  .post-card.vis-theme-public,
+  #create-post-modal .custom-modal-box.vis-theme-public {
+    background-color: #161b22 !important;
+  }
+
+  .post-card[class*="vis-theme-"]:not(.vis-theme-public),
+  #create-post-modal .custom-modal-box[class*="vis-theme-"]:not(.vis-theme-public) {
+    background-color: color-mix(in srgb, var(--vis-color), #161b22 86%) !important;
+  }
+
+  .post-card[class*="vis-theme-"]:not(.vis-theme-public) .accordion-content,
+  .accordion-content,
+  .comment-content,
+  .article-author-box {
+    background-color: #1c2128 !important;
+    border-color: #30363d !important;
+  }
+
+  /* Nagłówki, tytuły i treść artykułów */
+  h1, h2, h3, h4, h5,
+  .portal-card-title a,
+  .portal-single-title,
+  .portal-author-name,
+  .article-text-content,
+  .article-text-content p,
+  .dropdown-item,
+  .sidebar-item {
+    color: #e6edf3 !important;
+  }
+
+  .portal-card-lead,
+  .portal-card-meta,
+  .portal-date,
+  .post-stats,
+  .comment-actions-links,
+  .toolbar-group-label {
+    color: #8b949e !important;
+  }
+
+  /* Przyciski, pola tekstowe i paski wyszukiwania */
+  .action-btn,
+  .nav-dropdown-btn,
+  .search-bar,
+  .view-switch-btn,
+  .social-pill-link,
+  #load-more-btn,
+  .comment-form textarea,
+  input,
+  textarea,
+  select {
+    background-color: #21262d !important;
+    color: #e6edf3 !important;
+    border-color: #30363d !important;
+  }
+
+  .dropdown-item:hover,
+  .sidebar-item:hover,
+  .action-btn:hover:not([disabled]) {
+    background-color: #30363d !important;
+  }
+
+  .dropdown-divider,
+  .post-stats,
+  .post-actions,
+  .portal-card-footer {
+    border-color: #30363d !important;
+  }
+
+  /* Pełnoekranowy modal edytora oraz Quill w trybie ciemnym */
+  #create-post-modal,
+  #create-post-modal .custom-modal-box {
+    background-color: #161b22 !important;
+  }
+
+  #create-post-modal .ql-toolbar.ql-snow {
+    background-color: #21262d !important;
+    border-color: #30363d !important;
+  }
+
+  #create-post-modal .ql-toolbar .ql-stroke {
+    stroke: #e6edf3 !important;
+  }
+
+  #create-post-modal .ql-toolbar .ql-fill {
+    fill: #e6edf3 !important;
+  }
+
+  #create-post-modal .ql-toolbar .ql-picker-label {
+    color: #e6edf3 !important;
+  }
+
+  #create-post-modal #edit-quill-new,
+  #create-post-modal .ql-editor {
+    background-color: #0d1117 !important;
+    color: #e6edf3 !important;
+  }
+
+  .mobile-panel-indicator,
+  .mobile-panel-indicator .panel-segment {
+    background-color: #161b22 !important;
+  }
+  body:not(.has-left-sidebar):not(.has-right-sidebar) .mobile-panel-indicator .seg-center,
+  body.has-left-sidebar .mobile-panel-indicator .seg-left,
+  body.has-right-sidebar .mobile-panel-indicator .seg-right {
+    background-color: #58a6ff !important;
   }
 }

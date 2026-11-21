@@ -528,3 +528,75 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 });
 
+// =========================================================================
+// AUTOMATYCZNE DOCZYTYWANIE ("POKAŻ WIĘCEJ") NA MOBILE PRZY PRZEWIJANIU W DÓŁ
+// =========================================================================
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.innerWidth > 900) return;
+
+  const triggerLoadMoreIfReady = () => {
+    const loadMoreContainer = document.getElementById("load-more-container");
+    const loadMoreBtn = document.getElementById("load-more-btn");
+
+    if (
+      !loadMoreContainer ||
+      !loadMoreBtn ||
+      loadMoreContainer.style.display === "none" ||
+      loadMoreBtn.disabled
+    ) {
+      return;
+    }
+
+    if (typeof loadMorePosts === "function") {
+      loadMorePosts();
+    }
+  };
+
+  // 1. Reakcja natychmiastowa, gdy przycisk wejdzie w obszar ekranu (z zapasem 120px)
+  const loadMoreBtn = document.getElementById("load-more-btn");
+  if (loadMoreBtn && "IntersectionObserver" in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            triggerLoadMoreIfReady();
+          }
+        });
+      },
+      { rootMargin: "0px 0px 120px 0px", threshold: 0.1 },
+    );
+    observer.observe(loadMoreBtn);
+  }
+
+  // 2. Dodatkowe wyzwolenie gestem przesunięcia palca na samym dole strumienia
+  let pullStartY = 0;
+  document.addEventListener(
+    "touchstart",
+    (e) => {
+      pullStartY = e.changedTouches[0].screenY;
+    },
+    { passive: true },
+  );
+
+  document.addEventListener(
+    "touchend",
+    (e) => {
+      if (
+        document.body.classList.contains("has-left-sidebar") ||
+        document.body.classList.contains("has-right-sidebar")
+      ) {
+        return;
+      }
+
+      const deltaY = pullStartY - e.changedTouches[0].screenY;
+      const nearBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 160;
+
+      if (deltaY > 40 && nearBottom) {
+        triggerLoadMoreIfReady();
+      }
+    },
+    { passive: true },
+  );
+});

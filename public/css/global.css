@@ -1656,27 +1656,40 @@ footer.site-footer {
   background-color: #f7fef9 !important;
 }
 
-/* Okno modalu edytora dopasowujące tło do wybranej widoczności */
+/* =========================================================================
+   KOLORYSTYKA PASTELOWA WIDOCZNOŚCI POSTÓW (LISTA POSTÓW + OKNO EDYTORA)
+   ========================================================================= */
+.vis-theme-public     { --vis-color: #e4e6eb; }
+.vis-theme-restricted { --vis-color: #1877f2; }
+.vis-theme-private    { --vis-color: #dc3545; }
+.vis-theme-editors    { --vis-color: #e5a93c; }
+.vis-theme-users      { --vis-color: #198754; }
+
+/* Karty na liście postów */
+.post-card.vis-theme-public {
+  background-color: #ffffff !important;
+}
+
+.post-card[class*="vis-theme-"]:not(.vis-theme-public) {
+  background-color: color-mix(in srgb, var(--vis-color), white 80%) !important;
+  border-left: 4px solid var(--vis-color) !important;
+}
+
+.post-card[class*="vis-theme-"]:not(.vis-theme-public) .accordion-content {
+  background-color: color-mix(in srgb, var(--vis-color), white 80%) !important;
+}
+
+/* Okno modalu edytora (Desktop + Mobile) */
 #create-post-modal .custom-modal-box {
   transition: background-color 0.25s ease, border-top-color 0.25s ease;
 }
+
 #create-post-modal .custom-modal-box.vis-theme-public {
-  background-color: #ffffff;
+  background-color: #ffffff !important;
   border-top: 5px solid #e4e6eb;
 }
-#create-post-modal .custom-modal-box.vis-theme-restricted {
-  background-color: #f0f7ff;
-  border-top: 5px solid #1877f2;
-}
-#create-post-modal .custom-modal-box.vis-theme-private {
-  background-color: #fff5f5;
-  border-top: 5px solid #dc3545;
-}
-#create-post-modal .custom-modal-box.vis-theme-editors {
-  background-color: #fffdf0;
-  border-top: 5px solid #e5a93c;
-}
-#create-post-modal .custom-modal-box.vis-theme-users {
-  background-color: #f0fdf4;
-  border-top: 5px solid #198754;
+
+#create-post-modal .custom-modal-box[class*="vis-theme-"]:not(.vis-theme-public) {
+  background-color: color-mix(in srgb, var(--vis-color), white 80%) !important;
+  border-top: 5px solid var(--vis-color);
 }

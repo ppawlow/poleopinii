@@ -332,6 +332,8 @@ window.toggleInlineEdit = async function (postId, event) {
 };
 
 window.previewEditImage = function (input, postId) {
+  const cropBody = document.getElementById(`crop-image-body-${postId}`); 
+  if (cropBody) cropBody.style.display = "flex";
   if (input?.files?.item(0)) {
     const form = document.getElementById(`editForm-${postId}`);
     if (form) form.dataset.isDirty = "true";
