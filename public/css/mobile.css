@@ -643,4 +643,9 @@
   body.has-right-sidebar .mobile-panel-indicator .seg-right {
     background-color: #58a6ff !important;
   }
+    .ql-editor lead,
+  .article-text-content lead {
+    color: inherit !important;
+    border-bottom-color: #30363d !important;
+  }
 }
