@@ -50,6 +50,43 @@ const { generatePostExcerpt } = require("./tools/excerptHelper");
 const { attachWsMiddleware } = require("./tools/ws");
 
 const pkg = require("./package.json");
+
+function getLastAppUpdateDate() {
+  const formatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Warsaw",
+  };
+
+  try {
+    // 1. Próba odczytu daty i godziny ostatniego commita z Gita
+    const gitIsoDate = execSync("git log -1 --format=%cI", {
+      cwd: __dirname,
+      stdio: ["ignore", "pipe", "ignore"],
+    })
+      .toString()
+      .trim();
+
+    if (gitIsoDate) {
+      return new Date(gitIsoDate).toLocaleString("pl-PL", formatOptions);
+    }
+  } catch (e) {
+    // Ignorujemy brak Gita na serwerze produkcyjnym
+  }
+
+  try {
+    // 2. Fallback: data i godzina ostatniej modyfikacji pliku package.json na dysku
+    const stats = fs.statSync(path.join(__dirname, "package.json"));
+    return stats.mtime.toLocaleString("pl-PL", formatOptions);
+  } catch (e) {
+    return new Date().toLocaleString("pl-PL", formatOptions);
+  }
+}
+
+
 const APP_INFO = {
   name: pkg.name,
   version: pkg.version,
@@ -59,6 +96,7 @@ const APP_INFO = {
       ? pkg.author.name || JSON.stringify(pkg.author)
       : pkg.author,
   license: pkg.license,
+  lastUpdated: getLastAppUpdateDate(),
 };
 
 const app = express();

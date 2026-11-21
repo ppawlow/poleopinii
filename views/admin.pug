@@ -6,14 +6,14 @@ block append head
     link(rel="stylesheet" href="/css/admin.css?v=1")
     script(src="/js/adminApi.js")
 
-mixin adminSection(panelId, iconClass, titleText, titleColor, badgeText, badgeClass, isOpen, isCardBg, tableTrigger)
+mixin adminSection(panelId, iconClass, titleText, titleColor, badgeText, badgeClass, isOpen, isCardBg, tableTrigger, badgeId)
     .post-card.accordion-item.admin-panel-card(id=panelId)
         .accordion-header.admin-panel-header(data-table-trigger=tableTrigger)
             h3(style=`font-size: 16px; font-weight: 700; color: ${titleColor}; margin: 0; display: inline-flex; align-items: center; gap: 8px;`)
                 i(class=iconClass)
                 | #{titleText}
             div(style="display: flex; align-items: center; gap: 12px;")
-                span.admin-pill(class=badgeClass) #{badgeText}
+                span.admin-pill(id=badgeId class=badgeClass) #{badgeText}
                 i.fa-solid.fa-chevron-down.accordion-icon(style=`color: var(--text-muted); transition: transform 0.3s;${isOpen ? ' transform: rotate(180deg);' : ''}`)
         .accordion-content.admin-panel-body(class=(isCardBg ? 'is-card-bg' : '') style=(isOpen ? 'display: block;' : 'display: none;'))
             block
@@ -41,5 +41,5 @@ block content
                 +adminSection("admin-panel-logs", "fa-solid fa-scroll", "Logi operacyjne i audyt użycia AI", "var(--text-main)", logs.length, "", false, true, "logsTable")
                     include partials/admin-logs.pug
 
-                +adminSection("admin-panel-socials", "fa-solid fa-share-nodes", "Dystrybucja w mediach społecznościowych (Auto-Share)", "var(--color-primary)", `${activeSocialsCount} / ${SERVICE_SOCIALS.length}`, "is-success", false, true)
+                +adminSection("admin-panel-socials", "fa-solid fa-share-nodes", "Dystrybucja w mediach społecznościowych (Auto-Share)", "var(--color-primary)", activeSocialsCount, "is-success", false, true, null, "active-socials-badge")
                     include partials/admin-socials.pug

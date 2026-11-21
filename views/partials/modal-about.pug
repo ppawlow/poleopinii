@@ -8,24 +8,33 @@
             span(onclick="window.closeAboutModal()" style="cursor: pointer; font-size: 22px; font-weight: bold; color: var(--text-muted); line-height: 1;") &times;
 
         .custom-modal-body(style="padding: 16px; font-family: sans-serif;")
-            if APP_INFO && APP_INFO.description
-                p(style="font-size: 14px; color: var(--text-body); line-height: 1.5; margin-bottom: 14px;")
-                    | #{APP_INFO.description}
+            p(style="font-size: 14px; color: var(--text-body); line-height: 1.5; margin-bottom: 14px;")
+                b #{SERVICE_NAME}
+                if APP_INFO && APP_INFO.description
+                    |  - #{APP_INFO.description}
 
             table(style="width: 100%; border-collapse: collapse; font-size: 13.5px;")
-                tr(style="border-bottom: 1px solid var(--border-color);")
-                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600; width: 110px;") Aplikacja:
-                    td(style="padding: 8px 4px; font-family: monospace; color: var(--text-main); font-weight: 600;") #{APP_INFO ? APP_INFO.name : SERVICE_NAME}
-                tr(style="border-bottom: 1px solid var(--border-color);")
-                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Wersja:
-                    td(style="padding: 8px 4px;")
-                        span.admin-code-chip v#{APP_INFO ? APP_INFO.version : '1.0.0'}
-                tr(style="border-bottom: 1px solid var(--border-color);")
-                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Autor:
-                    td(style="padding: 8px 4px; color: var(--text-main);") #{APP_INFO ? APP_INFO.author : ''}
-                tr
-                    th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Licencja:
-                    td(style="padding: 8px 4px; font-family: monospace; color: var(--color-primary); font-weight: 700;") #{APP_INFO ? APP_INFO.license : ''}
+                if APP_INFO && APP_INFO.name
+                    tr(style="border-bottom: 1px solid var(--border-color);")
+                        th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600; width: 110px;") Pakiet:
+                        td(style="padding: 8px 4px; font-family: monospace; color: var(--text-main); font-weight: 600;") #{APP_INFO.name}
+                if APP_INFO && APP_INFO.version
+                    tr(style="border-bottom: 1px solid var(--border-color);")
+                        th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Wersja:
+                        td(style="padding: 8px 4px;")
+                            span.admin-code-chip #{APP_INFO.version}
+                if APP_INFO && APP_INFO.author
+                    tr(style="border-bottom: 1px solid var(--border-color);")
+                        th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Autor:
+                        td(style="padding: 8px 4px; color: var(--text-main);") #{APP_INFO.author}
+                if APP_INFO && APP_INFO.license
+                    tr(style="border-bottom: 1px solid var(--border-color);")
+                        th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Licencja:
+                        td(style="padding: 8px 4px; font-family: monospace; color: var(--color-primary); font-weight: 700;") #{APP_INFO.license}
+                if APP_INFO && APP_INFO.lastUpdated
+                    tr(style="border-bottom: 1px solid var(--border-color);")
+                        th(style="text-align: left; padding: 8px 4px; color: var(--text-muted); font-weight: 600;") Aktualizacja:
+                        td(style="padding: 8px 4px; color: var(--text-main);") #{APP_INFO.lastUpdated}
 
         .custom-modal-footer
             button.modal-btn-primary(type="button" onclick="window.closeAboutModal()") Zamknij

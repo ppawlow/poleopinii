@@ -1,7 +1,7 @@
 {
-  "name": "Pole Opinii",
-  "version": "2.0.0",
-  "description": "Portal publicystyki obywatelskiej",
+  "name": "opiner",
+  "version": "3.0.0",
+  "description": "portal publicystyki obywatelskiej",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

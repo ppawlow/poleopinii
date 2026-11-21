@@ -453,7 +453,7 @@ window.toggleSocialShareSlider = async function (checkbox, platformId) {
       if (badge && data.settings) {
         const allValues = Object.values(data.settings);
         const activeCount = allValues.filter(Boolean).length;
-        badge.textContent = `${activeCount} / ${allValues.length}`;
+        badge.textContent = `${activeCount}`;
       }
     } else {
       checkbox.checked = !checkbox.checked;
