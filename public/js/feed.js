@@ -104,6 +104,7 @@ const Icons = Quill.import("ui/icons");
 Icons["lead"] = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 512"><!--!Font Awesome Free v7.3.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2026 Fonticons, Inc.--><path fill="rgb(30, 48, 80)" d="M64 432c22.1 0 40 17.9 40 40s-17.9 40-40 40-40-17.9-40-40c0-22.1 17.9-40 40-40zM64 0c26.5 0 48 21.5 48 48 0 .6 0 1.1 0 1.7l-16 304c-.9 17-15 30.3-32 30.3S33 370.7 32 353.7L16 49.7c0-.6 0-1.1 0-1.7 0-26.5 21.5-48 48-48z"/></svg>`;
 
 // Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
+// Wspólna konfiguracja paska narzędzi dla wszystkich edytorów w systemie
 const COMMON_QUILL_MODULES = {
   toolbar: {
     container: [
@@ -113,7 +114,7 @@ const COMMON_QUILL_MODULES = {
       [{ indent: "-1" }, { indent: "+1" }],
       [{ align: [] }],
       ["lead", "blockquote"],
-      ["link"],
+      ["link", "image"], // <--- DODANO IKONĘ OBRAZKA DO PASKA QUILL
       ["clean"],
     ],
     handlers: {
@@ -137,6 +138,15 @@ const COMMON_QUILL_MODULES = {
 
         // Przełączamy format <lead> dla pierwszego bloku
         this.quill.format("lead", value);
+      },
+      image: function () {
+        // Wyciągamy postId z kontenera edytora (np. "edit-quill-new" -> "new")
+        const containerId = this.quill.container.id || "";
+        const postId = containerId.replace("edit-quill-", "") || "new";
+        const fileInput = document.getElementById(`editPostImage-${postId}`);
+        if (fileInput) {
+          fileInput.click();
+        }
       },
     },
   },
@@ -1588,19 +1598,26 @@ window.applyEditorVisibilityTheme = function (visibility) {
   }
 };
 
-window.applyEditorVisibilityTheme = function (visibility) {
-  const modalBox = document.querySelector("#create-post-modal .custom-modal-box");
-  if (!modalBox) return;
+window.toggleEditorImageSection = function (sectionType, postId, btnEl) {
+  const bodyId =
+    sectionType === "current"
+      ? `current-image-body-${postId}`
+      : `crop-image-body-${postId}`;
+  const bodyEl = document.getElementById(bodyId);
+  if (!bodyEl) return;
 
-  modalBox.classList.remove(
-    "vis-theme-public",
-    "vis-theme-restricted",
-    "vis-theme-private",
-    "vis-theme-editors",
-    "vis-theme-users",
-  );
+  const isHidden = bodyEl.style.display === "none";
+  const defaultDisplay = sectionType === "crop" ? "flex" : "block";
+  bodyEl.style.display = isHidden ? defaultDisplay : "none";
 
-  if (visibility) {
-    modalBox.classList.add(`vis-theme-${visibility}`);
+  if (btnEl) {
+    const icon = btnEl.querySelector("i");
+    const label = btnEl.querySelector("span");
+    if (icon) {
+      icon.className = isHidden ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+    }
+    if (label) {
+      label.textContent = isHidden ? "Ukryj obrazek" : "Pokaż obrazek";
+    }
   }
 };

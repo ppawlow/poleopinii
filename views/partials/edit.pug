@@ -25,44 +25,66 @@ form(id=`editForm-${activePost._id}` data-csrf=csrfToken onsubmit=`prepareEditSu
         if isNew
             span#public-debate-warning-badge(style="display: none; font-size: 12px; color: #bc2525; background: #fff3f3; padding: 4px 10px; border-radius: 4px; font-weight: 600; border: 1px solid #f5c6cb;")
 
-    input.edit-title-field(id=`edit-title-${activePost._id}` type="text" name="title" value=(activePost.title || '') style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #dddfe2; border-radius:6px; font-weight:600;" placeholder=(activePost._id === 'new' ? "Dodaj tytuł postu" : ""))
-    
-    div(id=`edit-quill-${activePost._id}` style="background:#fff; margin-bottom:8px;")
-    input(id=`edit-hidden-content-${activePost._id}` type="hidden" name="content")
-    
-    //- Kontener na aktualne zdjęcie z bazy (pokazywany dynamicznie podczas reedycji w modalu)
+    //- =========================================================================
+    //- SEKCJA GRAFIKI WYRÓŻNIAJĄCEJ (NAD TYTUŁEM POSTA)
+    //- =========================================================================
+
+    //- 1. Kontener na aktualne zdjęcie z bazy (pokazywany dynamicznie podczas reedycji)
     div(id=`current-image-preview-${activePost._id}` style=(activePost.imageUrl ? "display:block;" : "display:none;") + " margin-bottom:10px; border-radius:6px; border: 1px solid #dddfe2; overflow: hidden; position: relative; background: #f8f9fa;")
-        div(style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#f0f2f5; border-bottom: 1px solid #dddfe2;")
-            span(style="font-size:12px; color:#65676b; font-weight:600;") Aktualne zdjęcie (kliknij, aby powiększyć):
-            button#remove-current-image-btn(type="button" style="background: rgba(188, 37, 37, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;" title="Usuń tę grafikę") &times;
-        img(
-            id=`current-image-img-${activePost._id}`
-            src=(activePost.imageUrl || "")
-            onclick="if(this.src) window.openLightbox(this.src)"
-            style="display:block; width:100%; height:auto; max-height:360px; object-fit:contain; cursor:zoom-in; margin:0 auto;"
-        )
+        div(style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#f0f2f5; border-bottom: 1px solid #dddfe2; gap: 8px;")
+            span(style="font-size:12px; color:#65676b; font-weight:600;") Aktualne zdjęcie:
+            div(style="display:flex; align-items:center; gap:6px;")
+                button(
+                    type="button"
+                    onclick=`window.toggleEditorImageSection('current', '${activePost._id}', this)`
+                    style="background: #ffffff; color: #1c1e21; border: 1px solid #dddfe2; padding: 2px 8px; border-radius: 4px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 4px;"
+                    title="Ukryj lub pokaż podgląd zdjęcia"
+                )
+                    i.fa-solid.fa-eye-slash
+                    span Ukryj obrazek
+                button#remove-current-image-btn(type="button" style="background: rgba(188, 37, 37, 0.9); color: white; border: none; width: 24px; height: 24px; border-radius: 50%; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 14px;" title="Usuń tę grafikę") &times;
+        div(id=`current-image-body-${activePost._id}`)
+            img(
+                id=`current-image-img-${activePost._id}`
+                src=(activePost.imageUrl || "")
+                onclick="if(this.src) window.openLightbox(this.src)"
+                style="display:block; width:100%; height:auto; max-height:360px; object-fit:contain; cursor:zoom-in; margin:0 auto;"
+            )
     
-    //- Kontener podglądu i kadrowania nowego pliku wybranego z dysku
+    //- 2. Kontener podglądu i kadrowania nowego pliku wybranego z dysku
     div(id=`edit-image-preview-container-${activePost._id}` style="display:none; margin-bottom:10px; border-radius:6px; border: 1px solid #45bd62; overflow: hidden; background: #1a2536;")
         div(style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:#45bd62; color:#fff; font-size:12px; flex-wrap:wrap; gap:6px;")
             span(style="font-weight:600;") Kadrowanie i podgląd:
             div(style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;")
+                button(
+                    type="button"
+                    onclick=`window.toggleEditorImageSection('crop', '${activePost._id}', this)`
+                    style="background:rgba(0,0,0,0.25); color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px;"
+                    title="Zwiń lub rozwiń obszar kadrowania (wybrany kadr pozostaje aktywny)"
+                )
+                    i.fa-solid.fa-eye-slash
+                    span Ukryj obrazek
                 button.crop-ratio-btn.active(type="button" onclick=`setCropperAspect('${activePost._id}', 16/9, this)` style="background:#0f5132; color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;") Baner 16:9
                 button.crop-ratio-btn(type="button" onclick=`setCropperAspect('${activePost._id}', NaN, this)` style="background:rgba(255,255,255,0.2); color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;") Pełny obraz
                 button(type="button" onclick=`window.openEditorPreviewLightbox('${activePost._id}')` style="background:rgba(0,0,0,0.25); color:#fff; border:none; padding:3px 8px; border-radius:4px; font-size:11px; font-weight:700; cursor:pointer;" title="Powiększ podgląd na pełny ekran")
                     i.fa-solid.fa-magnifying-glass-plus(style="margin-right:4px;")
                     | Powiększ
                 button(type="button" onclick=`cancelSelectedImage('${activePost._id}')` style="background: rgba(188, 37, 37, 0.9); color: white; border: none; width: 22px; height: 22px; border-radius: 50%; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; margin-left:2px;" title="Usuń wybrane zdjęcie") &times;
-        div(style="max-height: 420px; width: 100%; background: #111; display: flex; justify-content: center; align-items: center;")
+        div(id=`crop-image-body-${activePost._id}` style="max-height: 420px; width: 100%; background: #111; display: flex; justify-content: center; align-items: center;")
             img(
                 id=`edit-image-preview-${activePost._id}`
                 src=""
                 onclick="if(typeof Cropper === 'undefined' && this.src) window.openLightbox(this.src)"
                 style="display:block; max-width:100%; max-height:420px; cursor:zoom-in;"
             )
+
+    //- =========================================================================
+    //- POLE TYTUŁU ORAZ EDYTOR TREŚCI QUILL
+    //- =========================================================================
+    input.edit-title-field(id=`edit-title-${activePost._id}` type="text" name="title" value=(activePost.title || '') style="width:100%; padding:8px; margin-bottom:8px; border:1px solid #dddfe2; border-radius:6px; font-weight:600;" placeholder=(activePost._id === 'new' ? "Dodaj tytuł postu" : ""))
     
-    div(style="display:flex; gap:8px; align-items:center; margin-top:8px; justify-content: space-between; flex-wrap: wrap; width: 100%;")
-        div(style="display:flex; gap:8px; align-items:center; flex: 1;")
-            label.file-upload-label(for=`editPostImage-${activePost._id}` style="padding: 6px 12px; font-size: 13px; color: #45bd62; cursor: pointer; display: flex; align-items: center; gap: 6px; background-color: #f0f2f5; border-radius: 20px; font-weight: 600;")
-                i.fa-regular.fa-image(title="Dodaj lub zmień zdjęcie/grafikę")
-            input(id=`editPostImage-${activePost._id}` type="file" name="editPostImage" accept="image/*" style="display:none;")
+    div(id=`edit-quill-${activePost._id}` style="background:#fff; margin-bottom:8px;")
+    input(id=`edit-hidden-content-${activePost._id}` type="hidden" name="content")
+    
+    //- Ukryte pole wyboru pliku (wyzwalane z paska narzędzi Quill)
+    input(id=`editPostImage-${activePost._id}` type="file" name="editPostImage" accept="image/*" style="display:none;")
