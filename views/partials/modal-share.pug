@@ -1,0 +1,20 @@
+//- Uniwersalne okno udostępniania artykułu
+#custom-share-modal.custom-modal-backdrop(style="display: none;" onclick="window.closeShareModal()")
+    .custom-modal-box(style="max-width: 380px;" onclick="event.stopPropagation()")
+        .custom-modal-header(style="display: flex; justify-content: space-between; align-items: center;")
+            h3 Udostępnij artykuł
+            span(onclick="window.closeShareModal()" style="cursor: pointer; font-size: 20px; font-weight: bold; color: var(--text-muted);") &times;
+        .custom-modal-body(style="padding: 16px; display: flex; flex-direction: column; gap: 12px;")
+            if SHARE_PLATFORMS && SHARE_PLATFORMS.length > 0
+                each platform in SHARE_PLATFORMS
+                    button.dropdown-item.share-platform-btn(
+                        type="button"
+                        data-url-template=platform.urlTemplate
+                        style=`background: ${platform.bgColor}; color: white; border-radius: 6px; width: 100%; border: none; cursor: pointer;`
+                    )
+                        i(class=platform.icon style="color: white;")
+                        | #{platform.label}
+            hr(style="border: 0; border-top: 1px solid var(--border-color); margin: 4px 0;")
+            div(style="display: flex; gap: 8px;")
+                input#share-copy-input(type="text" readonly style="flex: 1; padding: 8px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 13px; background: var(--bg-muted); color: var(--text-body); outline: none;")
+                button(type="button" onclick="window.copyShareLinkToClipboard()" style="background: #42b72a; color: white; border: none; padding: 8px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;") Kopiuj

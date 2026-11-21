@@ -1,34 +1,34 @@
 if systemUsers && systemUsers.length > 0
-    div(style="overflow-x: auto; background: #ffffff; border: 1px solid #e4e6eb; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);")
-        table#usersTable(style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; font-family: sans-serif;")
+    .admin-table-wrapper
+        table#usersTable.admin-table(style="font-size: 13px;")
             thead
-                tr(style="background: #f0f2f5; border-bottom: 2px solid #e4e6eb; color: #4a5568;")
+                tr
                     th(style="padding: 12px; font-weight: 700;") Użytkownik / E-mail
                     th(style="padding: 12px; font-weight: 700; text-align: center;") Rola / Status
                     th(style="padding: 12px; font-weight: 700; text-align: center;") Posty (Pub / Zas / Pryw)
                     th(style="padding: 12px; font-weight: 700; text-align: center;") Gwiazdki
-                    th(style="padding: 12px; font-weight: 700; text-align: center; color: #bc2525;") Redaktor Serwisu
+                    th(style="padding: 12px; font-weight: 700; text-align: center; color: var(--alert-danger-text);") Redaktor Serwisu
             tbody
                 each sUser in systemUsers
-                    tr(style="border-bottom: 1px solid #e4e6eb; transition: background 0.15s;")
+                    tr
                         td(style="padding: 12px;")
                             a(href=getProfileUrl({ _id: sUser._id, alias: sUser.alias || null }) style="font-weight: 600; color: #1877f2; text-decoration: none;") #{sUser.name}
-                            div(style="font-size: 11px; color: #65676b; margin-top: 2px;") #{sUser.email}
+                            div(style="font-size: 11px; color: var(--text-muted); margin-top: 2px;") #{sUser.email}
                         
                         td(style="padding: 12px; text-align: center;")
                             if sUser.role === 'editor'
-                                span(style="background: #f3ebff; color: #9360f7; border: 1px solid #9360f7; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px;") 🌟 Redaktor (Zatwierdzony)
+                                span.admin-pill.is-info(style="color: #9360f7; border-color: #9360f7; border-radius: 4px;") 🌟 Redaktor (Zatwierdzony)
                             else if sUser.totalStars >= 100
-                                span(style="background: #fdf2ff; color: #a855f7; border: 1px solid #a855f7; padding: 2px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; animation: pulse 2s infinite;") ⏳ Kandydat (Głosowanie)
+                                span.admin-pill.is-info(style="color: #a855f7; border-color: #a855f7; border-radius: 4px;") ⏳ Kandydat (Głosowanie)
                             else
-                                span(style="color: #65676b; font-size: 12px;") Standardowy Autor
+                                span(style="color: var(--text-muted); font-size: 12px;") Standardowy Autor
                         
                         td(style="padding: 12px; text-align: center; font-weight: 500;")
-                            span(style="color: #146c43;" title="Publiczne") #{sUser.publicCount}
+                            span(style="color: var(--alert-success-text);" title="Publiczne") #{sUser.publicCount}
                             |  / 
                             span(style="color: #1877f2;" title="Zastrzeżone") #{sUser.restrictedCount}
                             |  / 
-                            span(style="color: #65676b;" title="Prywatne") #{sUser.privateCount}
+                            span(style="color: var(--text-muted);" title="Prywatne") #{sUser.privateCount}
                         
                         td(style="padding: 12px; text-align: center; font-weight: bold; color: #e5a93c;")
                             | ⭐ #{sUser.totalStars}
@@ -43,4 +43,4 @@ if systemUsers && systemUsers.length > 0
                                     )
                                     span.slider
 else
-    .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #f0f2f5; border-radius: 6px;") W systemie nie odnotowano zarejestrowanych kont użytkowników.
+    .no-posts.empty-state-box W systemie nie odnotowano zarejestrowanych kont użytkowników.

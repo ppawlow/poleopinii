@@ -1,0 +1,26 @@
+//- Sekcja bezpieczeństwa konta
+.create-post(style="padding: 24px; margin-top: 16px; border-top: 3px solid #1877f2;")
+    h3(style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;") Bezpieczeństwo konta
+    p(style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;")
+        | Chcesz zmienić swoje hasło dostępu? Kliknij poniższy przycisk, aby wygenerować bezpieczny link autoryzacyjny bezpośrednio na Twój zarejestrowany adres e-mail.
+
+    form#passwordResetRequestForm(action="/auth/forgot-password" method="POST" style="margin:0; display: block;")
+        input(type="hidden" name="_csrf" value=csrfToken)
+        input#forgotRecaptchaToken(type="hidden" name="recaptchaToken")
+        input(type="hidden" name="email" value=user.email)
+        button(type="submit" style="background: #42b72a; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px; width: auto;") 🔑 Wyślij link do zmiany hasła
+
+//- Sekcja RODO
+.create-post(style="padding: 24px; margin-top: 16px; border-top: 3px solid var(--alert-danger-text);")
+    h3(style="font-size: 16px; font-weight: 700; color: var(--text-main); margin-bottom: 8px;") 🛡️ Panel Prywatności i Zarządzania RODO
+    p(style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;") 
+        | Zgodnie z Ogólnym Rozporządzeniem o Ochronie Danych Osobowych (RODO) posiadasz pełne prawo do wglądu, przenoszenia oraz trwałego usunięcia swoich danych osobowych zgromadzonych w bazie danych aplikacji.
+
+    div(style="display: flex; gap: 12px; flex-wrap: wrap;")
+        a(href="/profile/settings/export-data" target="_blank" style="background: #1877f2; color: white; text-decoration: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13.5px; display: inline-flex; align-items: center; gap: 6px;")
+            i.fa-solid.fa-file-arrow-down
+            | Pobierz pakiet danych (JSON)
+        
+        button.btn-danger-soft(type="button" onclick="window.triggerDeleteAccountModal()" style="padding: 10px 16px; border-radius: 6px; font-weight: 600; font-size: 13.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px;")
+            i.fa-solid.fa-user-slash
+            | Usuń trwale konto

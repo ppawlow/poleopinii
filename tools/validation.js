@@ -72,11 +72,11 @@ tools.validateContent = function (content) {
     allowedIframeHostnames: ["youtube.com", "youtu.be", "vimeo.com"],
     allowedStyles: {
       span: {
-        color: [/^#(?:[0-9a-fA-F]{3}){1,2}$/, /^rgb\(\d+,\s*\d+,\s*\d+\)$/],
-        "background-color": [
-          /^#(?:[0-9a-fA-F]{3}){1,2}$/,
-          /^rgb\(\d+,\s*\d+,\s*\d+\)$/,
-        ],
+        //color: [/^#(?:[0-9a-fA-F]{3}){1,2}$/, /^rgb\(\d+,\s*\d+,\s*\d+\)$/],
+        // "background-color": [
+        //   /^#(?:[0-9a-fA-F]{3}){1,2}$/,
+        //   /^rgb\(\d+,\s*\d+,\s*\d+\)$/,
+        // ],
       },
       p: { "text-align": [/^left$/, /^right$/, /^center$/, /^justify$/] },
     },

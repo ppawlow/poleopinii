@@ -1,20 +1,17 @@
 //- views/profile.pug
 extends layout
-block head
+
+block append head
+    link(rel="stylesheet" href="/css/profile.css?v=1")
     script(src="/js/profileApi.js")
     
 block content
     .profile-container
-        //- Nagłówek profilu (Tło, Awatar, Akcje)
         include partials/profile-header.pug
 
-        // Układ dolny profilu
         .profile-body-layout
             aside.profile-info-sidebar
-                //- Blok "O sobie" (Bio)
                 include partials/profile-bio.pug
-
-                //- Listy relacji społecznościowych (Obserwowani, Obserwujący, Blokady)
                 include partials/profile-relations.pug
 
             main.profile-feed
@@ -28,7 +25,6 @@ block content
                             include partials/post-card.pug
                 else
                     .accordion-container#accordion-posts-wrapper
-                        .no-posts(style="text-align: center; padding: 20px; color: #65676b; background:#fff; border-radius:8px;") Brak wpisów autora.
+                        .no-posts.empty-state-box Brak wpisów autora.
 
-        //- Dołączenie modalnego formularza kontaktowego e-mail
         include partials/profile-contact-modal.pug

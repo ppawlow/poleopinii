@@ -1,0 +1,34 @@
+//- Uniwersalne okno Custom Confirm (Zastępuje systemowe confirm)
+#custom-confirm-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box
+        .custom-modal-header
+            h3#custom-confirm-title Potwierdzenie akcji
+        .custom-modal-body
+            p#custom-confirm-message Czy na pewno chcesz to zrobić?
+        .custom-modal-footer
+            button#custom-confirm-cancel-btn.modal-btn-secondary Anuluj
+            button#custom-confirm-success-btn.modal-btn-danger Potwierdź
+
+//- Uniwersalne okno Custom Alert (Zastępuje systemowe alert)
+#custom-alert-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box
+        .custom-modal-header
+            h3#custom-alert-title Komunikat systemu
+        .custom-modal-body
+            p#custom-alert-message Treść wiadomości...
+        .custom-modal-footer
+            button#custom-alert-close-btn.modal-btn-primary OK
+
+//- Uniwersalne okno powiększenia zdjęcia (Lightbox Image Modal)
+#custom-lightbox-modal.custom-lightbox-backdrop(style="display: none;" onclick="closeLightbox()")
+    span.lightbox-close(onclick="closeLightbox()") &times;
+    img#lightbox-target-image.lightbox-content(src="" alt="Powiększone zdjęcie")
+
+//- DYNAMICZNY LOADER MODAL (SSE-COMPATIBLE)
+#custom-loading-modal.custom-modal-backdrop(style="display: none; background-color: rgba(0, 0, 0, 0.7); pointer-events: auto;")
+    .custom-modal-box(style="max-width: 360px; text-align: center; padding: 32px 24px;")
+        div(style="margin-bottom: 20px;")
+            i.fa-solid.fa-circle-notch.fa-spin(style="font-size: 44px; color: var(--color-primary);")
+        h3#loader-status-heading(style="font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 8px; font-family: sans-serif;") Trwa weryfikacja artykułu
+        p#loader-status-text(style="font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin: 0; font-family: sans-serif;") 
+            | Nasz algorytm sztucznej inteligencji właśnie przeprowadza dwuetapowy audyt bezpieczeństwa oraz weryfikację faktograficzną w sieci. Proszę nie zamykać i nie odświeżać strony.

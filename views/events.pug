@@ -4,11 +4,11 @@ block content
     .main-container(style="grid-template-columns: 1fr; max-width: 750px; margin: 0 auto;")
         main.feed
             .create-post(style="padding: 24px;")
-                h2(style="margin-bottom: 20px; color: #1c1e21; font-size: 22px; font-weight: 700;") 🔔 Powiadomienia i aktywność konta
+                h2(style="margin-bottom: 20px; color: var(--text-main); font-size: 22px; font-weight: 700;") 🔔 Powiadomienia i aktywność konta
 
                 #events-list-wrapper(style="display: flex; flex-direction: column; gap: 12px;")
                     if events && events.length > 0
                         each ev in events
                             include partials/event-row.pug
                     else
-                        .no-posts(style="text-align: center; padding: 32px; color: #65676b; background: #f0f2f5; border-radius: 6px; width: 100%;") Nie masz jeszcze żadnych powiadomień systemowych.
+                        .no-posts.empty-state-box Nie masz jeszcze żadnych powiadomień systemowych.

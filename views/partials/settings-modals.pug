@@ -1,0 +1,27 @@
+#rodo-delete-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box(style="max-width: 440px;")
+        .custom-modal-header(style="background: var(--alert-danger-bg); border-bottom: 1px solid var(--alert-danger-border);")
+            h3(style="color: var(--alert-danger-text); margin: 0;") 🚨 Bezpieczne usuwanie profilu (RODO)
+        form#rodoDeleteAccountForm(onsubmit="window.executeAccountErasure(event)" data-email=user.email)
+            .custom-modal-body(style="padding: 16px; font-family: sans-serif; font-size: 13.5px; line-height: 1.5;")
+                p(style="color: var(--alert-danger-text); font-weight: bold; margin-bottom: 12px;") 🔒 Autoryzacja dwuetapowa poza pasmem
+                p(style="color: var(--text-main); margin-bottom: 12px;") Ze względów bezpieczeństwa na Twój adres e-mail zostanie wysłany specjalny, jednorazowy link aktywacyjny. Kliknięcie w link ostatecznie wymaże Twoje dane.
+                p(style="color: var(--text-muted); margin-bottom: 14px;") Aby wygenerować link usuwający konto, przepisz swój adres e-mail poniżej:
+                input#rodoConfirmEmailField(type="email" required placeholder=user.email style="width: 100%; padding: 10px; border: 1px solid var(--alert-danger-border); border-radius: 6px; font-size: 14px; outline: none; background: var(--alert-danger-bg);")
+                #rodoModalError(style="display:none; color: var(--alert-danger-text); font-weight: bold; margin-top: 6px;") ✕ Wpisany adres e-mail jest niezgodny z adresem zalogowanego konta!
+            .custom-modal-footer
+                button.modal-btn-secondary(type="button" onclick="document.getElementById('rodo-delete-modal').style.display='none'") Anuluj
+                button.modal-btn-danger(type="submit" style="background: #bc2525; color: white;") Wyślij link usuwający
+
+#password-auth-modal.custom-modal-backdrop(style="display: none;")
+    .custom-modal-box(style="max-width: 400px;")
+        .custom-modal-header(style="background: var(--bg-muted); border-bottom: 1px solid var(--border-color);")
+            h3 🔐 Weryfikacja bezpieczeństwa
+        .custom-modal-body(style="padding: 16px;")
+            p(style="font-size: 14px; color: var(--text-main); margin-bottom: 12px; font-weight: 600;") Wykryto próbę zmiany adresu e-mail. 
+            p(style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;") Wprowadź swoje aktualne hasło, aby potwierdzić tożsamość:
+            input#modalPasswordField(type="password" placeholder="Twoje aktualne hasło" style="width: 100%; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; outline: none;")
+            #modalErrorMsg(style="display:none; color: var(--alert-danger-text); font-size: 12px; font-weight: bold; margin-top: 8px;") ⚠️ Hasło nie może być puste!
+        .custom-modal-footer
+            button#modalCancelBtn.modal-btn-secondary Anuluj
+            button#modalConfirmBtn.modal-btn-primary Potwierdź i zapisz

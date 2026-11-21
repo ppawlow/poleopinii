@@ -3,74 +3,43 @@ extends layout
 include partials/dataTable.pug
 
 block append head
+    link(rel="stylesheet" href="/css/admin.css?v=1")
     script(src="/js/adminApi.js")
 
+mixin adminSection(panelId, iconClass, titleText, titleColor, badgeText, badgeClass, isOpen, isCardBg, tableTrigger)
+    .post-card.accordion-item.admin-panel-card(id=panelId)
+        .accordion-header.admin-panel-header(data-table-trigger=tableTrigger)
+            h3(style=`font-size: 16px; font-weight: 700; color: ${titleColor}; margin: 0; display: inline-flex; align-items: center; gap: 8px;`)
+                i(class=iconClass)
+                | #{titleText}
+            div(style="display: flex; align-items: center; gap: 12px;")
+                span.admin-pill(class=badgeClass) #{badgeText}
+                i.fa-solid.fa-chevron-down.accordion-icon(style=`color: var(--text-muted); transition: transform 0.3s;${isOpen ? ' transform: rotate(180deg);' : ''}`)
+        .accordion-content.admin-panel-body(class=(isCardBg ? 'is-card-bg' : '') style=(isOpen ? 'display: block;' : 'display: none;'))
+            block
+
 block content
+    - var hasReports = reports && reports.length > 0
+    - var activeSocialsCount = Object.values(socialSettings || {}).filter(Boolean).length
+
     .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
         main.feed
             .create-post(style="padding: 24px; margin-bottom: 8px;")
-                h2(style="margin-bottom: 4px; color: #bc2525; font-size: 22px; font-weight: 700;") Panel Administratora
-                p(style="font-size: 14px; color: #65676b; margin-bottom: 0;") Zarządzaj zgłoszeniami nadużyć, procesami uwierzytelniania, użytkownikami oraz logami bezpieczeństwa.
+                h2(style="margin-bottom: 4px; color: var(--alert-danger-text); font-size: 22px; font-weight: 700;") Panel Administratora
+                p(style="font-size: 14px; color: var(--text-muted); margin-bottom: 0;") Zarządzaj zgłoszeniami nadużyć, procesami uwierzytelniania, użytkownikami oraz logami bezpieczeństwa.
 
             .accordion-container(style="display: flex; flex-direction: column; gap: 12px; width: 100%;")
-                
-                //- 1. PANEL ZGŁOSZEŃ NADUŻYĆ
-                .post-card.accordion-item(id="admin-panel-abuse" style="padding: 0; overflow: hidden;")
-                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;")
-                        h3(style="font-size: 16px; font-weight: 700; color: #bc2525; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
-                            i.fa-solid.fa-triangle-exclamation
-                            | Zgłoszenia nadużyć i moderacja treści
-                        div(style="display: flex; align-items: center; gap: 12px;")
-                            span(style="background: #fff3f3; color: #bc2525; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #f5c6cb;") #{reports.length}
-                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s; transform: rotate(180deg);")
-                    .accordion-content(style=`display: ${hasReports ? 'block' : 'none'}; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;`)
-                        include partials/abuse.pug
+                +adminSection("admin-panel-abuse", "fa-solid fa-triangle-exclamation", "Zgłoszenia nadużyć i moderacja treści", "var(--alert-danger-text)", reports.length, "is-danger", hasReports, false)
+                    include partials/abuse.pug
 
-                //- 2. PANEL OCZEKUJĄCYCH PRZELEWÓW
-                .post-card.accordion-item(id="admin-panel-verify" style="padding: 0; overflow: hidden;")
-                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;")
-                        h3(style="font-size: 16px; font-weight: 700; color: #1877f2; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
-                            i.fa-solid.fa-bank
-                            | Oczekujące przelewy uwierzytelniające
-                        div(style="display: flex; align-items: center; gap: 12px;")
-                            span(style="background: #e7f3ff; color: #1877f2; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #dddfe2;") #{pendingUsers.length}
-                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
-                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #fafbfc;")
-                        include partials/verify-user.pug
-                
-                //- 3. REJESTR I STATYSTYKI UŻYTKOWNIKÓW
-                .post-card.accordion-item(id="admin-panel-users" style="padding: 0; overflow: hidden;")
-                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;" data-table-trigger="usersTable")
-                        h3(style="font-size: 16px; font-weight: 700; color: #2d3748; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
-                            i.fa-solid.fa-users
-                            | Rejestr i aktywność użytkowników
-                        div(style="display: flex; align-items: center; gap: 12px;")
-                            span(style="background: #f0f2f5; color: #4a5568; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #e4e6eb;") #{systemUsers.length}
-                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
-                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
-                        include partials/admin-users.pug
+                +adminSection("admin-panel-verify", "fa-solid fa-bank", "Oczekujące przelewy uwierzytelniające", "#1877f2", pendingUsers.length, "is-info", false, false)
+                    include partials/verify-user.pug
 
-                //- 4. REJESTR ZDARZEŃ SYSTEMOWYCH i AUDYT API
-                .post-card.accordion-item(id="admin-panel-logs" style="padding: 0; overflow: hidden;")
-                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;" data-table-trigger="logsTable")
-                        h3(style="font-size: 16px; font-weight: 700; color: #4a5568; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
-                            i.fa-solid.fa-scroll
-                            | Logi operacyjne i audyt użycia AI
-                        div(style="display: flex; align-items: center; gap: 12px;")
-                            span(style="background: #f0f2f5; color: #4a5568; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #e4e6eb;") #{logs.length}
-                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
-                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
-                        include partials/admin-logs.pug
+                +adminSection("admin-panel-users", "fa-solid fa-users", "Rejestr i aktywność użytkowników", "var(--text-main)", systemUsers.length, "", false, true, "usersTable")
+                    include partials/admin-users.pug
 
-                //- 5. AUTOMATYCZNA PUBLIKACJA W MEDIACH SPOŁECZNOŚCIOWYCH
-                .post-card.accordion-item(id="admin-panel-socials" style="padding: 0; overflow: hidden;")
-                    .accordion-header(style="cursor: pointer; padding: 16px; display: flex; align-items: center; justify-content: space-between; background: #fff;")
-                        h3(style="font-size: 16px; font-weight: 700; color: #0f5132; margin: 0; display: inline-flex; align-items: center; gap: 8px;")
-                            i.fa-solid.fa-share-nodes
-                            | Dystrybucja w mediach społecznościowych (Auto-Share)
-                        div(style="display: flex; align-items: center; gap: 12px;")
-                            - var activeSocialsCount = Object.values(socialSettings || {}).filter(Boolean).length
-                            span#active-socials-badge(style="background: #f0fdf4; color: #146c43; padding: 2px 8px; border-radius: 20px; font-size: 12px; font-weight: bold; border: 1px solid #b1f2c2;") #{activeSocialsCount} #{"/"} #{SERVICE_SOCIALS.length}
-                            i.fa-solid.fa-chevron-down.accordion-icon(style="color: #65676b; transition: transform 0.3s;")
-                    .accordion-content(style="display: none; padding: 16px; border-top: 1px solid #e4e6eb; background-color: #ffffff;")
-                        include partials/admin-socials.pug
+                +adminSection("admin-panel-logs", "fa-solid fa-scroll", "Logi operacyjne i audyt użycia AI", "var(--text-main)", logs.length, "", false, true, "logsTable")
+                    include partials/admin-logs.pug
+
+                +adminSection("admin-panel-socials", "fa-solid fa-share-nodes", "Dystrybucja w mediach społecznościowych (Auto-Share)", "var(--color-primary)", `${activeSocialsCount} / ${SERVICE_SOCIALS.length}`, "is-success", false, true)
+                    include partials/admin-socials.pug

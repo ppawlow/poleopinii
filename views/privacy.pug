@@ -4,15 +4,15 @@ block content
     .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
         main.feed
             .editorial-article(style="padding: 32px 40px; font-family: sans-serif;")
-                h2(style="text-align:center")
+                h2(style="text-align: center; color: var(--text-main);")
                     | Polityka Prywatności i Ochrony Danych Osobowych
-                p(style="font-size: 13px; color: #65676b; margin:10px; margin-bottom: 24px; font-style: italic; text-align:center;") 
+                p(style="font-size: 13px; color: var(--text-muted); margin: 10px 10px 24px 10px; font-style: italic; text-align: center;") 
                     | Ostatnia aktualizacja: #{lastUpdate}
 
-                .article-text-content(style="font-size: 15px; line-height: 1.6; color: #1c1e21; text-align: justify;")
+                .article-text-content(style="font-size: 15px; line-height: 1.6; color: var(--text-body); text-align: justify;")
                     
                     h3 I Administrator Danych Osobowych
-                    p Administratorem danych osobowych przetwarzanych w infrastrukturze bazy danych platformy „PoleOpinii.pl” jest <strong>Kooperatywa Pracy Organicznej</strong> z siedzibą w Krakowie,  REGON: 545261951, NIP: 9452333584. Kontakt operacyjny realizowany jest pod adresem elektronicznym: <code>admin@poleopinii.pl</code>.
+                    p Administratorem danych osobowych przetwarzanych w infrastrukturze bazy danych platformy „PoleOpinii.pl” jest <strong>Kooperatywa Pracy Organicznej</strong> z siedzibą w Krakowie, REGON: 545261951, NIP: 9452333584. Kontakt operacyjny realizowany jest pod adresem elektronicznym: <code>admin@poleopinii.pl</code>.
 
                     h3 II Zakres i metody przetwarzania danych
                     ol
@@ -23,7 +23,7 @@ block content
                     p Dane osobowe przetwarzane są w celu realizacji umowy świadczenia usług drogą elektroniczną (Art. 6 ust. 1 lit. b RODO), a także w celu realizacji prawnie uzasadnionego interesu Administratora (Art. 6 ust. 1 lit. f RODO), polegającego na ochronie platformy przed atakami sybil (tworzenie wielu kont przez boty) oraz automatycznym audycie rzetelności informacji.
 
                     h3 IV Anonimowość sygnalistów i bezpieczeństwo zgłoszeń
-                    p W trosce o komfort i bezpieczeństwo społeczności, platforma wdraża restrykcyjny reżim poufności procesów moderacyjnych. Wszelkie dane identyfikacyjne użytkownika zgłaszającego nadużycie  są kaskadowo usuwane w algorytmach agregacji bazy danych i podmieniane na ciąg stały „Anonimowy Użytkownik” przed przekazaniem widoku do renderowania. Dane zgłaszającego są niewidoczne dla zaskarżonego autora oraz osób postronnych.
+                    p W trosce o komfort i bezpieczeństwo społeczności, platforma wdraża restrykcyjny reżim poufności procesów moderacyjnych. Wszelkie dane identyfikacyjne użytkownika zgłaszającego nadużycie są kaskadowo usuwane w algorytmach agregacji bazy danych i podmieniane na ciąg stały „Anonimowy Użytkownik” przed przekazaniem widoku do renderowania. Dane zgłaszającego są niewidoczne dla zaskarżonego autora oraz osób postronnych.
 
                     h3 V Mechanizm komunikacji prywatnej (Peer-to-Peer)
                     p Użytkownik w zakładce ustawień konta może dobrowolnie aktywować przesyłanie prywatnych wiadomości e-mail. System nie udostępnia bezpośrednio adresu e-mail użytkownika, jednak nadanie wiadomości za pośrednictwem formularza platformy skutkuje jawnym wstrzyknięciem adresu e-mail nadawcy do nagłówka <code>Reply-To</code> wiadomości, co pozwala odbiorcy na bezpośrednią odpowiedź zwrotną.
@@ -36,11 +36,11 @@ block content
                         li Dane telemetryczne zebrane w ten sposób są przesyłane bezpośrednio do serwerów Google LLC (w tym do struktur poza Europejskim Obszarem Gospodarczym – USA) w celu ich walidacji. Administrator platformy nie ma wglądu w surowe dane behawioralne zbierane przez Google, a jedynie otrzymuje wynik punktowy autoryzujący wysłanie formularza.
 
                     h3 VII Czas retencji danych
-                    p Dane użytkowników platformy są przechowywane w bazie danych przez okreslony okres:
+                    p Dane użytkowników platformy są przechowywane w bazie danych przez określony okres:
                     ol
-                        li Dane logowania i publicznego profilu użytkownika do momentu usunięcia tych danych przez użytkownika
-                        li Dane techniczne o działaniach uzytkownika przechowuje sie przez czas nie dłuższy niż 30 dni.
-                        li Dane sesyjne są przechowywane przez 14 dni
+                        li Dane logowania i publicznego profilu użytkownika do momentu usunięcia tych danych przez użytkownika.
+                        li Dane techniczne o działaniach użytkownika przechowuje się przez czas nie dłuższy niż 30 dni.
+                        li Dane sesyjne są przechowywane przez 14 dni.
                         
                     h3 VIII Dostęp do swoich danych i prawo do zapomnienia
-                    p Użytkownik ma możliwość pobrania kompletu danych dotyczących jego osoby, zapisanych w bazie danych palikacji, w formie pliku zapisanego w formacie JSON. Usunięcie konta przez użytkownika skutkuje trwałym usunięciem wszystkich jego danych, wraz ze wszystkimi treściami i grafikami, które są powiązane z jego profilem. 
+                    p Użytkownik ma możliwość pobrania kompletu danych dotyczących jego osoby, zapisanych w bazie danych aplikacji, w formie pliku zapisanego w formacie JSON. Usunięcie konta przez użytkownika skutkuje trwałym usunięciem wszystkich jego danych, wraz ze wszystkimi treściami i grafikami, które są powiązane z jego profilem.

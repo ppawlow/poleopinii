@@ -1,21 +1,20 @@
 div(style="font-family: sans-serif;")
-    p(style="font-size: 13.5px; color: #65676b; margin-bottom: 16px; line-height: 1.5;")
+    p(style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.5;")
         | Zarządzaj automatyczną dystrybucją nowo publikowanych artykułów publicznych w zewnętrznych mediach społecznościowych. Wyłączenie platformy wstrzymuje wysyłanie nowych postów, ale nie blokuje ich usuwania w przypadku wycofania artykułu do szkicu.
 
     if SERVICE_SOCIALS && SERVICE_SOCIALS.length > 0
         div(style="display: flex; flex-direction: column; gap: 10px;")
             each soc in SERVICE_SOCIALS
                 - var isEnabled = socialSettings && socialSettings[soc.id] === true
-                div(style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: #f8f9fa; border: 1px solid #e4e6eb; border-radius: 8px; gap: 16px;")
+                .admin-social-row
                     div(style="display: flex; align-items: center; gap: 12px;")
-                        a(href=soc.url title="Przejdź do serwisu " + soc.id target="_blank" style=`width: 36px; height: 36px; border-radius: 50%; background: #ffffff; border: 1px solid #dddfe2; display: inline-flex; align-items: center; justify-content: center; font-size: 17px; color: ${soc.color}; flex-shrink: 0;`)
+                        a.admin-social-icon-circle(href=soc.url title="Przejdź do serwisu " + soc.id target="_blank" style=`color: ${soc.color};`)
                             i(class=soc.icon)
                         div
-                            div(style="font-size: 14.5px; font-weight: 700; color: #1c1e21; text-transform: capitalize;") #{soc.id}
-                            // a(href=soc.url target="_blank" rel="noopener noreferrer" style="font-size: 12px; color: #1877f2; text-decoration: none;") #{soc.url}
+                            div(style="font-size: 14.5px; font-weight: 700; color: var(--text-main); text-transform: capitalize;") #{soc.id}
 
                     div(style="display: flex; align-items: center; gap: 10px;")
-                        span.social-status-label(id=`social-status-${soc.id}` style=`font-size: 12px; font-weight: 700; color: ${isEnabled ? '#146c43' : '#bc2525'};`)
+                        span.social-status-label(id=`social-status-${soc.id}` style=`font-size: 12px; font-weight: 700; color: ${isEnabled ? 'var(--alert-success-text)' : 'var(--alert-danger-text)'};`)
                             | #{isEnabled ? 'AKTYWNE' : 'WYŁĄCZONE'}
                         label.switch(title="Przełącz automatyczne udostępnianie")
                             input(
@@ -25,4 +24,4 @@ div(style="font-family: sans-serif;")
                             )
                             span.slider
     else
-        .no-posts(style="text-align: center; padding: 24px; color: #65676b; background: #f0f2f5; border-radius: 6px;") Brak zdefiniowanych serwisów w config.js (SERVICE_SOCIALS).
+        .no-posts.empty-state-box Brak zdefiniowanych serwisów w config.js (SERVICE_SOCIALS).

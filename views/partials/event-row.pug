@@ -1,43 +1,42 @@
 - var isAnnouncement = ev.type === 'announcement'
-- var rowStyle = isAnnouncement ? "display: flex; align-items: center; justify-content: space-between; background: #f0fdf4; padding: 14px 16px; border-radius: 8px; border: 1px solid #b1f2c2; border-left: 4px solid #198754; box-shadow: 0 1px 2px rgba(0,0,0,0.05);" : "display: flex; align-items: center; justify-content: space-between; background: #fff; padding: 14px 16px; border-radius: 8px; border: 1px solid #e4e6eb; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"
 
-.comment-card(id=`event-row-${ev._id}` style=rowStyle)
-    div(style="display: flex; align-items: center; gap: 12px; font-size: 15px; color: #050505;")
+.comment-card.event-row-card(id=`event-row-${ev._id}` class=(isAnnouncement ? 'is-announcement' : ''))
+    .event-row-content
         if ev.type === 'announcement'
-            i.fa-solid.fa-bullhorn(style="color: #146c43; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
+            i.fa-solid.fa-bullhorn(style="color: var(--alert-success-text); font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
             span
-                span(style="font-weight: 700; color: #146c43; margin-right: 4px;") [Ogłoszenie]
-                a(href=ev.senderUrl style="font-weight: 600; color: #146c43; text-decoration: none;") #{ev.senderName}
+                span(style="font-weight: 700; color: var(--alert-success-text); margin-right: 4px;") [Ogłoszenie]
+                a(href=ev.senderUrl style="font-weight: 600; color: var(--alert-success-text); text-decoration: none;") #{ev.senderName}
                 |  opublikował nowy komunikat: 
-                a(href=`/posts/${ev.postId}` style="font-weight: 700; color: #050505; text-decoration: underline;") "#{ev.postTitle}"
+                a.event-post-link(href=`/posts/${ev.postId}` style="font-weight: 700;") "#{ev.postTitle}"
 
         else if ev.type === 'like_post'
             i.fa-solid.fa-star(style="color: #E5A93C; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
             span
                 a(href=ev.senderUrl style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
                 |  docenił 
-                a(href=`/posts/${ev.postId}` style="font-weight: 600; color: #050505; text-decoration: underline;") Twój post ("#{ev.postTitle}")
+                a.event-post-link(href=`/posts/${ev.postId}`) Twój post ("#{ev.postTitle}")
         
         else if ev.type === 'comment_post'
             i.fa-solid.fa-comment(style="color: #42b72a; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
             span
                 a(href=ev.senderUrl style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
                 |  skomentował 
-                a(href=`/posts/${ev.postId}${ev.commentId ? '#comment-' + ev.commentId : ''}` style="font-weight: 600; color: #050505; text-decoration: underline;") Twój post ("#{ev.postTitle}")
+                a.event-post-link(href=`/posts/${ev.postId}${ev.commentId ? '#comment-' + ev.commentId : ''}`) Twój post ("#{ev.postTitle}")
         
         else if ev.type === 'reply_comment'
             i.fa-solid.fa-reply(style="color: #9360f7; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
             span
                 a(href=ev.senderUrl style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
                 |  odpowiedział na 
-                a(href=`/posts/${ev.postId}${ev.commentId ? '#comment-' + ev.commentId : ''}` style="font-weight: 600; color: #050505; text-decoration: underline;") Twój komentarz w dyskusji
+                a.event-post-link(href=`/posts/${ev.postId}${ev.commentId ? '#comment-' + ev.commentId : ''}`) Twój komentarz w dyskusji
 
         else if ev.type === 'reply_post'
-            i.fa-regular.fa-comments(style="color: #bc2525; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
+            i.fa-regular.fa-comments(style="color: var(--alert-danger-text); font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
             span
                 a(href=ev.senderUrl style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
                 |  opublikował polemikę: 
-                a(href=`/posts/${ev.postId}` style="font-weight: 600; color: #bc2525; text-decoration: underline;") "#{ev.postTitle}"
+                a(href=`/posts/${ev.postId}` style="font-weight: 600; color: var(--alert-danger-text); text-decoration: underline;") "#{ev.postTitle}"
         
         else if ev.type === 'follow'
             i.fa-solid.fa-user-plus(style="color: #1877f2; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
@@ -45,5 +44,5 @@
                 a(href=ev.senderUrl style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
                 |  zaczął Cię obserwować
     
-    span(style="font-size: 12px; color: #65676b; white-space: nowrap; margin-left: 8px;") 
+    span.event-time
         | #{new Date(ev.createdAt).toLocaleDateString('pl-PL')} o #{new Date(ev.createdAt).toLocaleTimeString('pl-PL', {hour: '2-digit', minute:'2-digit'})}

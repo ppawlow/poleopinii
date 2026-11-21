@@ -1,0 +1,172 @@
+/* =========================================================================
+   STYLE DEDYKOWANE DLA PANELU ADMINISTRATORA (views/admin.pug)
+   ========================================================================= */
+.admin-panel-card {
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+}
+
+.admin-panel-header {
+  cursor: pointer;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-card);
+}
+
+.admin-panel-body {
+  display: none;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+}
+
+.admin-panel-body.is-card-bg {
+  background-color: var(--bg-card);
+}
+
+.admin-pill {
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: bold;
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-muted);
+  color: var(--text-muted);
+}
+
+.admin-pill.is-danger {
+  background-color: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border-color: var(--alert-danger-border);
+}
+
+.admin-pill.is-info {
+  background-color: var(--alert-info-bg);
+  color: var(--alert-info-text);
+  border-color: var(--border-color);
+}
+
+.admin-pill.is-success {
+  background-color: var(--alert-success-bg);
+  color: var(--alert-success-text);
+  border-color: var(--alert-success-border);
+}
+
+.admin-subcard {
+  padding: 16px;
+  background-color: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.admin-subcard.is-danger-accent {
+  border-left: 4px solid var(--alert-danger-text);
+}
+
+.admin-subcard.is-info-accent {
+  border-left: 4px solid #1877f2;
+  padding: 20px;
+}
+
+.admin-form-box {
+  padding: 12px;
+  border-radius: 6px;
+  display: block;
+  background-color: var(--bg-muted);
+  border: 1px solid var(--border-color);
+}
+
+.admin-form-box.is-danger {
+  background-color: var(--alert-danger-bg);
+  border-color: var(--alert-danger-border);
+}
+
+.admin-code-chip {
+  font-family: monospace;
+  font-weight: bold;
+  background-color: var(--bg-muted);
+  color: var(--text-main);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.admin-table-wrapper {
+  overflow-x: auto;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-family: sans-serif;
+  color: var(--text-body);
+}
+
+.admin-table thead tr {
+  background-color: var(--bg-muted);
+  border-bottom: 2px solid var(--border-color);
+  color: var(--text-main);
+}
+
+.admin-table tbody tr {
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-card);
+}
+
+.admin-table tbody tr.is-ai-row {
+  background-color: var(--alert-info-bg);
+}
+
+.admin-log-action {
+  line-height: 1.4;
+  color: var(--text-body);
+}
+
+.admin-log-action.is-error {
+  color: var(--alert-danger-text);
+  font-weight: 600;
+}
+
+.admin-social-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background-color: var(--bg-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  gap: 16px;
+}
+
+.admin-social-icon-circle {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-input);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  flex-shrink: 0;
+}
+
+/* Dopasowanie DataTables w Panelu Admina do Dark Mode */
+@media (prefers-color-scheme: dark) {
+  .dt-container,
+  .dt-container .dt-info,
+  .dt-container .dt-length label,
+  .dt-container .dt-search label,
+  .dt-container .dt-paging-button {
+    color: var(--text-main) !important;
+  }
+}

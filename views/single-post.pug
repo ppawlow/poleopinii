@@ -3,34 +3,23 @@ extends layout
 block content
     - var isSingleView = true
     - var isWorkMode = false
-    - var singleCardStyle = post.visibility === 'users' ? "background: #f0fdf4; border-left: 5px solid #198754; padding: 0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);" : (post.visibility === 'editors' ? "background: #fffdf0; border-left: 5px solid #e5a93c; padding: 0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);" : "background: #ffffff; padding: 0; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05);")
+    - var singleVisClass = post.visibility === 'users' ? 'is-users' : (post.visibility === 'editors' ? 'is-editors' : '')
 
     .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 32px auto; padding: 0 20px;")
-        main.editorial-article.portal-news-card(id=`post-${post._id}` style=singleCardStyle)
-            //- Wspólny nagłówek prasowy ze zdjęciem głównym na górze
+        main.editorial-article.portal-news-card.single-article-card(id=`post-${post._id}` class=singleVisClass)
             include partials/post-header-portal.pug
 
             .portal-single-content-wrapper(style="padding: 20px 32px 36px 32px;")
-                hr(style="border: 0; border-top: 1px solid #e4e6eb; margin: 0 0 24px 0;")
+                hr(style="border: 0; border-top: 1px solid var(--border-color); margin: 0 0 24px 0;")
                 include partials/post-body.pug
-
-                //- Sekcja o autorze
                 include partials/single-author-box.pug
-
-                //- Zgłoszenia nadużyć powiązane z wpisem
                 include partials/single-abuse-reports.pug
-
-                //- Wyróżniony blok Raportu Faktograficznego AI
                 include partials/single-factcheck-box.pug
-
-                //- Powiązane artykuły (Kontynuacja wątku, Polemika, Tego samego autora)
                 include partials/single-related-posts.pug
 
-                //- Dolny pasek interakcji (lajki, udostępnianie, komentarze)
-                footer.article-footer(style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e4e6eb; display: block; margin-bottom: 24px;")
+                footer.article-footer(style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border-color); display: block; margin-bottom: 24px;")
                     include partials/post-footer.pug
 
-            //- Uniwersalne okno powiększenia zdjęcia (Lightbox Image Modal)
             #custom-lightbox-modal.custom-lightbox-backdrop(style="display: none;" onclick="closeLightbox()")
                 span.lightbox-close(onclick="closeLightbox()") &times;
                 img#lightbox-target-image.lightbox-content(src="" alt="Powiększone zdjęcie")

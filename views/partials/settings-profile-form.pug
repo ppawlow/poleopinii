@@ -1,0 +1,73 @@
+.create-post(style="padding: 24px;")
+    h2(style="margin-bottom: 20px; color: var(--text-main); font-size: 22px; font-weight: 700;") Ustawienia konta
+
+    if error === 'password_required'
+        .admin-alert-box(style="background: var(--alert-info-bg); color: var(--alert-info-text); border: 1px solid var(--alert-info-border); margin-bottom: 16px;")
+            | 🔒 Zmiana danych wrażliwych (e-mail) wymaga autoryzacji. Wprowadź hasło w oknie poniżej.
+        
+    if error === 'exists'
+        .admin-alert-box.is-danger(style="margin-bottom: 16px;")
+            | ⚠️ Podany adres e-mail jest już zajęty przez innego użytkownika.
+        
+    if error === 'invalid_password'
+        .admin-alert-box.is-danger(style="margin-bottom: 16px;")
+            | ⚠️ Podane hasło autoryzacyjne jest nieprawidłowe. Zmiana adresu e-mail została odrzucona.
+        
+    if error === 'server'
+        .admin-alert-box.is-danger(style="margin-bottom: 16px;")
+
+            | ⚠️ #{customMsg || 'Błąd zapisu danych. Sprawdź poprawność pól i spróbuj ponownie.'}
+            
+    if msg === 'updated'
+        .admin-alert-box.is-success(style="margin-bottom: 16px;")
+            | 🎉 Dane profilu zostały pomyślnie zapisane.
+        
+    if msg === 'email_pending'
+        .admin-alert-box(style="background: var(--alert-info-bg); color: var(--alert-info-text); border: 1px solid var(--alert-info-border); margin-bottom: 16px;")
+            | ✉️ Profil zapisany! Link aktywacyjny lub resetujący został wysłany na adres e-mail.
+
+    form#settingsForm(action="/profile/settings" method="POST" style="display: flex; flex-direction: column; gap: 16px; width: 100%;")
+        input(type="hidden" name="_csrf" value=csrfToken)
+        input#hiddenCurrentPassword(type="hidden" name="currentPassword" value="")
+
+        div
+            label(style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;") Nazwisko lub pseudonim
+            input(type="text" name="name" value=user.name required style="width: 100%; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; outline: none;")
+
+        div
+            label(style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;") Adres e-mail
+            input#settingsEmailField(type="email" name="email" value=user.email required style="width: 100%; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; outline: none;")
+        
+        div
+            label(style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;") Niestandardowy alias profilu (Direct Link URL)
+            .settings-alias-wrap
+                span(style="color: var(--text-muted); font-size: 14px; user-select: none;") /profile/
+                input(type="text" name="alias" value=currentAlias placeholder="np. jan-kowalski" style="flex: 1; padding: 10px 10px 10px 2px; border: none; background: transparent; font-size: 15px; outline: none;")
+
+        div
+            label(style="font-size: 13px; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 6px;") Napisz kilka zdań o sobie
+            textarea(name="bio" maxlength="160" placeholder="Napisz coś o sobie..." style="width: 100%; height: 70px; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; font-family: inherit; resize: none; outline: none;") #{user.bio === 'Nie dodano jeszcze żadnych informacji o sobie.' ? '' : user.bio}
+            
+        div(style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 8px;")
+            a.modal-btn-secondary(href=`/profile/${user._id}` style="text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; font-size: 14px;") Anuluj
+            button(type="submit" style="background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;") Zapisz zmiany
+
+        .settings-toggle-box(title="Kliknij, aby zmienić ustawienie")
+            label(for="allowPrivateEmailsCheck" style="font-size: 13px; font-weight: 600; color: var(--text-main); cursor: pointer; user-select: none; margin-bottom: 0; flex: 1; line-height: 1.4;") 
+                | Zgadzam się na odbieranie/wysyłanie prywatnych wiadomości e-mail od/do innych użytkowników za pośrednictwem serwisu. Rozumiem, że mój adres e-mail nie będzie udostępniony nikomu postronnemu.
+            .block-toggle-container(style="display: inline-block; vertical-align: middle;" title="Przełącz, aby zmienić ustawienia komunikacji prywatnej")
+                label.switch
+                    input(
+                        type="checkbox" 
+                        name="allowPrivateEmails"
+                        id="allowPrivateEmailsCheck" 
+                        checked=user.allowPrivateEmails
+                        onclick="togglePrivateEmailsSlider(this)"
+                    )
+                    span.slider
+
+        hr(style="border: 0; border-top: 1px solid var(--border-color); margin: 8px 0;")
+
+if !user.isFullyVerified
+    h4(style="color: var(--text-main);") Pamiętaj również o weryfikacji swojego profilu, aby korzystać ze wszystkich narzędzi
+    button(type="button" onclick="location='/verify'" style="background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;") Weryfikacja profilu użytkownika

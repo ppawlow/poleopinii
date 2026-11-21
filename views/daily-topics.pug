@@ -1,24 +1,17 @@
 extends layout
 
 block content
-    //- Usuwamy twarde marginesy pionowe w stylu inline, aby kaskada z global.css/mobile.css działała prawidłowo
     .main-container(style="grid-template-columns: 1fr; max-width: 700px; margin: 0 auto;")
         main.feed
-            //- USUNIĘTO: Pusty div z margin-bottom: 12px, który odpychał zawartość w dół
-            
-            //- Kontener główny przeglądu
-            .create-post(style="padding: 24px; border: 1px solid var(--color-border); border-radius: 8px;")
-                h2(style="margin-bottom: 8px; color: #1c1e21; font-size: 24px; font-weight: 700; font-family: sans-serif; display: flex; align-items: center; gap: 10px;") 
+            .create-post(style="padding: 24px; border: 1px solid var(--border-color); border-radius: 8px;")
+                h2(style="margin-bottom: 8px; color: var(--text-main); font-size: 24px; font-weight: 700; font-family: sans-serif; display: flex; align-items: center; gap: 10px;") 
                     i.fa-solid.fa-newspaper(style="color: var(--color-accent);")
                     | Przegląd dnia
-                p(style="font-size: 14px; color: #65676b; margin-bottom: 24px; line-height: 1.4; font-family: sans-serif;")
+                p(style="font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.4; font-family: sans-serif;")
                     | Przegląd najważniejszych wydarzeń dnia jest tworzony przez AI i może zawierać błędy. Zawsze sprawdzaj fakty w niezależnych źródłach!
 
-                //- Kreator postów na podstronie
                 include partials/create-post.pug
                 
-                //- Margines oddzielający formularz od kafelków z newsami
                 div(style="margin-bottom: 24px;")
 
-                //- Inkludowanie wspólnego szablonu newsów
                 include partials/news-feed.pug

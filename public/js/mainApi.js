@@ -221,116 +221,113 @@ async function handleAsyncPostLikeSubmit(form, csrfToken) {
 }
 
 /**
- * Obsługa asynchronicznego blokowania profilu (klasa .dynamic-block-form)
+ * Obsługa asynchronicznego blokowania profilu (nieużywana)
  */
-async function handleAsyncBlockUserSubmit(form, csrfToken) {
-  if (form.dataset.loading === "true") return;
-  form.dataset.loading = "true";
+// async function handleAsyncBlockUserSubmit(form, csrfToken) {
+//   if (form.dataset.loading === "true") return;
+//   form.dataset.loading = "true";
+// 
+//   const button = form.querySelector(".profile-block-main-btn");
+//   if (button) button.disabled = true;
+// 
+//   try {
+//     const response = await fetch(form.action, {
+//       method: "POST",
+//       headers: {
+//         Accept: "application/json",
+//         "X-CSRF-Token": csrfToken,
+//       },
+//     });
+// 
+//     if (response.ok) {
+//       const data = await response.json();
+//       if (data.success) {
+//         const btnTextSpan = button.querySelector(".btn-text");
+//         const iconEl = button.querySelector("i");
+//         const mailBtn = document.querySelector(".profile-mail-main-btn");
+// 
+//         if (btnTextSpan) {
+//           btnTextSpan.innerText = data.isBlocked ? "Odblokuj" : "Zablokuj";
+//         }
+// 
+//         // AKTUALIZACJA IKONY ORAZ ATRYBUTU TITLE DLA BLOKADY
+//         if (iconEl) {
+//           if (data.isBlocked) {
+//             iconEl.className = "fa-solid fa-user";
+//             button.setAttribute("title", "Odblokuj profil");
+//           } else {
+//             iconEl.className = "fa-solid fa-user-slash";
+//             button.setAttribute("title", "Blokuj profil");
+//           }
+//         }
+// 
+//         if (data.isBlocked) {
+//           button.classList.add("is-blocking");
+// 
+//           if (mailBtn) {
+//             mailBtn.style.display = "none";
+//           }
+// 
+//           // Reset przycisku obserwowania oraz jego title przy aktywacji blokady
+//           const followBtn = document.querySelector(".profile-follow-btn");
+//           if (followBtn) {
+//             followBtn.classList.remove("is-following");
+//             const followText = followBtn.querySelector(".btn-text");
+//             const followIcon = followBtn.querySelector("i");
+//             if (followText) followText.innerText = "Obserwuj";
+//             if (followIcon) {
+//               followIcon.className = "fa-solid fa-eye";
+//             }
+//             followBtn.setAttribute("title", "Obserwuj profil");
+//           }
+//           if (window.appUser) {
+//             const gridContainer = document.getElementById(
+//               "followers-grid-container",
+//             );
+//             const countBadge = document.getElementById("followers-count-badge");
+// 
+//             if (gridContainer && countBadge) {
+//               const myTile = gridContainer.querySelector(
+//                 `a[data-user-id="${window.appUser.id}"]`,
+//               );
+//               if (myTile) {
+//                 myTile.remove();
+//                 let currentCount =
+//                   parseInt(countBadge.getAttribute("data-count")) || 0;
+//                 currentCount = Math.max(0, currentCount - 1);
+//                 countBadge.setAttribute("data-count", currentCount);
+//                 countBadge.innerText = `${currentCount} osób`;
+// 
+//                 if (
+//                   currentCount === 0 &&
+//                   !document.getElementById("no-followers-fallback-text")
+//                 ) {
+//                   gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
+//                 }
+//               }
+//             }
+//           }
+//         } else {
+//           button.classList.remove("is-blocking");
+// 
+//           // Dynamiczne przywrócenie przycisku poczty na frontendzie po odblokowaniu
+//           if (mailBtn) {
+//             mailBtn.style.display = "inline-flex";
+//           }
+//         }
+//       }
+//     }
+//   } catch (err) {
+//     console.error("Błąd sieciowy podczas blokowania użytkownika:", err);
+//   } finally {
+//     form.dataset.loading = "false";
+//     if (button) {
+//       button.disabled = false;
+//       button.blur();
+//     }
+//   }
+// }
 
-  const button = form.querySelector(".profile-block-main-btn");
-  if (button) button.disabled = true;
-
-  try {
-    const response = await fetch(form.action, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "X-CSRF-Token": csrfToken,
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.success) {
-        const btnTextSpan = button.querySelector(".btn-text");
-        const iconEl = button.querySelector("i");
-        const mailBtn = document.querySelector(".profile-mail-main-btn");
-
-        if (btnTextSpan) {
-          btnTextSpan.innerText = data.isBlocked ? "Odblokuj" : "Zablokuj";
-        }
-
-        // AKTUALIZACJA IKONY ORAZ ATRYBUTU TITLE DLA BLOKADY
-        if (iconEl) {
-          if (data.isBlocked) {
-            iconEl.className = "fa-solid fa-user";
-            button.setAttribute("title", "Odblokuj profil");
-          } else {
-            iconEl.className = "fa-solid fa-user-slash";
-            button.setAttribute("title", "Blokuj profil");
-          }
-        }
-
-        if (data.isBlocked) {
-          button.classList.add("is-blocking");
-
-          if (mailBtn) {
-            mailBtn.style.display = "none";
-          }
-
-          // Reset przycisku obserwowania oraz jego title przy aktywacji blokady
-          const followBtn = document.querySelector(".profile-follow-btn");
-          if (followBtn) {
-            followBtn.classList.remove("is-following");
-            const followText = followBtn.querySelector(".btn-text");
-            const followIcon = followBtn.querySelector("i");
-            if (followText) followText.innerText = "Obserwuj";
-            if (followIcon) {
-              followIcon.className = "fa-solid fa-eye";
-            }
-            followBtn.setAttribute("title", "Obserwuj profil");
-          }
-          if (window.appUser) {
-            const gridContainer = document.getElementById(
-              "followers-grid-container",
-            );
-            const countBadge = document.getElementById("followers-count-badge");
-
-            if (gridContainer && countBadge) {
-              const myTile = gridContainer.querySelector(
-                `a[data-user-id="${window.appUser.id}"]`,
-              );
-              if (myTile) {
-                myTile.remove();
-                let currentCount =
-                  parseInt(countBadge.getAttribute("data-count")) || 0;
-                currentCount = Math.max(0, currentCount - 1);
-                countBadge.setAttribute("data-count", currentCount);
-                countBadge.innerText = `${currentCount} osób`;
-
-                if (
-                  currentCount === 0 &&
-                  !document.getElementById("no-followers-fallback-text")
-                ) {
-                  gridContainer.innerHTML = `<p id="no-followers-fallback-text" style="font-size: 13px; color: #65676b; text-align: center; margin: 10px 0; grid-column: span 3;">Tego użytkownika nikt jeszcze nie obserwuje.</p>`;
-                }
-              }
-            }
-          }
-        } else {
-          button.classList.remove("is-blocking");
-
-          // Dynamiczne przywrócenie przycisku poczty na frontendzie po odblokowaniu
-          if (mailBtn) {
-            mailBtn.style.display = "inline-flex";
-          }
-        }
-      }
-    }
-  } catch (err) {
-    console.error("Błąd sieciowy podczas blokowania użytkownika:", err);
-  } finally {
-    form.dataset.loading = "false";
-    if (button) {
-      button.disabled = false;
-      button.blur();
-    }
-  }
-}
-
-/**
- * Obsługa bezpiecznego usuwania zasobów (akcje zawierające endpoint /delete)
- */
 /**
  * Obsługa bezpiecznego usuwania zasobów (zarówno postów, jak i komentarzy) przez AJAX
  */

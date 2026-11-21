@@ -2,5 +2,5 @@ if user
     .create-post(id="post-new-trigger" style="margin-bottom: 16px; padding: 12px 16px; cursor: pointer;" onclick="window.openCreatePostModal()")
         div(style="display: flex; align-items: center; gap: 12px;")
             img.nav-avatar(src=(user.avatarUrl || '/uploads/default-avatar.png') style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover;")
-            .search-bar(style="flex: 1; background-color: #f0f2f5; color: #65676b; padding: 10px 16px; border-radius: 50px; font-size: 15px; pointer-events: none;") Stwórz nowy post
+            .search-bar(style="flex: 1; color: var(--text-muted); padding: 10px 16px; border-radius: 50px; font-size: 15px; pointer-events: none;") Stwórz nowy post
             i.fa-solid.fa-pen-to-square(style="color: #1877f2; font-size: 18px;")

@@ -315,13 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
         e.stopImmediatePropagation();
         window.openLightbox(e.target.src);
         return;
-      }
-      const articleImg = e.target.closest(".article-featured-image img");
-      if (articleImg) {
-        e.preventDefault();
-        window.openLightbox(articleImg.src);
-        return;
-      }
+      }    
     },
     true,
   );

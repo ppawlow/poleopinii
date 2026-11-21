@@ -1,0 +1,28 @@
+//- Uniwersalny modal zgłaszania nadużyć (DSA / Safe Harbor)
+#custom-abuse-modal.custom-modal-backdrop(style="display: none;" onclick="window.closeAbuseModal()")
+    .custom-modal-box(style="max-width: 500px;" onclick="event.stopPropagation()")
+        .custom-modal-header(style="background: var(--alert-danger-bg); border-bottom: 1px solid var(--alert-danger-border); display: flex; justify-content: space-between; align-items: center;")
+            h3(style="color: var(--alert-danger-text); margin: 0; font-size: 16px; font-weight: bold;") ⚠️ Zgłoś naruszenie lub nadużycie
+            span(onclick="window.closeAbuseModal()" style="cursor: pointer; font-size: 24px; font-weight: bold; color: var(--text-muted); line-height: 1;") &times;
+        form#publicAbuseReportForm(onsubmit="window.submitAbuseModalForm(event)" autocomplete="off")
+            input(type="hidden" name="_csrf" value=csrfToken)
+            input#abuseModalParentPostId(type="hidden" name="parentPostId")
+            input(type="hidden" name="isAbuseReport" value="true")
+            .custom-modal-body(style="padding: 16px; display: flex; flex-direction: column; gap: 12px; font-family: sans-serif;")
+                if !user
+                    div
+                        label(style="font-size: 12px; font-weight: bold; color: var(--alert-danger-text); display: block; margin-bottom: 4px;") Twój adres e-mail (Wymagany do kontaktu):*
+                        input#abuseModalReporterEmail(type="email" name="reporterEmail" required placeholder="np. twój-email@domena.pl" style="width: 100%; padding: 10px; border: 1px solid var(--alert-danger-border); border-radius: 6px; font-size: 14px; outline: none;")
+                div
+                    label(style="font-size: 12px; font-weight: bold; color: var(--alert-danger-text); display: block; margin-bottom: 4px;") Typ zgłoszenia / Charakter naruszenia:*
+                    select(name="abuseCategory" required style="width: 100%; padding: 10px; border: 1px solid var(--alert-danger-border); border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer;")
+                        option(value="general") Spam, wulgaryzmy, mowa nienawiści (Procedura standardowa - 72h)
+                        option(value="copyright") 🚨 Naruszenie majątkowych praw autorskich (Wniosek o natychmiastowe usunięcie)
+                div
+                    label(style="font-size: 12px; font-weight: bold; color: var(--alert-danger-text); display: block; margin-bottom: 4px;") Dokładne uzasadnienie zgłoszenia:*
+                    textarea(name="content" required placeholder="Wpisz szczegółowe powody zgłoszenia treści..." style="width: 100%; height: 120px; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 14px; resize: none; outline: none; font-family: inherit;")
+                p(style="font-size: 11.5px; color: var(--text-muted); margin: 0; line-height: 1.4; font-style: italic;") 
+                    | Narzędzie chronione przez system reCAPTCHA. Twoja tożsamość pozostanie całkowicie anonimowa przed zaskarżonym autorem wpisu.
+            .custom-modal-footer
+                button.modal-btn-secondary(type="button" onclick="window.closeAbuseModal()") Anuluj
+                button.modal-btn-danger(type="submit" style="background: #bc2525; color: white;") Wyślij zgłoszenie

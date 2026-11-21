@@ -1,52 +1,43 @@
-//- views/main.pug
 extends layout
 
 block content
     .main-container
-        //- ==========================================
-        //- LEWY PANEL BOCZNY (Zależny od zalogowania)
-        //- ==========================================
         aside.left-sidebar
             if user
-                a.sidebar-item(href="/following-feed" style="text-decoration: none; color: inherit; border-bottom: 1px solid var(--color-border); padding-bottom: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s;")
+                a.sidebar-item(href="/following-feed" style="text-decoration: none; color: inherit; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 8px; display: flex; align-items: center; gap: 12px;")
                     i.fa-solid.fa-rss(style="color: var(--color-primary);")
-                    span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Obserwowani autorzy
+                    span(style="font-weight: 700; color: var(--text-main); text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Obserwowani autorzy
                     
                 if followingProfiles && followingProfiles.length > 0
                     each followed in followingProfiles
-                        a.sidebar-item(href=`/profile/${followed._id}` style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px; transition: background 0.2s;")
+                        a.sidebar-item(href=`/profile/${followed._id}` style="text-decoration:none; color:inherit; display:flex; align-items:center; gap:12px;")
                             img.nav-avatar(src=(followed.avatarUrl || DEFAULT_ASSETS.avatar) style="width:28px; height:28px; object-fit: cover;")
                             span(style="font-size: 14px; font-weight: 500;") #{followed.displayName}
                 else
-                    p(style="font-size: 12px; color: #65676b; padding: 8px 12px; font-style: italic;") Nie obserwujesz jeszcze żadnych autorów.
+                    p(style="font-size: 12px; color: var(--text-muted); padding: 8px 12px; font-style: italic;") Nie obserwujesz jeszcze żadnych autorów.
             else
-                a.sidebar-item(href="/search" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s;")
+                a.sidebar-item(href="/search" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; display: flex; align-items: center; gap: 12px;")
                     i.fa-solid.fa-magnifying-glass(style="color: var(--color-primary);")
-                    span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Szukaj autorów
+                    span(style="font-weight: 700; color: var(--text-main); text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Szukaj autorów
 
-                div(style="background: #ffffff; padding: 14px; border-radius: 8px; border: 1px solid var(--color-border); margin-bottom: 12px;")
+                div(style="background: var(--bg-card); padding: 14px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;")
                     form(action="/search" method="GET" style="display: flex; flex-direction: column; gap: 8px; width: 100%;")
-                        input.search-bar(type="text" name="q" placeholder="Imię, nazwisko lub pseudonim..." required minlength="3" style="width: 100%; border: 1px solid #dddfe2; border-radius: 6px; padding: 9px 12px; font-size: 13.5px; background: #f8f9fa;")
+                        input.search-bar(type="text" name="q" placeholder="Imię, nazwisko lub pseudonim..." required minlength="3" style="width: 100%; border: 1px solid var(--border-input); border-radius: 6px; padding: 9px 12px; font-size: 13.5px;")
                         button(type="submit" style="background: #1877f2; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: 600; font-size: 13.5px; cursor: pointer; width: 100%;") Szukaj
 
-                //- Kontener na dynamiczne wyniki wyszukiwania AJAX
                 #sidebar-search-results.accordion-container(style="display: flex; flex-direction: column; gap: 8px; width: 100%;")
 
-        //- ==========================================
-        //- CENTRALNY PANEL (Wspólny dla gości i zalogowanych)
-        //- ==========================================
         main.feed
             if user
                 if !user.isFullyVerified
-                    .verification-reminder-banner(style="background: #e7f3ff; border: 1px solid #1877f2; padding: 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; font-family: sans-serif;")
+                    .verification-reminder-banner.verification-banner-box
                         div(style="flex: 1; padding-right: 16px;")
-                            h4(style="margin: 0 0 4px 0; color: #0a5b9d; font-size: 15px; font-weight: bold;") 🛡️ Twój profil nie jest jeszcze w pełni aktywny
-                            p(style="margin: 0; font-size: 13px; color: #1c1e21; line-height: 1.4;") Aby odblokować wszystkie możliwości profilu, np. zamieszczać artykuły publiczne, brać udział w dyskusjach, kontaktować się prywatnie z innymi użytkownikami, potwierdź swoją autentyczność.
+                            h4(style="margin: 0 0 4px 0; color: var(--alert-info-text); font-size: 15px; font-weight: bold;") 🛡️ Twój profil nie jest jeszcze w pełni aktywny
+                            p(style="margin: 0; font-size: 13px; color: var(--text-body); line-height: 1.4;") Aby odblokować wszystkie możliwości profilu, np. zamieszczać artykuły publiczne, brać udział w dyskusjach, kontaktować się prywatnie z innymi użytkownikami, potwierdź swoją autentyczność.
                         a(href="/verify" style="background: #1877f2; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; white-space: nowrap;") Zweryfikuj konto
 
                 include partials/create-post.pug
 
-            //- WSPÓLNY PASEK NARZĘDZI: Sociale po lewej (dla wszystkich), przełącznik widoku po prawej (dla zalogowanych)
             if (SERVICE_SOCIALS && SERVICE_SOCIALS.length > 0) || user
                 .feed-toolbar-row(style="display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 12px; flex-wrap: wrap;")
                     if SERVICE_SOCIALS && SERVICE_SOCIALS.length > 0
@@ -83,18 +74,15 @@ block content
                         else
                             include partials/post-card.pug
                 else
-                    .no-posts(style="text-align: center; padding: 20px; color: #65676b; background: #ffffff; border-radius: 8px; border: 1px solid var(--color-border);") Brak wpisów do wyświetlenia.
+                    .no-posts.empty-state-box Brak wpisów do wyświetlenia.
 
             if hasMore
                 #load-more-container(style="text-align: center; margin-top: 20px;")
-                    button#load-more-btn(onclick="loadMorePosts()" style="background:#fff; border:1px solid #dddfe2; padding:10px 24px; border-radius:6px; font-weight:600; cursor:pointer; color:#1877f2; box-shadow:0 1px 2px rgba(0,0,0,0.05); transition: background 0.2s;") Pokaż więcej
+                    button#load-more-btn.action-btn(onclick="loadMorePosts()" style="border: 1px solid var(--border-input); color: #1877f2;") Pokaż więcej
 
-        //- ==========================================
-        //- PRAWY PANEL BOCZNY (Wspólny dla gości i zalogowanych)
-        //- ==========================================
         aside.right-sidebar
-            a.sidebar-item(href="/topics" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--color-border); padding-bottom: 8px; display: flex; align-items: center; gap: 12px; transition: opacity 0.2s;")
+            a.sidebar-item(href="/topics" style="text-decoration: none; color: inherit; margin-bottom: 12px; border-bottom: 2px solid var(--border-color); padding-bottom: 8px; display: flex; align-items: center; gap: 12px;")
                 i.fa-solid.fa-newspaper(style="color: var(--color-primary);")
-                span(style="font-weight: 700; color: #1c1e21; text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Przegląd dnia
+                span(style="font-weight: 700; color: var(--text-main); text-transform: uppercase; font-size: 14px; letter-spacing: 0.5px;") Przegląd dnia
 
             include partials/news-feed.pug

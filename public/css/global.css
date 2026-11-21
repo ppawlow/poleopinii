@@ -1,16 +1,38 @@
-/* =========================================================================
-   1. ZMIENNE (THEMING) I CZCIONKI
-   ========================================================================= */
+/* ===========================================================
+   1. ZMIENNE SEMANTYCZNE (THEMING: JASNY / CIEMNY) I CZCIONKI
+   =========================================================== */
 :root {
   --color-primary: #0f5132;
   --color-primary-hover: #0b3d25;
   --color-secondary: #1a2536;
   --color-accent: #e5a93c;
   --color-accent-hover: #ce932a;
-  --color-bg-main: #f8f9fa;
-  --color-bg-card: #ffffff;
-  --color-border: #e2e8f0;
-  --color-text-muted: #64748b;
+
+  --bg-page: #f0f2f5;
+  --bg-card: #ffffff;
+  --bg-subtle: #f8f9fa;
+  --bg-muted: #f0f2f5;
+  --text-main: #1c1e21;
+  --text-body: #050505;
+  --text-muted: #65676b;
+  --border-color: #e4e6eb;
+  --border-input: #dddfe2;
+
+  --alert-danger-bg: #fff3f3;
+  --alert-danger-border: #f5c6cb;
+  --alert-danger-text: #bc2525;
+
+  --alert-success-bg: #f0fdf4;
+  --alert-success-border: #b1f2c2;
+  --alert-success-text: #146c43;
+
+  --alert-info-bg: #e7f3ff;
+  --alert-info-border: #b6d4fe;
+  --alert-info-text: #1877f2;
+
+  --alert-warning-bg: #fffdf0;
+  --alert-warning-border: #ffe69c;
+  --alert-warning-text: #997404;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -18,10 +40,32 @@
     --color-primary: #198754;
     --color-primary-hover: #146c43;
     --color-secondary: #f8f9fa;
-    --color-bg-main: #0b111a;
-    --color-bg-card: #1a2536;
-    --color-border: #2d3748;
-    --color-text-muted: #94a3b8;
+
+    --bg-page: #0d1117;
+    --bg-card: #161b22;
+    --bg-subtle: #1c2128;
+    --bg-muted: #21262d;
+    --text-main: #e6edf3;
+    --text-body: #e6edf3;
+    --text-muted: #8b949e;
+    --border-color: #30363d;
+    --border-input: #30363d;
+
+    --alert-danger-bg: #2b161b;
+    --alert-danger-border: #6e2832;
+    --alert-danger-text: #ffa198;
+
+    --alert-success-bg: #12261e;
+    --alert-success-border: #23533a;
+    --alert-success-text: #7ee787;
+
+    --alert-info-bg: #13233a;
+    --alert-info-border: #264c7e;
+    --alert-info-text: #79c0ff;
+
+    --alert-warning-bg: #2d2211;
+    --alert-warning-border: #6b4e1d;
+    --alert-warning-text: #e3b341;
   }
 }
 
@@ -33,9 +77,9 @@
   src: url("../fonts/varela-round-v21-latin-regular.woff2") format("woff2");
 }
 
-/* =========================================================================
+/* =========================
    2. RESET I STYLE GLOBALNE
-   ========================================================================= */
+   ========================= */
 * {
   margin: 0;
   padding: 0;
@@ -48,12 +92,24 @@
 }
 
 body {
-  background-color: #f0f2f5;
-  color: #050505;
+  background-color: var(--bg-page);
+  color: var(--text-body);
   padding-top: 56px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+}
+
+body,
+.post-card,
+.create-post,
+.info-box,
+header.fb-navbar,
+footer.site-footer {
+  transition:
+    background-color 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease;
 }
 
 .page-main-content {
@@ -62,27 +118,40 @@ body {
 }
 
 .site-footer {
+  position: relative;
+  overflow: visible;
   flex-shrink: 0;
-  background-color: #ffffff;
-  border-top: 1px solid var(--color-border, #e4e6eb);
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-color);
   padding: 16px 0;
   width: 100%;
-  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.02);
   font-family: sans-serif;
   margin-top: auto;
 }
 
-/* =========================================================================
-   3. GÓRNY PASEK NAWIGACJI
-   ========================================================================= */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="date"],
+textarea,
+select {
+  background-color: var(--bg-card);
+  color: var(--text-body);
+  border-color: var(--border-input);
+}
+
+/* ===============================
+   3. GÓRNY PASEK NAWIGACJI I MENU
+   =============================== */
 .fb-navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 56px;
-  background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -114,7 +183,8 @@ body {
 }
 
 .search-bar {
-  background-color: #f0f2f5;
+  background-color: var(--bg-muted);
+  color: var(--text-body);
   border: none;
   border-radius: 50px;
   padding: 10px 16px;
@@ -138,14 +208,14 @@ body {
   justify-content: center;
   width: 110px;
   height: 100%;
-  color: #65676b;
+  color: var(--text-muted);
   font-size: 20px;
   text-decoration: none;
   border-bottom: 3px solid transparent;
 }
 
 .nav-icon:hover {
-  background-color: #f2f2f2;
+  background-color: var(--bg-subtle);
   border-radius: 8px;
   height: 90%;
   margin-top: 3px;
@@ -163,9 +233,17 @@ body {
   justify-content: flex-end;
 }
 
+.fb-navbar .nav-right .user-visitcard {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
 .user-name {
   font-weight: 600;
   font-size: 15px;
+  color: var(--text-main);
 }
 
 .user-nav-link.active-profile {
@@ -174,32 +252,14 @@ body {
   padding-top: 3px;
 }
 
-.logout-btn,
-.login-btn {
-  color: #1877f2;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 14px;
-  padding: 8px 12px;
-  border-radius: 6px;
-}
-
-.logout-btn:hover,
-.login-btn:hover {
-  background-color: #f0f2f5;
-}
-
-/* =========================================================================
-   4. DROPDOWN MENU
-   ========================================================================= */
 .nav-dropdown-container {
   position: relative;
   display: inline-block;
 }
 
 .nav-dropdown-btn {
-  background-color: #f0f2f5;
-  color: #050505;
+  background-color: var(--bg-muted);
+  color: var(--text-main);
   border: none;
   border-radius: 50%;
   width: 40px;
@@ -214,7 +274,7 @@ body {
 }
 
 .nav-dropdown-btn:hover {
-  background-color: #e4e6eb;
+  background-color: var(--bg-subtle);
 }
 
 .nav-dropdown-content {
@@ -222,9 +282,10 @@ body {
   position: absolute;
   right: 0;
   top: 48px;
-  background-color: #ffffff;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
   min-width: 200px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   border-radius: 8px;
   padding: 8px;
   z-index: 200;
@@ -235,7 +296,7 @@ body {
 }
 
 .dropdown-item {
-  color: #050505;
+  color: var(--text-main);
   padding: 10px 12px;
   text-decoration: none;
   display: flex;
@@ -248,33 +309,54 @@ body {
 }
 
 .dropdown-item:hover {
-  background-color: #f2f2f2;
+  background-color: var(--bg-subtle);
 }
 
 .dropdown-item i {
   width: 18px;
   text-align: center;
-  color: #65676b;
+  color: var(--text-muted);
 }
 
 .dropdown-item.logout-link:hover {
-  background-color: #ffebe9;
-  color: #bc2525;
+  background-color: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
 }
 
 .dropdown-item.logout-link:hover i {
-  color: #bc2525;
+  color: var(--alert-danger-text);
 }
 
 .dropdown-divider {
   border: 0;
-  border-top: 1px solid #e4e6eb;
+  border-top: 1px solid var(--border-color);
   margin: 6px 0;
 }
 
-/* =========================================================================
-   5. GŁÓWNY KONTENER I BOCZNE PANELE
-   ========================================================================= */
+.brand-text-wrap {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.05;
+  gap: 2px;
+}
+
+.brand-text-wrap h1 {
+  margin: 0;
+  line-height: 1;
+}
+
+.brand-text-wrap small {
+  display: block;
+  font-size: 11.5px;
+  line-height: 1.1;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ==================================
+   4. GŁÓWNY KONTENER I BOCZNE PANELE
+   ================================== */
 .main-container {
   display: grid;
   grid-template-columns: minmax(150px, 320px) 650px minmax(150px, 320px);
@@ -292,8 +374,6 @@ body {
 .right-sidebar {
   position: sticky;
   top: 76px;
-/*   max-height: calc(100vh - 90px); */
-/*   overflow-y: auto; */
   height: fit-content;
 }
 
@@ -306,10 +386,11 @@ body {
   cursor: pointer;
   font-weight: 500;
   font-size: 15px;
+  color: var(--text-main);
 }
 
 .sidebar-item:hover {
-  background-color: #e4e6eb;
+  background-color: var(--bg-subtle);
 }
 
 .sidebar-item i {
@@ -319,15 +400,9 @@ body {
   text-align: center;
 }
 
-.right-sidebar h4 {
-  color: #65676b;
-  margin-bottom: 12px;
-  font-size: 17px;
-}
-
-/* =========================================================================
-   6. FEED I KARTY POSTÓW
-   ========================================================================= */
+/* ========================+=========
+   5. FEED, KARTY POSTÓW I KOMENTARZE
+   ================================== */
 .feed {
   display: flex;
   flex-direction: column;
@@ -337,34 +412,13 @@ body {
 
 .create-post,
 .post-card,
-.login-prompt {
-  background-color: #ffffff;
+.login-prompt,
+.info-box {
+  background-color: var(--bg-card);
+  color: var(--text-body);
   border-radius: 8px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   padding: 12px 16px;
-}
-
-.create-post .post-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.create-post form {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  gap: 8px;
-}
-
-.create-post input {
-  flex: 1;
-  background-color: #f0f2f5;
-  border: none;
-  border-radius: 20px;
-  padding: 10px 16px;
-  font-size: 15px;
-  outline: none;
 }
 
 .post-author-row {
@@ -374,93 +428,45 @@ body {
   margin-bottom: 12px;
 }
 
-.author-info h4 {
-  font-size: 15px;
-  font-weight: 600;
-}
-
 .author-info span {
   font-size: 12px;
-  color: #65676b;
+  color: var(--text-muted);
 }
 
-.post-direct-link:hover {
-  color: #1877f2;
-}
-
-.follow-btn {
-  background: #e4e6eb;
+.follow-btn,
+.upload-action-btn {
+  background-color: var(--bg-muted);
+  color: var(--text-main);
   border: none;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 6px;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 14px;
   cursor: pointer;
   text-decoration: none;
 }
 
-.follow-btn:hover {
-  background: #d8dadf;
-}
-
-.post-content-html {
-  font-size: 15px;
-  line-height: 1.5;
-  margin-bottom: 12px;
-  color: #050505;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-}
-
-.post-image-container {
-  margin: 12px -16px;
-  background-color: #f0f2f5;
-  display: flex;
-  justify-content: center;
-  width: calc(100% + 32px);
-}
-
-.post-media {
-  max-width: 100%;
-  max-height: 500px;
-  object-fit: contain;
-  cursor: zoom-in;
-  transition:
-    transform 0.2s ease,
-    filter 0.2s ease;
-}
-
-.post-media:hover,
-.article-featured-image img:hover {
-  transform: scale(1.005);
-  filter: brightness(1.03);
+.follow-btn:hover,
+.upload-action-btn:hover {
+  background-color: var(--bg-subtle);
 }
 
 .post-stats {
   display: flex;
   justify-content: space-between;
-  color: #65676b;
+  color: var(--text-muted);
   font-size: 13px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #e4e6eb;
-}
-
-.likes-count i {
-  color: #1877f2;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .post-actions {
   display: flex;
   padding: 4px 0;
-  border-bottom: 1px solid #e4e6eb;
+  border-bottom: 1px solid var(--border-color);
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
-}
-
-.post-actions form {
-  flex: 1;
 }
 
 .post-like-form {
@@ -469,14 +475,14 @@ body {
 }
 
 .action-btn {
-  background-color: #f0f2f5;
+  background-color: var(--bg-muted);
+  color: var(--text-main);
   border: none;
   padding: 0 16px;
   border-radius: 20px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
-  color: #050505;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -489,17 +495,7 @@ body {
 }
 
 .action-btn:hover:not([disabled]) {
-  background-color: #f2f2f2;
-}
-
-/* =========================================================================
-   7. SEKCJA KOMENTARZY I KOMPONENTY INTEGRALNE
-   ========================================================================= */
-.comments-section {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  background-color: var(--bg-subtle);
 }
 
 .comment-card {
@@ -509,7 +505,8 @@ body {
 }
 
 .comment-content {
-  background-color: #f0f2f5;
+  background-color: var(--bg-muted);
+  color: var(--text-body);
   padding: 8px 12px;
   border-radius: 18px;
   max-width: calc(100% - 40px);
@@ -522,22 +519,23 @@ body {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 2px;
+  color: var(--text-main);
 }
 
 .comment-content p {
   font-size: 14px;
 }
-
 .comment-form {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-top: 8px;
 }
-
-.comment-form textarea {
+.comment-form textarea,
+.comment-edit-form-block textarea {
   flex: 1;
-  background-color: #f0f2f5;
+  background-color: var(--bg-muted);
+  color: var(--text-body);
   border: none;
   border-radius: 18px;
   padding: 8px 12px;
@@ -545,15 +543,16 @@ body {
   outline: none;
   font-family: inherit;
   line-height: 1.4;
-  box-sizing: border-box;
+  min-height: 36px;
+  resize: none;
+  transition: height 0.15s ease-out;
 }
-
 .nav-avatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
   object-fit: cover;
-  background-color: #ddd;
+  background-color: var(--bg-muted);
 }
 .comment-avatar {
   width: 32px;
@@ -561,46 +560,140 @@ body {
   border-radius: 50%;
   object-fit: cover;
 }
-.file-upload-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 12px;
-  background-color: #f0f2f5;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  color: #45bd62;
-}
+/* =============================
+6. EDYTOR QUILL I WIDOK ARTYKUŁU
+================================ */
 .ql-container.ql-snow {
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
-  border-color: #dddfe2 !important;
+  border-color: var(--border-input) !important;
+  resize: vertical;
+  overflow: auto;
+  min-height: 120px;
+  max-height: 600px;
 }
 .ql-toolbar.ql-snow {
   border-top-left-radius: 8px;
   border-top-right-radius: 8px;
-  border-color: #dddfe2 !important;
-  background: #f7f8fa;
+  border-color: var(--border-input) !important;
+  background: var(--bg-subtle);
 }
-/* =========================================================================
-8. MODALE, LIGHTBOX I POWIĘKSZENIA IMAGES
-========================================================================= */
+.ql-snow .ql-editor {
+  min-height: 100%;
+  height: 100%;
+  overflow-y: auto;
+  padding: 12px 16px;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.ql-editor lead,
+.article-text-content lead {
+  display: block;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.55;
+  text-align: justify;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+/* Czyszczenie wklejonych białych teł ze schowka (Facebook/Word) */
+.article-text-content,
+.article-text-content *,
+.post-content-html,
+.post-content-html *,
+.ql-editor,
+.ql-editor * {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+@media (prefers-color-scheme: dark) {
+  .ql-toolbar.ql-snow {
+    background-color: var(--bg-muted) !important;
+  }
+  .ql-toolbar .ql-stroke {
+    stroke: var(--text-main) !important;
+  }
+  .ql-toolbar .ql-fill {
+    fill: var(--text-main) !important;
+  }
+  .ql-toolbar .ql-picker-label {
+    color: var(--text-main) !important;
+  }
+  .ql-container.ql-snow,
+  .ql-editor {
+    background-color: var(--bg-page) !important;
+    color: var(--text-body) !important;
+  }
+  .article-text-content,
+  .article-text-content *,
+  .post-content-html,
+  .post-content-html * {
+    color: var(--text-body) !important;
+  }
+}
+.editorial-article {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  box-sizing: border-box;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  background-color: var(--bg-card);
+  color: var(--text-body);
+}
+.article-text-content {
+  display: block;
+  min-width: 0;
+}
+.article-text-content p {
+  text-align: justify;
+  text-justify: inter-word;
+  text-wrap: pretty;
+  padding: 8px 0;
+  margin: 0;
+  font-size: 16.5px;
+  line-height: 1.65;
+}
+.article-text-content h1,
+.article-text-content h2,
+.article-text-content h3 {
+  text-align: left;
+  font-weight: 700;
+  color: var(--text-main);
+  display: block;
+  padding-top: 24px;
+  padding-bottom: 12px;
+  margin: 0;
+}
+.article-text-content ul,
+.article-text-content ol {
+  margin-left: 24px;
+  padding: 8px 0;
+}
+.article-text-content li {
+  padding: 4px 0;
+  font-size: 16px;
+}
+/* =======================================
+7. MODALE, LIGHTBOX I PRZEŁĄCZNIK SUWAKOWY
+========================================== */
 .custom-modal-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.55);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
 }
 .custom-modal-box {
-  background-color: #ffffff;
+  background-color: var(--bg-card);
+  color: var(--text-body);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   width: 100%;
   max-width: 450px;
@@ -610,22 +703,22 @@ body {
 }
 .custom-modal-header {
   padding: 16px;
-  border-bottom: 1px solid #e4e6eb;
+  border-bottom: 1px solid var(--border-color);
 }
 .custom-modal-header h3 {
   font-size: 18px;
   font-weight: 700;
-  color: #1c1e21;
+  color: var(--text-main);
 }
 .custom-modal-body {
   padding: 20px 16px;
   font-size: 15px;
   line-height: 1.5;
-  color: #050505;
+  color: var(--text-body);
 }
 .custom-modal-footer {
   padding: 12px 16px;
-  background-color: #f0f2f5;
+  background-color: var(--bg-muted);
   display: flex;
   justify-content: flex-end;
   gap: 8px;
@@ -643,34 +736,36 @@ body {
   color: #fff;
 }
 .modal-btn-secondary {
-  background-color: #e4e6eb;
-  color: #050505;
+  background-color: var(--bg-subtle);
+  color: var(--text-main);
+  border: 1px solid var(--border-input) !important;
 }
 .modal-btn-danger {
   background-color: #bc2525;
   color: #fff;
 }
+#custom-confirm-modal,
+#custom-alert-modal,
+#custom-loading-modal {
+  z-index: 10020 !important;
+}
 .custom-lightbox-backdrop {
   position: fixed;
-  top: 0;
-  left: 0;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   background-color: rgba(0, 0, 0, 0.9);
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 10000;
+  z-index: 10030 !important;
   cursor: zoom-out;
-  animation: lightboxFadeIn 0.25s ease-out;
 }
 .lightbox-content {
   max-width: 90%;
   max-height: 85%;
   object-fit: contain;
   border-radius: 4px;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
-  user-select: none;
   cursor: default;
 }
 .lightbox-close {
@@ -680,12 +775,8 @@ body {
   color: #f1f1f1;
   font-size: 40px;
   font-weight: bold;
-  transition: color 0.15s;
   cursor: pointer;
-  z-index: 10001;
-}
-.lightbox-close:hover {
-  color: var(--color-accent, #e5a93c);
+  z-index: 10031;
 }
 @keyframes modalFadeIn {
   from {
@@ -697,518 +788,36 @@ body {
     opacity: 1;
   }
 }
-@keyframes lightboxFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-/* =========================================================================
-9. LOGOWANIE, REJESTRACJA I PROFIL
-========================================================================= */
-.login-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1000px;
-  margin: 80px auto 0 auto;
-  padding: 0 40px;
-}
-.login-branding {
-  max-width: 500px;
-  padding-bottom: 40px;
-}
-.login-branding h1 {
-  color: #1877f2;
-  font-size: 60px;
-  font-weight: bold;
-  letter-spacing: -1px;
-}
-.login-box,
-.login-branding {
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  width: 396px;
-}
-.login-box h3 {
-  margin-bottom: 12px;
-  font-size: 18px;
-  color: #1c1e21;
-}
-.login-box input {
-  width: 100%;
-  padding: 14px 16px;
-  border: 1px solid #dddfe2;
-  border-radius: 6px;
-  font-size: 14px;
-  margin-bottom: 12px;
-  outline: none;
-}
-.login-box input:focus {
-  border-color: #1877f2;
-  box-shadow: 0 0 0 2px #e7f3ff;
-}
-.login-box hr {
-  border: 0;
-  border-top: 1px solid #dadde1;
-  margin: 20px 0;
-}
-.login-submit,
-.register-submit {
-  width: 100%;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  padding: 10px 0;
-  cursor: pointer;
-  color: #fff;
-}
-.login-submit {
-  background-color: #1877f2;
-  font-size: 20px;
-}
-.register-submit {
-  background-color: #42b72a;
-  font-size: 17px;
-}
-.profile-container {
-  max-width: 940px;
-  margin: 0 auto;
-  padding: 0 16px 40px 16px;
-}
-.profile-header-card {
-  background-color: #fff;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-  padding-bottom: 16px;
-  margin-bottom: 16px;
-}
-.cover-photo-wrapper {
-  position: relative;
-  width: 100%;
-  height: 350px;
-  background-color: #f0f2f5;
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-  overflow: hidden;
-}
-.cover-photo {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.profile-avatar-row {
-  display: flex;
-  align-items: flex-end;
-  padding: 0 32px;
-  margin-top: -30px;
-  position: relative;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-.avatar-wrapper {
-  width: 168px;
-  height: 168px;
-  border-radius: 50%;
-  border: 5px solid #fff;
-  overflow: hidden;
-  background-color: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-}
-.profile-main-avatar {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-.profile-user-details {
-  margin-bottom: 16px;
-  flex: 1;
-}
-.profile-user-details h2 {
-  font-size: 32px;
-  font-weight: 700;
-}
-.upload-action-btn,
-.profile-follow-btn {
-  background-color: #e4e6eb;
-  color: #050505;
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-  border: none;
-}
-.profile-follow-btn {
-  background-color: #1877f2;
-  color: white;
-}
-.profile-body-layout {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  gap: 16px;
-}
-.info-box {
-  background-color: #fff;
-  padding: 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-/* =========================================================================
-10. STYLE ARTYKUŁÓW I WIDOKÓW SZCZEGÓŁOWYCH
-========================================================================= */
-.editorial-article {
-  width: 100%;
-  max-width: 800px;
-  margin: 0 auto;
-  box-sizing: border-box;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  background: #ffffff;
-}
-
-.editorial-article .portal-card-image-link {
-  max-height: none;
-}
-
-.editorial-article .portal-card-image {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-}
-
-.article-header h1 {
-  font-size: 38px;
-  font-weight: 800;
-  color: #1c1e21;
-  text-align: center;
-  line-height: 1.25;
-  margin: 0 0 16px 0;
-  letter-spacing: -0.5px;
-}
-.article-text-content p {
-  text-align: justify;
-  text-justify: inter-word;
-  text-wrap: pretty;
-  padding: 8px 0;
-  margin: 0;
-  font-size: 16.5px;
-  line-height: 1.65;
-}
-.article-text-content h1,
-.article-text-content h2,
-.article-text-content h3 {
-  text-align: left;
-  font-weight: 700;
-  color: #1c1e21;
-  display: block;
-  padding-top: 24px;
-  padding-bottom: 12px;
-  margin: 0;
-}
-.article-text-content h1 {
-  font-size: 28px;
-}
-.article-text-content h2 {
-  font-size: 24px;
-}
-.article-text-content h3 {
-  font-size: 20px;
-}
-.article-text-content ul,
-.article-text-content ol {
-  margin-left: 24px;
-  padding: 8px 0;
-}
-.article-text-content li {
-  padding: 4px 0;
-  font-size: 16px;
-}
-.article-featured-image {
-  float: right;
-  max-width: 40%;
-  margin: 0 0 12px 16px;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: zoom-in;
-}
-.post-card .post-static-title,
-.post-card .post-title-display h2 {
-  font-size: 22px;
-  font-weight: 700;
-  color: #1c1e21;
-  text-align: left;
-  padding: 6px 0;
-}
-/* Likwidacja nadmiarowej przestrzeni */
-.page-main-content:has(.login-prompt) + .main-container,
-.page-main-content:has(div[style="text-align: center"]) .main-container {
-  padding-top: 4px;
-}
-
-.fb-navbar .nav-right .user-visitcard {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
-}
-/*
-/* Poprawki 
- */
-body,
-.post-card,
-.create-post,
-.info-box,
-header.fb-navbar,
-footer.site-footer {
-  transition:
-    background-color 0.3s ease,
-    border-color 0.3s ease,
-    color 0.3s ease,
-    box-shadow 0.3s ease;
-}
-
-.comment-form textarea,
-.comment-edit-form-block textarea {
-  transition: height 0.15s ease-out;
-  min-height: 36px;
-  resize: none;
-}
-
-.news-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--color-border);
-  padding-top: 14px;
-  flex-wrap: wrap;
-  gap: 10px;
-  width: 100%;
-}
-
-.article-featured-image {
-  float: right;
-  max-width: 40%;
-  width: 300px;
-  margin: 4px 0 16px 24px;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-
-.article-featured-image img {
-  width: 100%;
-  height: auto;
-  display: block;
-  object-fit: cover;
-}
-
-/* Zabezpieczenie dla tekstu, aby nie przyklejał się do grafiki */
-.article-text-content {
-  display: block;
-  min-width: 0;
-}
-
-/* KRYTYCZNA POPRAWKA DLA SREDRNICH I MAŁYCH EKRANÓW (RESPONSOWNOŚĆ) */
-@media (max-width: 768px) {
-  .article-featured-image {
-    float: none; /* Wyłącza opływanie na telefonach */
-    max-width: 100%; /* Obrazek zajmuje pełną dostępną szerokość */
-    width: 100%;
-    margin: 0 0 20px 0; /* Margines tylko na dole, oddzielający od tekstu */
-  }
-}
-
-/* =========================================================================
-   REFAKTORYZACJA I WYGLĄD PRZYCISKÓW AKCJI GOŚCIA NA PROFILU
-   ========================================================================= */
-.profile-guest-actions-mobile {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-left: auto;
-}
-
-/* Wspólna klasa bazowa dla przycisków profilu gościa na desktopie */
-.profile-follow-btn,
-.profile-block-main-btn,
-.profile-mail-main-btn,
-.profile-guest-actions-mobile .restricted-feature-trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 14px;
-  border: none;
-  cursor: pointer;
-  transition:
-    background-color 0.2s,
-    transform 0.1s;
-  height: 38px;
-  white-space: nowrap;
-}
-
-/* Kolorystyka i zachowanie przycisku OBSERWUJ */
-.profile-follow-btn {
-  background-color: #1877f2;
-  color: #ffffff;
-}
-.profile-follow-btn:hover {
-  background-color: #166fe5;
-}
-.profile-follow-btn.is-following {
-  background-color: #42b72a;
-}
-.profile-follow-btn.is-following:hover {
-  background-color: #36a420;
-}
-
-/* Kolorystyka i zachowanie przycisku ZABLOKUJ */
-.profile-block-main-btn {
-  background-color: #bc2525;
-  color: #ffffff;
-}
-.profile-block-main-btn:hover {
-  background-color: #a31f1f;
-}
-.profile-block-main-btn.is-blocking {
-  background-color: #65676b;
-}
-.profile-block-main-btn.is-blocking:hover {
-  background-color: #57585a;
-}
-
-/* Kolorystyka i zachowanie przycisku WYŚLIJ WIADOMOŚĆ */
-.profile-mail-main-btn {
-  background-color: #42b72a;
-  color: #ffffff;
-}
-.profile-mail-main-btn:hover {
-  background-color: #36a420;
-}
-
-/* Przycisk maila z blokadą dla niezweryfikowanych */
-.profile-guest-actions-mobile .restricted-feature-trigger {
-  background-color: #e4e6eb;
-  color: #65676b;
-}
-.profile-guest-actions-mobile .restricted-feature-trigger:hover {
-  background-color: #d8dadf;
-}
-
-/* Efekt aktywnego kliknięcia micro-UX */
-.profile-guest-actions-mobile button:active {
-  transform: scale(0.98);
-}
-
-/* Zmiana tła przycisku po asynchronicznej aktywacji obserwowania */
-.profile-follow-btn.is-following {
-  background-color: #e4e6eb !important;
-  color: #050505 !important;
-}
-
-/* Zmiana tła przycisku po asynchronicznej aktywacji blokady */
-.profile-block-main-btn.is-blocking {
-  background-color: #4a5568 !important;
-  color: #ffffff !important;
-}
-
-/* =========================================================================
-   ZOPTYMALIZOWANY WYGLĄD PRZYCISKÓW AKCJI PROFILU (KONTRAST UX)
-   ========================================================================= */
-
-/* Domyślny stan przycisku OBSERWUJ (Niebieski, ikona Solid) */
-.profile-follow-btn {
-  background-color: #1877f2 !important;
-  color: #ffffff !important;
-}
-/* Stan AKTYWNY - OBSERWUJESZ (Czysty, głęboki zielony, ikona pozostaje wyraźna i biała) */
-.profile-follow-btn.is-following {
-  background-color: #0f5132 !important; /* Bezpieczny, głęboki zielony */
-  color: #ffffff !important;
-}
-
-/* Domyślny stan przycisku ZABLOKUJ (Karminowy czerwony, ikona Solid) */
-.profile-block-main-btn {
-  background-color: #bc2525 !important;
-  color: #ffffff !important;
-}
-/* Stan AKTYWNY - ZABLOKOWANY (Stonowany, ciemny grafit, informujący o odcięciu relacji) */
-.profile-block-main-btn.is-blocking {
-  background-color: #212529 !important; /* Ciemny grafitowy/czarny */
-  color: #ffffff !important;
-}
-
-/* Przycisk wysyłki wiadomości (Zawsze zielony) */
-.profile-mail-main-btn {
-  background-color: #198754 !important;
-  color: #ffffff !important;
-}
-
-/* Wymuszenie ostrego, białego koloru ikon wewnątrz okręgów na mobile */
-@media (max-width: 600px) {
-  .profile-guest-actions-mobile i {
-    color: #ffffff !important; /* Wszystkie ikony są zawsze białe i idealnie widoczne! */
-    font-size: 16px !important;
-  }
-}
-
-/* 1. Nadanie stopce kontekstu pozycjonowania (Kotwica) */
-.site-footer {
-  position: relative; /* Gwarantuje, że elementy pozycjonowane absolutnie wewnątrz stopki nie uciekną */
-  overflow: visible; /* Pozwala odznace delikatnie wystawać, jeśli stopka jest za niska */
-}
-
-/* Całkowite i bezpieczne ukrycie odznaki reCAPTCHA (zgodne z wytycznymi Google) */
 .grecaptcha-badge {
   visibility: hidden !important;
   opacity: 0 !important;
   pointer-events: none !important;
 }
-
-/* =========================================================================
-   KOMPONENT DWUKOLOROWEGO PRZEŁĄCZNIKA SUWAKOWEGO (ZIELONY/CZERWONY)
-   ========================================================================= */
+.mobile-panel-indicator {
+  display: none;
+}
+/* Przełącznik suwakowy (Switch) */
 .switch {
   position: relative;
   display: inline-block;
   width: 42px;
   height: 22px;
   vertical-align: middle;
-  flex-shrink: 0; /* Zabezpieczenie przed zgnieceniem suwaka w tabelach i flexboxach */
+  flex-shrink: 0;
 }
-
-/* Ukrywamy domyślny natywny checkbox */
 .switch input {
   opacity: 0;
   width: 0;
   height: 0;
 }
-
-/* Domyślny stan suwaka: WYŁĄCZONY (Czerwony - dynamiczne przejście koloru tła) */
 .slider {
   position: absolute;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #bc2525; /* Charakterystyczna czerwony kolor systemu Pole Opinii */
+  inset: 0;
+  background-color: #bc2525;
   border-radius: 22px;
-  /* Płynna animacja zmiany tła przy użyciu krzywej sprzętowej */
-  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: background-color;
+  transition: background-color 0.25s ease;
 }
-
-/* Biała, okrągła gałka suwaka */
 .slider::before {
   position: absolute;
   content: "";
@@ -1218,111 +827,43 @@ footer.site-footer {
   bottom: 3px;
   background-color: #ffffff;
   border-radius: 50%;
-  /* Animacja przesunięcia realizowana za pomocą transformacji GPU dla optymalizacji Mobile */
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: transform;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.25s ease;
 }
-
-/* Stan: WŁĄCZONY (Zielony - aktywowany po zaznaczeniu checkboxa) */
 .switch input:checked + .slider {
-  background-color: #146c43; /* Bezpieczny, kontrastowy zielony kolor */
+  background-color: #146c43;
 }
-
-/* Przemieszczenie gałki suwaka (W prawo) przy użyciu akceleracji sprzętowej */
 .switch input:checked + .slider::before {
   transform: translateX(20px);
 }
-
-/* Feedback wizualny podczas wykonywania asynchronicznego Fetch API (Ochrona przed double-click) */
 .switch input:disabled + .slider {
   opacity: 0.55;
   cursor: not-allowed;
 }
-
-/* Subtelny focus ring ułatwiający nawigację klawiaturą (WCAG Accessibility) */
-.switch input:focus-visible + .slider {
-  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #1877f2;
-}
-
-/* =========================================================================
-   OPTYMALIZACJA WYMIARÓW I ROZCIĄGANIA EDYTORA QUILL (PIONOWY RESIZE)
-   ========================================================================= */
-
-/* Kontener zewnętrzny Quill */
-.ql-container.ql-snow {
-  border-bottom-left-radius: 8px;
-  border-bottom-right-radius: 8px;
-  border-color: #dddfe2 !important;
-  
-  /* Włączenie natywnego chwytaka do rozciągania kontenera w pionie */
-  resize: vertical; 
-  overflow: auto;
-  
-  /* Definiujemy bezpieczne ramy wymiarów */
-  min-height: 120px;
-  max-height: 600px; 
-}
-
-/* Wewnętrzny obszar roboczy edytora (obszar wpisywania tekstu) */
-.ql-snow .ql-editor {
-  min-height: 100%;
-  height: 100%;
-  overflow-y: auto;
-  
-  /* Zapewniamy ładne łamanie wyrazów i estetyczny padding */
-  padding: 12px 16px;
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-/* Stylizacja deweloperska paska chwytaka re-size w prawym dolnym rogu (Micro-UX) */
-.ql-container.ql-snow::-webkit-resizer {
-  background-image: linear-gradient(135deg, transparent 40%, #65676b 40%, #65676b 60%, transparent 60%, transparent 80%, #65676b 80%);
-  background-size: 8px 8px;
-  background-repeat: no-repeat;
-  background-position: bottom right;
-  cursor: ns-resize;
-}
-/* Upewnienie się, że okna alertów i potwierdzeń są zawsze na samym wierzchu */
-#custom-confirm-modal,
-#custom-alert-modal,
-#custom-loading-modal {
-  z-index: 10020 !important;
-}
-
-.mobile-panel-indicator {
-  display: none;
-}
-
-/* =========================================================================
-   ALTERNATYWNY WIDOK PORTALOWY (KARTY PRASOWE)
-   ========================================================================= */
+/* ===========================================================
+8. WIDOK PORTALOWY, OBRAZY, POWIADOMIENIA I KOLORY WIDOCZNOŚCI
+============================================================== */
 .toolbar-group-label {
   font-size: 11.5px;
   font-weight: 600;
-  color: #65676b;
+  color: var(--text-muted);
   line-height: 1;
 }
-
-.view-switch-btn {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+.view-switch-btn,
+.social-pill-link {
   width: 30px;
   height: 30px;
-  padding: 0;
   border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid #dddfe2;
-  color: #65676b;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-input);
+  color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
   transition: all 0.2s ease;
 }
-
 .view-switch-btn.active,
 .view-switch-btn:hover {
   background: #1877f2;
@@ -1334,186 +875,15 @@ footer.site-footer {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--color-border, #e4e6eb);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--border-color);
 }
-
-.portal-news-card:hover {
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
-}
-
-.portal-card-image-link {
-  display: block;
-  width: 100%;
-  max-height: none;
-  overflow: hidden;
-  background: #f0f2f5;
-}
-
-.portal-card-image {
-  width: 100%;
-  height: auto;
-  object-fit: contain;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.portal-news-card:hover .portal-card-image {
-  transform: scale(1.02);
-}
-
-.portal-card-body {
-  padding: 18px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.portal-card-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  font-size: 12.5px;
-  color: #65676b;
-}
-
-.portal-author-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  color: #1c1e21;
-  font-weight: 600;
-}
-
-.portal-author-avatar {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.portal-card-title {
-  margin: 0;
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.3;
-}
-
-.portal-card-title a {
-  text-decoration: none;
-  color: #1c1e21;
-  transition: color 0.15s ease;
-}
-
-.portal-card-title a:hover {
-  color: #1877f2;
-}
-
-.portal-reply-badge {
-  font-size: 12.5px;
-  color: #65676b;
-}
-
-.portal-reply-badge a {
-  color: #1877f2;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.portal-card-lead {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #374151;
-  text-align: justify;
-}
-
-.portal-card-footer {
-  margin-top: 6px;
-  padding-top: 12px;
-  border-top: 1px solid #e4e6eb;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.portal-card-stats {
-  display: flex;
-  gap: 14px;
-  font-size: 13px;
-  color: #65676b;
-}
-
-.portal-read-more-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background-color: var(--color-primary, #0f5132);
-  color: #ffffff !important;
-  text-decoration: none;
-  padding: 7px 16px;
-  border-radius: 20px;
-  font-size: 13.5px;
-  font-weight: 600;
-  transition: background-color 0.2s ease;
-}
-
-.portal-read-more-btn:hover {
-  background-color: var(--color-primary-hover, #0b3d25);
-}
-
-/* =========================================================================
-   PRZYCISK I BLOK ZAJAWKI (<lead>) W EDYTORZE QUILL ORAZ ARTYKULE
-   ========================================================================= */
-.ql-editor lead,
-.article-text-content lead {
-  display: block;
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-  line-height: 1.55;
-  text-align: justify;
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e4e6eb;
-}
-
-/* public/css/global.css */
-.social-pill-link {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  border: 1px solid #dddfe2;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  text-decoration: none;
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-}
-
-.social-pill-link:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
-  background-color: #f8f9fa;
-}
-
-/* =========================================================================
-   DOPASOWANIE ZDJĘĆ I INFOGRAFIK W POSTACH (MOBILE + DESKTOP)
-   ========================================================================= */
 .portal-card-image-link,
 .editorial-article .portal-card-image-link {
   display: block;
   width: 100%;
-  max-height: none;
   overflow: hidden;
-  background: #f8f9fa;
+  background-color: var(--bg-subtle);
 }
-
 .portal-card-image,
 .editorial-article .portal-card-image {
   width: 100%;
@@ -1521,36 +891,103 @@ footer.site-footer {
   object-fit: contain;
   display: block;
   margin: 0 auto;
-  transition: transform 0.3s ease;
 }
-
-/* Ograniczenie maksymalnej wysokości na komputerach, aby wysokie pionowe obrazy nie zajmowały całego ekranu */
 @media (min-width: 901px) {
   .portal-card-image {
     max-height: 520px;
   }
-
   .editorial-article .portal-card-image {
     max-height: 650px;
   }
 }
-/* =========================================================================
-   LIGHTBOX PONAD MODALEM EDYTORA POSTA
-   ========================================================================= */
-#custom-lightbox-modal {
-  z-index: 10030 !important;
+.portal-card-body {
+  padding: 18px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-
-/* =========================================================================
-   ANIMACJE POWIADOMIEŃ NA ŻYWO (GDY DŹWIĘK JEST WYCISZONY)
-   ========================================================================= */
+.portal-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.portal-author-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--text-main);
+  font-weight: 600;
+}
+.portal-author-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.portal-card-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.portal-card-title a {
+  text-decoration: none;
+  color: var(--text-main);
+}
+.portal-reply-badge {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+.portal-reply-badge a {
+  color: #1877f2;
+  font-weight: 600;
+  text-decoration: none;
+}
+.portal-card-lead {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--text-body);
+  text-align: justify;
+}
+.portal-card-footer {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.portal-card-stats {
+  display: flex;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.portal-read-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: var(--color-primary);
+  color: #ffffff !important;
+  text-decoration: none;
+  padding: 7px 16px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+/* Animacje powiadomień */
 .nav-bell-wrapper {
   position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
-
 .unread-events-dot {
   position: absolute;
   top: -2px;
@@ -1559,11 +996,8 @@ footer.site-footer {
   height: 9px;
   background-color: #bc2525;
   border-radius: 50%;
-  border: 1.5px solid #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  border: 1.5px solid var(--bg-card);
 }
-
-/* Rozchodząca się czerwona fala wokół kropki nieprzeczytanych powiadomień */
 .unread-events-dot.is-pulsing::after {
   content: "";
   position: absolute;
@@ -1572,19 +1006,14 @@ footer.site-footer {
   border: 2px solid #bc2525;
   animation: notifDotRipple 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
-
-/* Złoty błysk i podskok ikony dzwoneczka / menu */
 .notif-attention-ring {
   animation: notifBellRing 0.9s ease-in-out 2;
   color: #e5a93c !important;
 }
-
-/* Pulsująca obwódka przycisku menu na ekranach mobilnych */
 .nav-dropdown-btn.has-new-notif {
   box-shadow: 0 0 0 0 rgba(188, 37, 37, 0.7);
   animation: notifBtnPulse 1.4s ease-out 3;
 }
-
 @keyframes notifDotRipple {
   0% {
     transform: scale(0.8);
@@ -1595,16 +1024,27 @@ footer.site-footer {
     opacity: 0;
   }
 }
-
 @keyframes notifBellRing {
-  0%, 100% { transform: rotate(0deg) scale(1); }
-  15% { transform: rotate(18deg) scale(1.2); }
-  30% { transform: rotate(-16deg) scale(1.2); }
-  45% { transform: rotate(12deg) scale(1.15); }
-  60% { transform: rotate(-10deg) scale(1.1); }
-  75% { transform: rotate(5deg) scale(1.05); }
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+  15% {
+    transform: rotate(18deg) scale(1.2);
+  }
+  30% {
+    transform: rotate(-16deg) scale(1.2);
+  }
+  45% {
+    transform: rotate(12deg) scale(1.15);
+  }
+  60% {
+    transform: rotate(-10deg) scale(1.1);
+  }
+  75% {
+    transform: rotate(5deg) scale(1.05);
+  }
 }
-
 @keyframes notifBtnPulse {
   0% {
     box-shadow: 0 0 0 0 rgba(188, 37, 37, 0.75);
@@ -1616,80 +1056,289 @@ footer.site-footer {
     box-shadow: 0 0 0 0 rgba(188, 37, 37, 0);
   }
 }
-
-/* =========================================================================
-   KOLORYSTYKA PASTELOWA WIDOCZNOŚCI POSTÓW (LISTA POSTÓW + OKNO EDYTORA)
-   ========================================================================= */
-.post-card.vis-theme-public {
-  background-color: #ffffff !important;
+/* Kolorystyka pastelowa widoczności postów (Lista + Okno edytora) */
+.vis-theme-public {
+  --vis-color: #e4e6eb;
 }
-
-.post-card.vis-theme-restricted {
-  background-color: #f0f7ff !important;
-  border-left: 4px solid #1877f2 !important;
+.vis-theme-restricted {
+  --vis-color: #1877f2;
 }
-.post-card.vis-theme-restricted .accordion-content {
-  background-color: #f7fbff !important;
+.vis-theme-private {
+  --vis-color: #dc3545;
 }
-
-.post-card.vis-theme-private {
-  background-color: #fff5f5 !important;
-  border-left: 4px solid #dc3545 !important;
+.vis-theme-editors {
+  --vis-color: #e5a93c;
 }
-.post-card.vis-theme-private .accordion-content {
-  background-color: #fffafa !important;
+.vis-theme-users {
+  --vis-color: #198754;
 }
-
-.post-card.vis-theme-editors {
-  background-color: #fffdf0 !important;
-  border-left: 4px solid #e5a93c !important;
+.post-card.vis-theme-public,
+#create-post-modal .custom-modal-box.vis-theme-public {
+  background-color: var(--bg-card) !important;
 }
-.post-card.vis-theme-editors .accordion-content {
-  background-color: #fffdf5 !important;
-}
-
-.post-card.vis-theme-users {
-  background-color: #f0fdf4 !important;
-  border-left: 4px solid #198754 !important;
-}
-.post-card.vis-theme-users .accordion-content {
-  background-color: #f7fef9 !important;
-}
-
-/* =========================================================================
-   KOLORYSTYKA PASTELOWA WIDOCZNOŚCI POSTÓW (LISTA POSTÓW + OKNO EDYTORA)
-   ========================================================================= */
-.vis-theme-public     { --vis-color: #e4e6eb; }
-.vis-theme-restricted { --vis-color: #1877f2; }
-.vis-theme-private    { --vis-color: #dc3545; }
-.vis-theme-editors    { --vis-color: #e5a93c; }
-.vis-theme-users      { --vis-color: #198754; }
-
-/* Karty na liście postów */
-.post-card.vis-theme-public {
-  background-color: #ffffff !important;
-}
-
 .post-card[class*="vis-theme-"]:not(.vis-theme-public) {
-  background-color: color-mix(in srgb, var(--vis-color), white 80%) !important;
+  background-color: color-mix(in srgb, var(--vis-color), white 90%) !important;
   border-left: 4px solid var(--vis-color) !important;
 }
-
 .post-card[class*="vis-theme-"]:not(.vis-theme-public) .accordion-content {
-  background-color: color-mix(in srgb, var(--vis-color), white 80%) !important;
+  background-color: color-mix(in srgb, var(--vis-color), white 93%) !important;
 }
-
-/* Okno modalu edytora (Desktop + Mobile) */
 #create-post-modal .custom-modal-box {
-  transition: background-color 0.25s ease, border-top-color 0.25s ease;
+  transition:
+    background-color 0.25s ease,
+    border-top-color 0.25s ease;
 }
-
 #create-post-modal .custom-modal-box.vis-theme-public {
-  background-color: #ffffff !important;
-  border-top: 5px solid #e4e6eb;
+  border-top: 5px solid var(--border-color);
 }
-
-#create-post-modal .custom-modal-box[class*="vis-theme-"]:not(.vis-theme-public) {
-  background-color: color-mix(in srgb, var(--vis-color), white 80%) !important;
+#create-post-modal
+  .custom-modal-box[class*="vis-theme-"]:not(.vis-theme-public) {
+  background-color: color-mix(in srgb, var(--vis-color), white 90%) !important;
   border-top: 5px solid var(--vis-color);
+}
+@media (prefers-color-scheme: dark) {
+  .post-card[class*="vis-theme-"]:not(.vis-theme-public),
+  #create-post-modal
+    .custom-modal-box[class*="vis-theme-"]:not(.vis-theme-public) {
+    background-color: color-mix(
+      in srgb,
+      var(--vis-color),
+      #161b22 84%
+    ) !important;
+  }
+  .post-card[class*="vis-theme-"]:not(.vis-theme-public) .accordion-content {
+    background-color: color-mix(
+      in srgb,
+      var(--vis-color),
+      #161b22 88%
+    ) !important;
+  }
+}
+/* ===================================================================+===
+9. WSPÓLNE KOMPONENTY (PRZEGLĄD DNIA, POWIADOMIENIA, WYSZUKIWARKA, BANERY)
+=======================================================================+== */
+.news-topic-card {
+  padding: 0;
+  margin-bottom: 0;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  border-radius: 8px;
+  width: 100%;
+  background-color: var(--bg-card);
+}
+.news-topic-header {
+  cursor: pointer;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-card);
+  gap: 16px;
+}
+.news-topic-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin: 0;
+  line-height: 1.4;
+  word-break: break-word;
+}
+.news-topic-body {
+  display: none;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+  width: 100%;
+}
+.news-topic-summary {
+  font-size: 14px;
+  color: var(--text-body);
+  line-height: 1.6;
+  margin: 0 0 16px 0;
+  font-family: sans-serif;
+  text-align: justify;
+}
+.news-rank-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  height: 32px;
+  background-color: var(--alert-warning-bg);
+  color: var(--alert-warning-text);
+  border: 1px solid var(--alert-warning-border);
+}
+.news-rank-badge.is-critical {
+  background-color: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border-color: var(--alert-danger-border);
+}
+.btn-danger-soft {
+  background-color: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border: 1px solid var(--alert-danger-border);
+}
+.btn-ai-primary {
+  background-color: var(--color-primary);
+  color: #ffffff;
+  border: none;
+}
+.btn-ai-editor {
+  background-color: var(--alert-info-bg);
+  color: #9360f7;
+  border: 1px solid #9360f7;
+}
+.event-row-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--bg-card);
+  padding: 14px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+.event-row-card.is-announcement {
+  background-color: var(--alert-success-bg);
+  border-color: var(--alert-success-border);
+  border-left: 4px solid var(--alert-success-text);
+}
+.event-row-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: var(--text-body);
+}
+.event-post-link {
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: underline;
+}
+.event-time {
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: 8px;
+}
+.search-card-body {
+  display: none;
+  padding: 16px;
+  border-top: 1px solid var(--border-color);
+  background-color: var(--bg-subtle);
+}
+.search-bio-quote {
+  font-size: 15px;
+  color: var(--text-body);
+  line-height: 1.5;
+  font-style: italic;
+  background-color: var(--bg-card);
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+.empty-state-box {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-muted);
+  background-color: var(--bg-card);
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px dashed var(--border-color);
+  font-family: sans-serif;
+  width: 100%;
+}
+.admin-alert-box {
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+.admin-alert-box.is-danger {
+  background-color: var(--alert-danger-bg);
+  color: var(--alert-danger-text);
+  border: 1px solid var(--alert-danger-border);
+}
+.admin-alert-box.is-success {
+  background-color: var(--alert-success-bg);
+  color: var(--alert-success-text);
+  border: 1px solid var(--alert-success-border);
+}
+.single-article-card {
+  background-color: var(--bg-card);
+  padding: 0;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+.single-article-card.is-users {
+  background-color: var(--alert-success-bg);
+  border-left: 5px solid var(--alert-success-text);
+}
+.single-article-card.is-editors {
+  background-color: var(--alert-warning-bg);
+  border-left: 5px solid var(--color-accent);
+}
+.editors-room-banner {
+  padding: 12px 16px;
+  background-color: var(--alert-warning-bg);
+  border: 1px solid var(--border-color);
+  border-left: 4px solid var(--color-accent);
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+.verification-banner-box {
+  background-color: var(--alert-info-bg);
+  border: 1px solid var(--alert-info-text);
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: sans-serif;
+}
+.verify-step-card {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  background-color: var(--bg-card);
+}
+.verify-step-card.is-approved {
+  background-color: var(--alert-success-bg);
+  border-color: var(--alert-success-border);
+}
+.verify-transfer-box {
+  background-color: var(--bg-muted);
+  padding: 16px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 12px;
+}
+.guest-top-prompt {
+  padding: 20px;
+  text-align: center;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+}
+.cookie-banner-box {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 600px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 16px;
+  z-index: 10005;
+  font-family: sans-serif;
+  box-sizing: border-box;
 }
