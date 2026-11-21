@@ -143,14 +143,28 @@ select {
 /* ===============================
    3. GÓRNY PASEK NAWIGACJI I MENU
    =============================== */
+.fb-navbar,
+.mobile-panel-indicator,
+.guest-top-prompt {
+  --bg-card: #ffffff;
+  --bg-muted: #f0f2f5;
+  --bg-subtle: #e4e6eb;
+  --text-main: #1c1e21;
+  --text-body: #050505;
+  --text-muted: #65676b;
+  --border-color: #e4e6eb;
+  --alert-danger-bg: #fff3f3;
+  --alert-danger-text: #bc2525;
+}
+
 .fb-navbar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   height: 56px;
-  background-color: var(--bg-card);
-  border-bottom: 1px solid var(--border-color);
+  background-color: #ffffff;
+  border-bottom: 1px solid #e4e6eb;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   display: flex;
   justify-content: space-between;
@@ -793,6 +807,7 @@ select {
   opacity: 0 !important;
   pointer-events: none !important;
 }
+
 .mobile-panel-indicator {
   display: none;
 }
@@ -1342,3 +1357,4 @@ select {
   font-family: sans-serif;
   box-sizing: border-box;
 }
+
