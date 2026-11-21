@@ -868,7 +868,7 @@ select {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background-color: var(--bg-card);
+  background-color: #ffffff;
   border: 1px solid var(--border-input);
   color: var(--text-muted);
   font-size: 13px;
