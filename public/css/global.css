@@ -476,8 +476,8 @@ select {
 
 .post-actions {
   display: flex;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--border-color);
+  padding: 4px;
+  border-bottom: none;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
