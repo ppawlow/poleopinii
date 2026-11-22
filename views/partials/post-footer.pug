@@ -42,7 +42,7 @@
                 id=`factcheck-btn-${post._id}`
                 onclick=`window.executeReaderFactCheckWithConfirm('${post._id}', this)` 
                 title="Zweryfikuj wiarygodność i fakty zawarte we wpisie" 
-                style="background: #f0fdf4; color: #146c43; border: 1px solid #b1f2c2;"
+                style="background: var(--alert-success-bg); color: var(--alert-success-text); border: 1px solid var(--alert-success-border);"
             )
                 i.fa-solid.fa-scale-balanced
                 span.btn-text Prawda?
@@ -57,7 +57,12 @@
             span.btn-text Udostępnij
 
     if post.visibility === 'public' && (!user || String(user.id) !== String(post.authorId))
-        button.action-btn.abuse-trigger-btn(type="button" onclick=`triggerAbuseReport('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` title="Zgłoś nadużycie" style="background: #fff3f3; color: #bc2525;")
+        button.action-btn.abuse-trigger-btn(
+            type="button" 
+            onclick=`triggerAbuseReport('${post._id}', '${post.title ? post.title.replace(/'/g, "\\'") : "Wpis"}')` 
+            title="Zgłoś nadużycie" 
+            style="background: var(--alert-danger-bg); color: var(--alert-danger-text); border: 1px solid var(--alert-danger-border);"
+        )
             i.fa-solid.fa-triangle-exclamation
             span.btn-text Zgłoś nadużycie
 
