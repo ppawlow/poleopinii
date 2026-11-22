@@ -1,0 +1,55 @@
+.info-box(style="padding: 16px; border: 1px solid var(--border-color); font-family: sans-serif;")
+    div(style="border-bottom: 2px solid var(--border-color); padding-bottom: 10px; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between;")
+        div(style="display: flex; align-items: center; gap: 8px;")
+            i.fa-solid.fa-server(style="color: var(--color-primary); font-size: 16px;")
+            span(style="font-weight: 700; color: var(--text-main); text-transform: uppercase; font-size: 13px; letter-spacing: 0.5px;") Stan serwera
+        span(style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--alert-success-text); background: var(--alert-success-bg); border: 1px solid var(--alert-success-border); padding: 2px 8px; border-radius: 12px;")
+            span(style="width: 7px; height: 7px; border-radius: 50%; background: #198754; display: inline-block;")
+            | ONLINE
+
+    //- 1. UŻYTKOWNICY I SESJE
+    div(style="margin-bottom: 16px;")
+        div(style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;") Użytkownicy i sesje
+        div(style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px;")
+            div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span(style="color: var(--text-body);") Zarejestrowani ogółem
+                strong(style="color: var(--text-main); font-size: 14px;") #{serverStatus.totalUsers}
+            div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--alert-success-bg); border: 1px solid var(--alert-success-border); border-radius: 6px;")
+                span(style="color: var(--alert-success-text); font-weight: 600;") Aktualnie zalogowani
+                strong(style="color: var(--alert-success-text); font-size: 14px;") #{serverStatus.activeSessions}
+
+    //- 2. POSTY WG WIDOCZNOŚCI
+    div(style="margin-bottom: 16px;")
+        div(style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;")
+            span(style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px;") Zasoby treści (Posty)
+            span.admin-pill.is-info #{serverStatus.posts.total} ogółem
+        div(style="display: flex; flex-direction: column; gap: 5px; font-size: 13px;")
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span 🌐 Publiczne
+                strong #{serverStatus.posts.public}
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span 👥 Dla obserwujących
+                strong #{serverStatus.posts.restricted}
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span 🔒 Prywatne (szkice)
+                strong #{serverStatus.posts.private}
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span 📝 Redakcyjne
+                strong #{serverStatus.posts.editors}
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span 📢 Ogłoszenia
+                strong #{serverStatus.posts.users}
+
+    //- 3. RUCH I BEZPIECZEŃSTWO (DZIEŃ DZISIEJSZY)
+    div
+        div(style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;") Ruch dzisiaj (#{serverStatus.today.dateKey})
+        div(style="display: flex; flex-direction: column; gap: 6px; font-size: 13.5px;")
+            div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span Odwiedziny ogółem
+                strong(style="color: #1877f2;") #{serverStatus.today.totalVisits}
+            div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span Unikalne IP
+                strong(style="color: var(--color-primary);") #{serverStatus.today.uniqueIps}
+            div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--alert-danger-bg); border: 1px solid var(--alert-danger-border); border-radius: 6px;")
+                span(style="color: var(--alert-danger-text); font-weight: 600;") 🛡️ Zablokowane ataki
+                strong(style="color: var(--alert-danger-text);") #{serverStatus.today.blockedVisits}

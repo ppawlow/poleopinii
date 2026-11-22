@@ -22,7 +22,10 @@ block content
     - var hasReports = reports && reports.length > 0
     - var activeSocialsCount = Object.values(socialSettings || {}).filter(Boolean).length
 
-    .main-container(style="grid-template-columns: 1fr; max-width: 800px; margin: 0 auto;")
+    .main-container(style="grid-template-columns: minmax(260px, 310px) minmax(0, 800px); max-width: 1160px; margin: 0 auto;")
+        aside.left-sidebar
+            include partials/admin-server-status.pug
+
         main.feed
             .create-post(style="padding: 24px; margin-bottom: 8px;")
                 h2(style="margin-bottom: 4px; color: var(--alert-danger-text); font-size: 22px; font-weight: 700;") Panel Administratora
@@ -41,8 +44,10 @@ block content
                 +adminSection("admin-panel-logs", "fa-solid fa-scroll", "Logi operacyjne i audyt użycia AI", "var(--text-main)", logs.length, "", false, true, "logsTable")
                     include partials/admin-logs.pug
 
+                +adminSection("admin-panel-analytics", "fa-solid fa-chart-line", "Statystyki ruchu i odwiedzin serwisu", "#1877f2", `${analytics.todayStats.totalVisits} dziś`, "is-info", false, true)
+                    include partials/admin-analytics.pug
+
                 +adminSection("admin-panel-socials", "fa-solid fa-share-nodes", "Dystrybucja w mediach społecznościowych (Auto-Share)", "var(--color-primary)", activeSocialsCount, "is-success", false, true, null, "active-socials-badge")
                     include partials/admin-socials.pug
 
-                +adminSection("admin-panel-analytics", "fa-solid fa-chart-line", "Statystyki ruchu i odwiedzin serwisu", "#1877f2", `${analytics.todayStats.totalVisits} dziś`, "is-info", false, true)
-                    include partials/admin-analytics.pug
+        aside.right-sidebar

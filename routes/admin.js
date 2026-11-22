@@ -58,7 +58,9 @@ function mapLogDocument(log) {
 
 async function main(req, res) {
   try {
-    
+    const mongoose = require("mongoose");
+    const { getAnalyticsSummary } = require("../tools/analytics");
+
     const reports = await Post.find({ isAbuseReport: true })
       .sort({ createdAt: -1 })
       .populate("authorId", "name avatarUrl")
@@ -70,7 +72,7 @@ async function main(req, res) {
     }).lean();
 
     const socialSettings = await getSocialShareSettings();
-    // DOMYŚLNY FILTR: Ostatnie 24 godziny dla widoku startowego
+
     const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
     const logs = await SystemLog.find({
       createdAt: { $gte: twentyFourHoursAgo },
@@ -95,7 +97,7 @@ async function main(req, res) {
           name: 1,
           email: 1,
           alias: 1,
-          role:  1,
+          role: 1,
           aiBlockedSafetyCount: { $ifNull: ["$aiBlockedSafetyCount", 0] },
           aiBlockedFactCheckCount: { $ifNull: ["$aiBlockedFactCheckCount", 0] },
           publicCount: {
@@ -147,7 +149,59 @@ async function main(req, res) {
       { $sort: { name: 1 } },
     ]);
 
+    // 1. Statystyki dziennych odwiedzin (w tym dzisiejsze)
     const analytics = await getAnalyticsSummary(30);
+
+    // 2. Liczba aktualnie otwartych sesji w MongoDB (connect-mongo)
+    let activeSessionsCount = 0;
+    try {
+      const sessionsColl = mongoose.connection.collection("sessions");
+      activeSessionsCount = await sessionsColl.countDocuments({
+        expires: { $gt: new Date() },
+        session: { $regex: '"user"' },
+      });
+    } catch (sessErr) {
+      console.error("[ADMIN] Błąd zliczania sesji:", sessErr.message);
+    }
+
+    // 3. Rozbicie postów na obszary widoczności (bez zgłoszeń nadużyć i raportów AI)
+    const postsBreakdownAgg = await Post.aggregate([
+      {
+        $match: {
+          isAbuseReport: { $ne: true },
+          isFactCheckReport: { $ne: true },
+        },
+      },
+      {
+        $group: {
+          _id: "$visibility",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const postsStats = {
+      total: 0,
+      public: 0,
+      restricted: 0,
+      private: 0,
+      editors: 0,
+      users: 0,
+    };
+
+    for (const item of postsBreakdownAgg) {
+      if (item._id && Object.prototype.hasOwnProperty.call(postsStats, item._id)) {
+        postsStats[item._id] = item.count;
+        postsStats.total += item.count;
+      }
+    }
+
+    const serverStatus = {
+      totalUsers: usersStats.length,
+      activeSessions: activeSessionsCount,
+      posts: postsStats,
+      today: analytics.todayStats,
+    };
 
     res.render("admin", {
       title: "Panel Zarządzania Systemem",
@@ -159,9 +213,10 @@ async function main(req, res) {
       queryError: req.query.error || null,
       queryMsg: req.query.msg || null,
       customMsg: req.query.customMsg || null,
-      SERVICE_SOCIALS, 
+      SERVICE_SOCIALS,
       socialSettings,
       analytics,
+      serverStatus,
     });
   } catch (err) {
     console.error(err);
