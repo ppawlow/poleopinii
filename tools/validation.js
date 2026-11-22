@@ -354,12 +354,11 @@ tools.validatePublicContent = async function (
       );
     }
 
-    await createLog(
+   await createLog(
       req,
-      `[AI VALIDATOR - SUKCES] Post publiczny przeszedł audyt regulaminu ("${title}"). Zużycie tokenów: ${totalTokens.total}`,
+      `[AI VALIDATOR - SUKCES] Post publiczny przeszedł audyt regulaminu ("${title}"). Zużycie tokenów -> In: ${totalTokens.input} | Out: ${totalTokens.output} | Total: ${totalTokens.total}`,
       executionEmail,
     );
-
     return {
       approved: true,
       reason: null,

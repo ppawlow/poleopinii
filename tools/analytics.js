@@ -179,12 +179,16 @@ async function backfillDailyStatsFromLogs() {
 
     if (!logs || logs.length === 0) return 0;
 
-    const alreadyMigratedKeys = new Set(
-      (
-        await DailyStats.find({ backfilledFromLogs: true })
-          .select("dateKey -_id")
-          .lean()
-      ).map((d) => d.dateKey),
+    // Dni, które mają już pełne statystyki (zarówno odwiedziny, jak i niezerowe tokeny)
+    const fullyMigratedDocs = await DailyStats.find({
+      backfilledFromLogs: true,
+    })
+      .select("dateKey tokensTotal -_id")
+      .lean();
+
+    const visitsMigratedKeys = new Set(fullyMigratedDocs.map((d) => d.dateKey));
+    const tokensMigratedKeys = new Set(
+      fullyMigratedDocs.filter((d) => (d.tokensTotal || 0) > 0).map((d) => d.dateKey),
     );
 
     const buckets = new Map();
@@ -192,10 +196,15 @@ async function backfillDailyStatsFromLogs() {
     for (const log of logs) {
       if (!log.createdAt) continue;
       const dateKey = getTodayWarsawKey(new Date(log.createdAt));
-      if (alreadyMigratedKeys.has(dateKey)) continue;
+
+      const needVisits = !visitsMigratedKeys.has(dateKey);
+      const needTokens = !tokensMigratedKeys.has(dateKey);
+      if (!needVisits && !needTokens) continue;
 
       if (!buckets.has(dateKey)) {
         buckets.set(dateKey, {
+          needVisits,
+          needTokens,
           totalVisits: 0,
           blockedVisits: 0,
           loggedInVisits: 0,
@@ -209,34 +218,40 @@ async function backfillDailyStatsFromLogs() {
       const dayStat = buckets.get(dateKey);
       const actionStr = log.action || "";
 
+      // 1. Wyciąganie tokenów z logów CRON AI (In / Out / Total)
       const cronTokensMatch = actionStr.match(
         /Zużycie tokenów -> In:\s*(\d+)\s*\|\s*Out:\s*(\d+)\s*\|\s*Total:\s*(\d+)/i,
       );
       if (cronTokensMatch) {
-        dayStat.tokensIn += parseInt(cronTokensMatch[1], 10) || 0;
-        dayStat.tokensOut += parseInt(cronTokensMatch[2], 10) || 0;
-        dayStat.tokensTotal += parseInt(cronTokensMatch[3], 10) || 0;
+        if (dayStat.needTokens) {
+          dayStat.tokensIn += parseInt(cronTokensMatch[1], 10) || 0;
+          dayStat.tokensOut += parseInt(cronTokensMatch[2], 10) || 0;
+          dayStat.tokensTotal += parseInt(cronTokensMatch[3], 10) || 0;
+        }
         continue;
       }
 
+      // 2. Wyciąganie łącznych tokenów ze starszych logów walidatora postów
       const validatorTokensMatch = actionStr.match(/Zużycie tokenów:\s*(\d+)/i);
-      if (validatorTokensMatch) {
+      if (validatorTokensMatch && dayStat.needTokens) {
         dayStat.tokensTotal += parseInt(validatorTokensMatch[1], 10) || 0;
       }
 
-      const isBlocked =
-        actionStr.includes("[ODRZUCONO") ||
-        actionStr.includes("[reCAPTCHA BLOKADA]");
+      if (dayStat.needVisits) {
+        const isBlocked =
+          actionStr.includes("[ODRZUCONO") ||
+          actionStr.includes("[reCAPTCHA BLOKADA]");
 
-      if (isBlocked) {
-        dayStat.blockedVisits += 1;
-      } else {
-        dayStat.totalVisits += 1;
-        if (log.userId) {
-          dayStat.loggedInVisits += 1;
-        }
-        if (log.ipAddress) {
-          dayStat.ipHashes.add(hashVisitorIp(log.ipAddress.trim(), dateKey));
+        if (isBlocked) {
+          dayStat.blockedVisits += 1;
+        } else {
+          dayStat.totalVisits += 1;
+          if (log.userId) {
+            dayStat.loggedInVisits += 1;
+          }
+          if (log.ipAddress) {
+            dayStat.ipHashes.add(hashVisitorIp(log.ipAddress.trim(), dateKey));
+          }
         }
       }
     }
@@ -246,27 +261,37 @@ async function backfillDailyStatsFromLogs() {
     let migratedDaysCount = 0;
 
     for (const [dateKey, stats] of buckets.entries()) {
-      const updateResult = await DailyStats.updateOne(
-        { dateKey, backfilledFromLogs: { $ne: true } },
-        {
-          $inc: {
-            totalVisits: stats.totalVisits,
-            blockedVisits: stats.blockedVisits,
-            loggedInVisits: stats.loggedInVisits,
-            tokensIn: stats.tokensIn,
-            tokensOut: stats.tokensOut,
-            tokensTotal: stats.tokensTotal,
-          },
-          $addToSet: {
-            uniqueIpHashes: { $each: Array.from(stats.ipHashes) },
-          },
-          $set: {
-            backfilledFromLogs: true,
-            updatedAt: new Date(),
-          },
+      const incFields = {};
+      if (stats.needVisits) {
+        incFields.totalVisits = stats.totalVisits;
+        incFields.blockedVisits = stats.blockedVisits;
+        incFields.loggedInVisits = stats.loggedInVisits;
+      }
+      if (stats.needTokens && stats.tokensTotal > 0) {
+        incFields.tokensIn = stats.tokensIn;
+        incFields.tokensOut = stats.tokensOut;
+        incFields.tokensTotal = stats.tokensTotal;
+      }
+
+      if (Object.keys(incFields).length === 0) continue;
+
+      const updateQuery = {
+        $inc: incFields,
+        $set: {
+          backfilledFromLogs: true,
+          updatedAt: new Date(),
         },
-        { upsert: true },
-      );
+      };
+
+      if (stats.needVisits && stats.ipHashes.size > 0) {
+        updateQuery.$addToSet = {
+          uniqueIpHashes: { $each: Array.from(stats.ipHashes) },
+        };
+      }
+
+      const updateResult = await DailyStats.updateOne({ dateKey }, updateQuery, {
+        upsert: true,
+      });
 
       if (updateResult.upsertedCount > 0 || updateResult.modifiedCount > 0) {
         migratedDaysCount += 1;
@@ -275,7 +300,7 @@ async function backfillDailyStatsFromLogs() {
 
     if (migratedDaysCount > 0) {
       console.log(
-        `[ANALYTICS MIGRATION] Zaimportowano historyczne statystyki (w tym dzisiejsze) dla ${migratedDaysCount} dni z SystemLog.`,
+        `[ANALYTICS MIGRATION] Zaktualizowano statystyki i tokeny AI dla ${migratedDaysCount} dni z SystemLog.`,
       );
     }
 
