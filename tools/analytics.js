@@ -8,6 +8,7 @@ const dailyStatsSchema = new mongoose.Schema({
   blockedVisits: { type: Number, default: 0 },             // Odrzucone przez system (401/403/429)
   loggedInVisits: { type: Number, default: 0 },            // Odsłony wykonane przez zalogowanych użytkowników
   uniqueIpHashes: [{ type: String }],                      // Zbiór unikalnych skrótów IP w danym dniu
+  backfilledFromLogs: { type: Boolean, default: false },   // Ochrona przed ponownym doliczeniem starych logów
   updatedAt: { type: Date, default: Date.now },
 });
 
@@ -160,8 +161,8 @@ async function getAnalyticsSummary(days = 30) {
   };
 }
 /**
- * Jednorazowa migracja danych historycznych z kolekcji SystemLog (ostatnie 30 dni)
- * do trwałej kolekcji DailyStats. Pomija dni, które mają już zapisane statystyki.
+ * Jednorazowa migracja danych historycznych z kolekcji SystemLog (w tym wcześniejszej części dnia dzisiejszego)
+ * do trwałej kolekcji DailyStats. Flaga backfilledFromLogs gwarantuje brak duplikacji przy kolejnych restartach.
  */
 async function backfillDailyStatsFromLogs() {
   try {
@@ -172,13 +173,14 @@ async function backfillDailyStatsFromLogs() {
 
     if (!logs || logs.length === 0) return 0;
 
-    // Pobieramy dni już istniejące w DailyStats, aby ich nie nadpisać
-    const existingKeys = new Set(
-      (await DailyStats.find({}).select("dateKey -_id").lean()).map(
-        (d) => d.dateKey,
-      ),
+    // Pobieramy dni, dla których migracja z logów została już wcześniej wykonana
+    const alreadyMigratedKeys = new Set(
+      (
+        await DailyStats.find({ backfilledFromLogs: true })
+          .select("dateKey -_id")
+          .lean()
+      ).map((d) => d.dateKey),
     );
-    const todayKey = getTodayWarsawKey();
 
     const buckets = new Map();
 
@@ -189,8 +191,8 @@ async function backfillDailyStatsFromLogs() {
 
       const dateKey = getTodayWarsawKey(new Date(log.createdAt));
 
-      // Nie nadpisujemy dnia dzisiejszego ani dni już zmigrowanych
-      if (dateKey === todayKey || existingKeys.has(dateKey)) continue;
+      // Pomijamy wyłącznie dni, które przeszły już pełną migrację
+      if (alreadyMigratedKeys.has(dateKey)) continue;
 
       if (!buckets.has(dateKey)) {
         buckets.set(dateKey, {
@@ -222,31 +224,40 @@ async function backfillDailyStatsFromLogs() {
 
     if (buckets.size === 0) return 0;
 
-    const operations = [];
+    let migratedDaysCount = 0;
+
     for (const [dateKey, stats] of buckets.entries()) {
-      operations.push({
-        updateOne: {
-          filter: { dateKey },
-          update: {
-            $setOnInsert: {
-              dateKey,
-              totalVisits: stats.totalVisits,
-              blockedVisits: stats.blockedVisits,
-              loggedInVisits: stats.loggedInVisits,
-              uniqueIpHashes: Array.from(stats.ipHashes),
-              updatedAt: new Date(),
-            },
+      const updateResult = await DailyStats.updateOne(
+        { dateKey, backfilledFromLogs: { $ne: true } },
+        {
+          $inc: {
+            totalVisits: stats.totalVisits,
+            blockedVisits: stats.blockedVisits,
+            loggedInVisits: stats.loggedInVisits,
           },
-          upsert: true,
+          $addToSet: {
+            uniqueIpHashes: { $each: Array.from(stats.ipHashes) },
+          },
+          $set: {
+            backfilledFromLogs: true,
+            updatedAt: new Date(),
+          },
         },
-      });
+        { upsert: true },
+      );
+
+      if (updateResult.upsertedCount > 0 || updateResult.modifiedCount > 0) {
+        migratedDaysCount += 1;
+      }
     }
 
-    const res = await DailyStats.bulkWrite(operations);
-    console.log(
-      `[ANALYTICS MIGRATION] Zaimportowano historyczne statystyki dla ${res.upsertedCount} dni z kolekcji SystemLog.`,
-    );
-    return res.upsertedCount;
+    if (migratedDaysCount > 0) {
+      console.log(
+        `[ANALYTICS MIGRATION] Zaimportowano historyczne statystyki (w tym dzisiejsze) dla ${migratedDaysCount} dni z SystemLog.`,
+      );
+    }
+
+    return migratedDaysCount;
   } catch (err) {
     console.error("[ANALYTICS MIGRATION ERROR]:", err.message);
     return 0;
