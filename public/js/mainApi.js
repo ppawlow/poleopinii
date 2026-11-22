@@ -692,6 +692,7 @@ window.executeReaderFactCheckPayload = async function (postId, buttonElement) {
 };
 
 // Obsługa kliknięcia w funkcje wymagające weryfikacji konta (gwiazdki, komentarze, wiadomości)
+// Obsługa kliknięcia w funkcje wymagające zalogowania lub weryfikacji konta
 document.addEventListener("click", (e) => {
   const trigger = e.target.closest(".restricted-feature-trigger");
   if (!trigger) return;
@@ -700,6 +701,20 @@ document.addEventListener("click", (e) => {
   e.stopPropagation();
 
   const reason = trigger.getAttribute("data-reason");
+
+  if (reason === "guest_like") {
+    window.Alert(
+      `<div style="text-align: left; line-height: 1.5;">
+        <p style="margin-bottom: 14px;">Tej funkcji możesz użyć po zalogowaniu.</p>
+        <p style="text-align: center; margin: 0;">
+          <a href="/auth/login" style="display: inline-block; background: #1877f2; color: white; padding: 8px 20px; border-radius: 6px; font-weight: bold; text-decoration: none;">Zaloguj się</a>
+        </p>
+      </div>`,
+      "🔒 Wymagane logowanie"
+    );
+    return;
+  }
+
   let message = "Ta funkcja wymaga pełnej weryfikacji tożsamości.";
 
   if (reason === "like_public") {
