@@ -159,10 +159,104 @@ async function getAnalyticsSummary(days = 30) {
     dailyRows, // posortowane od najnowszego dnia
   };
 }
+/**
+ * Jednorazowa migracja danych historycznych z kolekcji SystemLog (ostatnie 30 dni)
+ * do trwałej kolekcji DailyStats. Pomija dni, które mają już zapisane statystyki.
+ */
+async function backfillDailyStatsFromLogs() {
+  try {
+    const SystemLog = mongoose.model("SystemLog");
+    const logs = await SystemLog.find({})
+      .select("userId action ipAddress createdAt")
+      .lean();
+
+    if (!logs || logs.length === 0) return 0;
+
+    // Pobieramy dni już istniejące w DailyStats, aby ich nie nadpisać
+    const existingKeys = new Set(
+      (await DailyStats.find({}).select("dateKey -_id").lean()).map(
+        (d) => d.dateKey,
+      ),
+    );
+    const todayKey = getTodayWarsawKey();
+
+    const buckets = new Map();
+
+    for (const log of logs) {
+      if (!log.createdAt) continue;
+      // Pomijamy wewnętrzne zadania CRON AI
+      if (log.action && log.action.startsWith("[AI INTEGRACJA]")) continue;
+
+      const dateKey = getTodayWarsawKey(new Date(log.createdAt));
+
+      // Nie nadpisujemy dnia dzisiejszego ani dni już zmigrowanych
+      if (dateKey === todayKey || existingKeys.has(dateKey)) continue;
+
+      if (!buckets.has(dateKey)) {
+        buckets.set(dateKey, {
+          totalVisits: 0,
+          blockedVisits: 0,
+          loggedInVisits: 0,
+          ipHashes: new Set(),
+        });
+      }
+
+      const dayStat = buckets.get(dateKey);
+      const isBlocked =
+        log.action &&
+        (log.action.includes("[ODRZUCONO") ||
+          log.action.includes("[reCAPTCHA BLOKADA]"));
+
+      if (isBlocked) {
+        dayStat.blockedVisits += 1;
+      } else {
+        dayStat.totalVisits += 1;
+        if (log.userId) {
+          dayStat.loggedInVisits += 1;
+        }
+        if (log.ipAddress) {
+          dayStat.ipHashes.add(hashVisitorIp(log.ipAddress.trim(), dateKey));
+        }
+      }
+    }
+
+    if (buckets.size === 0) return 0;
+
+    const operations = [];
+    for (const [dateKey, stats] of buckets.entries()) {
+      operations.push({
+        updateOne: {
+          filter: { dateKey },
+          update: {
+            $setOnInsert: {
+              dateKey,
+              totalVisits: stats.totalVisits,
+              blockedVisits: stats.blockedVisits,
+              loggedInVisits: stats.loggedInVisits,
+              uniqueIpHashes: Array.from(stats.ipHashes),
+              updatedAt: new Date(),
+            },
+          },
+          upsert: true,
+        },
+      });
+    }
+
+    const res = await DailyStats.bulkWrite(operations);
+    console.log(
+      `[ANALYTICS MIGRATION] Zaimportowano historyczne statystyki dla ${res.upsertedCount} dni z kolekcji SystemLog.`,
+    );
+    return res.upsertedCount;
+  } catch (err) {
+    console.error("[ANALYTICS MIGRATION ERROR]:", err.message);
+    return 0;
+  }
+}
 
 module.exports = {
   DailyStats,
   trafficAnalyticsMiddleware,
   getAnalyticsSummary,
   getTodayWarsawKey,
+backfillDailyStatsFromLogs,
 };
