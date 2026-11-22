@@ -1,0 +1,63 @@
+div(style="font-family: sans-serif;")
+    //- 1. KAFELKI STATYSTYK DZISIEJSZYCH
+    - var t = analytics && analytics.todayStats ? analytics.todayStats : { totalVisits: 0, uniqueIps: 0, loggedInVisits: 0, blockedVisits: 0 }
+    div(style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 20px;")
+        .admin-subcard(style="text-align: center; padding: 14px;")
+            div(style="font-size: 12px; color: var(--text-muted); font-weight: 600;") Odwiedziny dziś
+            div(style="font-size: 24px; font-weight: 800; color: #1877f2; margin-top: 4px;") #{t.totalVisits}
+        .admin-subcard(style="text-align: center; padding: 14px;")
+            div(style="font-size: 12px; color: var(--text-muted); font-weight: 600;") Unikalne IP dziś
+            div(style="font-size: 24px; font-weight: 800; color: var(--color-primary); margin-top: 4px;") #{t.uniqueIps}
+        .admin-subcard(style="text-align: center; padding: 14px;")
+            div(style="font-size: 12px; color: var(--text-muted); font-weight: 600;") Zalogowani dziś
+            div(style="font-size: 24px; font-weight: 800; color: #9360f7; margin-top: 4px;") #{t.loggedInVisits}
+        .admin-subcard(style="text-align: center; padding: 14px;")
+            div(style="font-size: 12px; color: var(--text-muted); font-weight: 600;") Zablokowane dziś
+            div(style="font-size: 24px; font-weight: 800; color: var(--alert-danger-text); margin-top: 4px;") #{t.blockedVisits}
+
+    if analytics && analytics.dailyRows && analytics.dailyRows.length > 0
+        //- 2. WIZUALNY WYKRES SŁUPKOWY (OSTATNIE 14 DNI)
+        - var chartRows = analytics.dailyRows.slice(0, 14).reverse()
+        - var maxVisits = Math.max(1, ...chartRows.map(r => r.totalVisits))
+        .admin-subcard(style="margin-bottom: 20px; padding: 16px;")
+            div(style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;")
+                h4(style="margin: 0; font-size: 14px; color: var(--text-main);") 📊 Dynamika odwiedzin (ostatnie #{chartRows.length} dni)
+                div(style="display: flex; gap: 12px; font-size: 11.5px; color: var(--text-muted);")
+                    span
+                        span(style="display: inline-block; width: 10px; height: 10px; background: #1877f2; border-radius: 2px; margin-right: 4px;")
+                        | Wszystkie odsłony
+                    span
+                        span(style="display: inline-block; width: 10px; height: 10px; background: #198754; border-radius: 2px; margin-right: 4px;")
+                        | Unikalne IP
+            div(style="display: flex; align-items: flex-end; gap: 8px; height: 140px; padding-top: 16px; border-bottom: 1px solid var(--border-color);")
+                each row in chartRows
+                    - var totalPct = Math.round((row.totalVisits / maxVisits) * 100)
+                    - var uniquePct = Math.round((row.uniqueIps / maxVisits) * 100)
+                    div(style="flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; min-width: 0;" title=`${row.dateKey}: ${row.totalVisits} odwiedzin, ${row.uniqueIps} unikalnych IP, ${row.loggedInVisits} zalogowanych, ${row.blockedVisits} blokad`)
+                        div(style="display: flex; align-items: flex-end; gap: 2px; width: 100%; justify-content: center; height: 100%;")
+                            div(style=`width: 45%; max-width: 14px; height: ${Math.max(4, totalPct)}%; background: #1877f2; border-radius: 3px 3px 0 0; transition: height 0.3s;`)
+                            div(style=`width: 45%; max-width: 14px; height: ${Math.max(4, uniquePct)}%; background: #198754; border-radius: 3px 3px 0 0; transition: height 0.3s;`)
+                        span(style="font-size: 10px; color: var(--text-muted); margin-top: 4px; white-space: nowrap;") #{row.dateKey.slice(5)}
+
+        //- 3. TABELA SZCZEGÓŁOWA Z OSTATNICH 30 DNI
+        .admin-table-wrapper
+            table#analyticsTable.admin-table(style="font-size: 13px;")
+                thead
+                    tr
+                        th(style="padding: 10px 12px; font-weight: 700;") Data
+                        th(style="padding: 10px 12px; font-weight: 700; text-align: center;") Odwiedziny ogółem
+                        th(style="padding: 10px 12px; font-weight: 700; text-align: center;") Unikalne IP
+                        th(style="padding: 10px 12px; font-weight: 700; text-align: center;") Zalogowani
+                        th(style="padding: 10px 12px; font-weight: 700; text-align: center;") Goście
+                        th(style="padding: 10px 12px; font-weight: 700; text-align: center; color: var(--alert-danger-text);") Zablokowane
+                tbody
+                    each row in analytics.dailyRows
+                        tr
+                            td(style="padding: 10px 12px; font-weight: 600; color: var(--text-main); white-space: nowrap;") #{row.dateKey}
+                            td(style="padding: 10px 12px; text-align: center; font-weight: 700; color: #1877f2;") #{row.totalVisits}
+                            td(style="padding: 10px 12px; text-align: center; font-weight: 600; color: var(--alert-success-text);") #{row.uniqueIps}
+                            td(style="padding: 10px 12px; text-align: center; color: #9360f7; font-weight: 600;") #{row.loggedInVisits}
+                            td(style="padding: 10px 12px; text-align: center; color: var(--text-muted);") #{row.guestVisits}
+                            td(style="padding: 10px 12px; text-align: center; color: var(--alert-danger-text); font-weight: 600;") #{row.blockedVisits}
+    else
+        .no-posts.empty-state-box Brak zgromadzonych statystyk odwiedzin. Dane zaczną pojawiać się automatycznie.

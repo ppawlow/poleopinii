@@ -10,6 +10,7 @@ const dbModules = Object.assign(
   require("./notification"),
   require("./topics"),
   require("./settings"),
+  require("./analytics"),
 );
 
 mongoose
@@ -19,6 +20,7 @@ mongoose
     try {
       await dbModules.User.syncIndexes();
       await dbModules.Post.syncIndexes();
+      await dbModules.DailyStats.syncIndexes();     
       console.log("[MONGODB] Indeksy kolekcji User i Post zsynchronizowane pomyślnie.");
     } catch (idxErr) {
       console.error("[MONGODB BŁĄD INDEKSÓW]: Nie udało się zbudować indeksów unikalnych:", idxErr.message);

@@ -16,6 +16,8 @@ const { adminApprovalValidationRules } = require("../tools/validation");
 const { deleteFromAllSocials } = require("../tools/socialPublisher");
 const { renderPartial } = require("../tools/pug2html");
 const { SERVICE_SOCIALS } =  require("../config");
+const { getAnalyticsSummary } = require("../tools/analytics");
+
 
 module.exports = express.Router()
   .use(adminControl)
@@ -145,6 +147,8 @@ async function main(req, res) {
       { $sort: { name: 1 } },
     ]);
 
+    const analytics = await getAnalyticsSummary(30);
+
     res.render("admin", {
       title: "Panel Zarządzania Systemem",
       reports: reports || [],
@@ -157,6 +161,7 @@ async function main(req, res) {
       customMsg: req.query.customMsg || null,
       SERVICE_SOCIALS, 
       socialSettings,
+      analytics,
     });
   } catch (err) {
     console.error(err);

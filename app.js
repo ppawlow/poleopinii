@@ -50,6 +50,7 @@ const { generatePostExcerpt } = require("./tools/excerptHelper");
 const { attachWsMiddleware } = require("./tools/ws");
 
 const pkg = require("./package.json");
+const { trafficAnalyticsMiddleware } = require("./tools/analytics");
 
 function getLastAppUpdateDate() {
   const formatOptions = {
@@ -272,6 +273,8 @@ app.use(async (req, res, next) => {
 });
 
 app.use(userData);
+
+app.use(trafficAnalyticsMiddleware);
 
 app.use((err, req, res, next) => {
   if (err.code !== "EBADCSRFTOKEN") return next(err);
