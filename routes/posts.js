@@ -6,6 +6,7 @@ const mailer = require("../tools/mailer");
 const { renderPartial } = require("../tools/pug2html"); 
 const { publishToAllSocials, deleteFromAllSocials } = require("../tools/socialPublisher");
 const { generatePostExcerpt } = require("../tools/excerptHelper");
+const { recordAiTokens } = require("../tools/analytics");
 
 const {
   User,
@@ -1360,6 +1361,11 @@ async function postReaderFactCheck(req, res) {
     // 4. Uruchamiamy model LLM (Gemini 3.8 Flash + Google Search Grounding)
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: "v1beta" });
     const factCheckAnalysis = await checkContentFacts(ai, originalPost.title, originalPost.content);
+    await recordAiTokens({
+      input: factCheckAnalysis.meta.promptTokenCount,
+      output: factCheckAnalysis.meta.candidatesTokenCount,
+      total: factCheckAnalysis.meta.totalTokenCount,
+    });
 
     // 5. Zapisujemy raport jako oficjalny artykuł polemiczny (Polemika) przypisany do konta "Gemini AI"
     // Skracamy tytuł artykułu do maksymalnie 5 słów + "..."

@@ -53,3 +53,16 @@
             div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--alert-danger-bg); border: 1px solid var(--alert-danger-border); border-radius: 6px;")
                 span(style="color: var(--alert-danger-text); font-weight: 600;") 🛡️ Zablokowane ataki
                 strong(style="color: var(--alert-danger-text);") #{serverStatus.today.blockedVisits}
+    //- 4. ZUŻYCIE TOKENÓW AI DZISIAJ
+    div(style="margin-top: 16px;")
+        div(style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;") Tokeny AI dzisiaj
+        div(style="display: flex; flex-direction: column; gap: 5px; font-size: 13px;")
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span Wejściowe (In)
+                strong #{(serverStatus.today.tokensIn || 0).toLocaleString('pl-PL')}
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--bg-subtle); border-radius: 6px;")
+                span Wyjściowe (Out)
+                strong #{(serverStatus.today.tokensOut || 0).toLocaleString('pl-PL')}
+            div(style="display: flex; justify-content: space-between; padding: 5px 10px; background: var(--alert-info-bg); border: 1px solid var(--alert-info-border); border-radius: 6px;")
+                span(style="color: var(--alert-info-text); font-weight: 600;") 🤖 Łącznie (Total)
+                strong(style="color: var(--alert-info-text);") #{(serverStatus.today.tokensTotal || 0).toLocaleString('pl-PL')}

@@ -4,6 +4,7 @@ const { TopicOfTheDay } = require("./db");
 const { SystemLog, createLog } = require("./systemLog");
 const { OpenAI } = require("openai");
 const { GoogleGenAI } = require("@google/genai");
+const { recordAiTokens } = require("./analytics");
 
 const { AI_CONFIG } = require("../config");
 const PROVIDER = process.env.AI_PROVIDER || AI_CONFIG.DEFAULT_PROVIDER;
@@ -232,6 +233,7 @@ async function fetchAndSaveDailyTopics() {
       // Przywrócenie zapisu pełnego logu audytowego z tokenami do bazy MongoDB
       const logMessage = `[AI INTEGRACJA] Pomyślnie zsynchronizowano newsy (${PROVIDER.toUpperCase()}). Nowych unikalnych: ${newInsertedCount}. Zużycie tokenów -> In: ${tokens.input} | Out: ${tokens.output} | Total: ${tokens.total}`;
       await createLog(dummyReq, logMessage);
+      await recordAiTokens(tokens);
     }
   } catch (err) {
     console.error(`[AI NEWS ERROR]:`, err);

@@ -8,6 +8,8 @@ const sanitizeHtml = require("sanitize-html");
 const { POST_VISIBILITY, PASSWORD_REGEX, ADMINS } = require("../config");
 const { verifyBufferSignature } = require("./db");
 const { renderMessage } = require("./pug2html");
+const { recordAiTokens } = require("./analytics");
+
 const tools = { validationResult };
 module.exports = tools;
 
@@ -321,6 +323,7 @@ tools.validatePublicContent = async function (
     totalTokens.input += safetyData.meta.promptTokenCount;
     totalTokens.output += safetyData.meta.candidatesTokenCount;
     totalTokens.total += safetyData.meta.totalTokenCount;
+    await recordAiTokens(totalTokens);
 
     if (!safetyData.result.approved) {
       await createLog(

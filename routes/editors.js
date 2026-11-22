@@ -6,6 +6,7 @@ const { accessControl } = require("../tools/security");
 const { AI_CONFIG } = require("../config");
 const {validateId} = require("../tools/validation");
 const { renderMessage } = require("../tools/pug2html"); 
+const { recordAiTokens } = require("../tools/analytics");
 
 module.exports = express.Router()
   .use(accessControl)
@@ -130,6 +131,14 @@ async function postGenerateArticle(req, res){
         }
       });
       generatedContentHtml = response.text;
+      // Dla Gemini:
+      const meta = response.usageMetadata || {};
+      await recordAiTokens({
+        input: meta.promptTokenCount || 0,
+        output: meta.candidatesTokenCount || 0,
+        total: meta.totalTokenCount || 0,
+      });
+
     } else {
       const { OpenAI } = require("openai");
       const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -142,6 +151,13 @@ async function postGenerateArticle(req, res){
         ]
       });
       generatedContentHtml = response.choices[0].message.content;
+      // Dla OpenAI:
+      const usage = response.usage || {};
+      await recordAiTokens({
+        input: usage.prompt_tokens || 0,
+        output: usage.completion_tokens || 0,
+        total: usage.total_tokens || 0,
+      });
     }
 
     // Sanityzacja / Czyszczenie ewentualnych tagów markdown \`\`\`html dodanych przez model
@@ -215,6 +231,11 @@ async function postCheck(req, res) {
     
     // Uruchamiamy odizolowany moduł fact-checkingu z groundingem w wyszukiwarce Google
     const factCheckAnalysis = await checkContentFacts(ai, post.title, post.content);
+    await recordAiTokens({
+      input: factCheckAnalysis.meta.promptTokenCount,
+      output: factCheckAnalysis.meta.candidatesTokenCount,
+      total: factCheckAnalysis.meta.totalTokenCount,
+    });
 
     // Rejestrujemy zapytanie w logu systemowym
     await createLog(
