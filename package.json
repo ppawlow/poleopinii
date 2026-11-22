@@ -1,6 +1,6 @@
 {
   "name": "opiner",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "portal publicystyki obywatelskiej",
   "main": "index.js",
   "scripts": {
