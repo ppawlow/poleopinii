@@ -53,38 +53,73 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // 2. FORMULARZ ZAPOMNIANEGO HASŁA (ekran logowania oraz ustawienia konta)
+  // 2. FORMULARZ ZAPOMNIANEGO HASŁA / ZMIANY HASŁA (ekran logowania oraz ustawienia konta)
   const forgotPasswordForm =
     document.getElementById("forgotPasswordForm") ||
     document.getElementById("passwordResetRequestForm");
 
   if (forgotPasswordForm) {
     forgotPasswordForm.addEventListener("submit", async function (e) {
-      const tokenInput = document.getElementById("forgotRecaptchaToken");
-      if (tokenInput && tokenInput.value) {
-        return;
-      }
-
       e.preventDefault();
-      const submitBtn = forgotPasswordForm.querySelector(
-        'button[type="submit"]',
-      );
-      if (submitBtn) submitBtn.disabled = true;
+
+      const submitBtn = forgotPasswordForm.querySelector('button[type="submit"]');
+      const originalText = submitBtn ? submitBtn.innerHTML : "";
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Wysyłanie...";
+      }
 
       try {
         const token = await getCaptchaToken("forgot_password_auth");
-//        if (token && tokenInput) {
-        if (token !== null && tokenInput) {
-          tokenInput.value = token;
-          HTMLFormElement.prototype.submit.call(forgotPasswordForm);
+        if (token === null) return;
+
+        const formData = new FormData(forgotPasswordForm);
+        formData.set("recaptchaToken", token);
+
+        const csrfToken =
+          document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") ||
+          formData.get("_csrf");
+
+        const response = await fetch(forgotPasswordForm.action, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "X-CSRF-Token": csrfToken,
+            Accept: "application/json",
+          },
+          body: new URLSearchParams(formData).toString(),
+        });
+
+        if (response.ok) {
+          // Jeśli to formularz na ekranie logowania (zawiera jawne pole email do wpisania), czyścimy je
+          const emailInput = forgotPasswordForm.querySelector('input[type="email"][name="email"]');
+          if (emailInput) emailInput.value = "";
+
+          const isSettingsForm = forgotPasswordForm.id === "passwordResetRequestForm";
+          const alertMsg = isSettingsForm
+            ? "✉️ <b>Link do zmiany hasła został wysłany!</b><br><br>Sprawdź swoją skrzynkę pocztową i kliknij w przesłany odnośnik, aby ustawić nowe hasło."
+            : "✉️ <b>Instrukcja została wysłana!</b><br><br>Jeśli podany adres e-mail istnieje w naszej bazie, wysłaliśmy na niego link umożliwiający zresetowanie hasła.";
+
+          await window.Alert(alertMsg, "🔑 Odzyskiwanie i zmiana hasła");
         } else {
-          if (submitBtn) submitBtn.disabled = false;
+          const errText = await response.text();
+          await window.Alert(
+            `⚠️ Nie udało się przetworzyć żądania: ${errText || "Błąd serwera lub przekroczono limit prób."}`,
+            "Błąd",
+          );
         }
       } catch (err) {
-        if (submitBtn) submitBtn.disabled = false;
+        console.error("Błąd wysyłki linku resetującego hasło:", err);
+        await window.Alert("Wystąpił błąd połączenia z serwerem.", "Błąd sieci");
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
       }
     });
   }
+
 
   // 3. ASYNCHRONICZNA REJESTRACJA KONTA (FETCH API)
   const registerForm = document.getElementById("registerForm");
