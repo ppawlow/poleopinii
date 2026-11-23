@@ -26,6 +26,9 @@ module.exports = express
     setInitialPasswordValidationRules,
     postSetPassword,
   )
+  
+  .post("/forgot-password", tokenGenerationLimiter, postForgotPassword);
+  
   // Dostępne tylko dla niezalogowanych
   .use(isGuest)
   .get("/login", getLogin)
@@ -33,7 +36,6 @@ module.exports = express
   .get("/forgot-password", getForgotPassword)
   .post("/login", authLimiter, loginValidationRules, postLogin)
   .post("/register", authLimiter, registerValidationRules, postRegister)
-  .post("/forgot-password", tokenGenerationLimiter, postForgotPassword);
 
 function getLogin(req, res) {
   res.render("login", {
@@ -187,21 +189,30 @@ async function postRegister(req, res) {
 // PROCEDURA ZAPOMNIANEGO HASŁA (POST) - routes/auth.js
 async function postForgotPassword(req, res) {
   const { email, recaptchaToken } = req.body;
+  const successRedirect = req.dbUser
+    ? "/profile/settings?msg=email_pending"
+    : "/auth/forgot-password?msg=sent";
+  const errorRedirect = req.dbUser
+    ? "/profile/settings?error=server"
+    : "/auth/forgot-password?error=server";
 
   // WERYFIKACJA reCAPTCHA
   const { verifyRecaptcha } = require("../tools/validation");
   const ip = req.ip || "127.0.0.1";
   const isHuman = await verifyRecaptcha(recaptchaToken, ip);
   if (!isHuman) {
-    return res.redirect("/auth/forgot-password?msg=sent"); // Ciche odrzucenie bota (udajemy sukces)
+    return res.redirect(successRedirect);
   }
 
   try {
-    if (!email || typeof email !== "string") {
-      return res.redirect("/auth/forgot-password?msg=sent");
+    // Jeśli użytkownik jest zalogowany, bierzemy jego pewny adres e-mail prosto z sesji/bazy
+    const targetEmail = req.dbUser ? req.dbUser.email : email;
+
+    if (!targetEmail || typeof targetEmail !== "string") {
+      return res.redirect(successRedirect);
     }
 
-    const targetNormalizedEmail = canonicalizeEmail(email);
+    const targetNormalizedEmail = canonicalizeEmail(targetEmail);
     const user = await User.findOne({ normalizedEmail: targetNormalizedEmail });
 
     if (user) {
@@ -210,12 +221,13 @@ async function postForgotPassword(req, res) {
       await mailer.sendPasswordResetEmail(user, req);
     }
 
-    return res.redirect("/auth/forgot-password?msg=sent");
+    return res.redirect(successRedirect);
   } catch (err) {
     console.error("Błąd podczas generowania linku resetu:", err);
-    return res.redirect("/auth/forgot-password?error=server");
+    return res.redirect(errorRedirect);
   }
 }
+
 // ZUNIFIKOWANY FORMULARZ USTAWIANIA HASŁA (GET)
 async function getSetPassword(req, res) {
   try {
