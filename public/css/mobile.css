@@ -324,3 +324,27 @@
     gap: 24px !important;
   }
 }
+
+  /* Widok pojedynczego artykułu oraz stron dokumentów (Regulamin, Polityka) na mobile */
+  .main-container:has(.editorial-article) {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    transform: none !important;
+  }
+
+  .main-container .editorial-article {
+    padding: 20px 16px 28px 16px !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Dla pojedynczego wpisu (single-post) zdjęcie i nagłówek mają własne wewnętrzne paddingi */
+  .main-container .editorial-article.single-article-card {
+    padding: 0 0 24px 0 !important;
+  }
+  
