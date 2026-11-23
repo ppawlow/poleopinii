@@ -228,7 +228,7 @@ POST_VISIBILITY: ["public", "restricted", "private", "editors", "users"],
 
   PORT: 3000,
   SALT_ROUNDS: 12,
-
+  fb_domain_verification_code: process.env.FB_DOMAIN_VERIFICATION_CODE,
   useRecaptcha: process.env.USE_RECAPTCHA === "true",
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_PUBLIC_KEY,
