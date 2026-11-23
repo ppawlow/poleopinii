@@ -12,7 +12,7 @@ const {
   updateSocialShareSetting 
 } = require("../tools/db");
 const { adminControl } = require("../tools/security");
-const { adminApprovalValidationRules } = require("../tools/validation");
+const { adminApprovalValidationRules, validateId } = require("../tools/validation");
 const { deleteFromAllSocials } = require("../tools/socialPublisher");
 const { renderPartial } = require("../tools/pug2html");
 const { SERVICE_SOCIALS } =  require("../config");
@@ -24,9 +24,11 @@ module.exports = express.Router()
   .get("/", main)
   .get("/logs/api", getLogsApi)
   .post("/socials/toggle", postToggleSocialShare)
-  .post("/:reportId/accept", postAcceptAbuseReport)
-  .post("/:reportId/reject", postRejectAbuseReport)
+
+  .use("/:dummy/:postId", validateId("postId"))
   .post("/posts/:postId/unlock", postUnlockModeratorFlag)
+
+  .use("/:dummy/:userId", validateId("userId"))
   .post(
     "/verify-user/:userId/approve",
     adminApprovalValidationRules,
@@ -35,6 +37,10 @@ module.exports = express.Router()
   .post("/verify-user/:userId/reject", postAdminRejectUser)
   .post("/users/:userId/promote", postPromoteToEditor)
   .post("/users/:userId/demote", postDemoteFromEditor)
+
+  .use("/:reportId", validateId("reportId"))
+  .post("/:reportId/accept", postAcceptAbuseReport)
+  .post("/:reportId/reject", postRejectAbuseReport);
 
 // Pomocnicza funkcja formatująca wpis logu prasowego
 function mapLogDocument(log) {
@@ -261,9 +267,6 @@ async function getLogsApi(req, res) {
 async function postAcceptAbuseReport(req, res) {
   try {
     const { reportId } = req.params;
-    if (!ObjectId.isValid(reportId)) {
-      return res.status(400).send("Nieprawidłowy identyfikator zgłoszenia.");
-    }
 
     const reportPost = await Post.findById(reportId);
     if (!reportPost || !reportPost.isAbuseReport || !reportPost.parentPostId) {
@@ -317,8 +320,6 @@ async function postAcceptAbuseReport(req, res) {
 async function postRejectAbuseReport(req, res) {
   try {
     const { reportId } = req.params;
-    if (!ObjectId.isValid(reportId))
-      return res.status(400).send("Nieprawidłowy ID zgłoszenia.");
 
     const reportPost = await Post.findById(reportId);
     if (!reportPost || !reportPost.isAbuseReport || !reportPost.parentPostId) {
@@ -359,8 +360,6 @@ async function postRejectAbuseReport(req, res) {
 async function postUnlockModeratorFlag(req, res) {
   try {
     const { postId } = req.params;
-    if (!ObjectId.isValid(postId))
-      return res.status(400).send("Nieprawidłowy ID posta.");
 
     const post = await Post.findById(postId);
     if (!post) return res.status(404).send("Nie odnaleziono wpisu.");
@@ -489,13 +488,13 @@ async function postAdminRejectUser(req, res) {
 async function postPromoteToEditor(req, res) {
   try {
     const { userId } = req.params;
-    if (!ObjectId.isValid(userId)) return res.status(400).send("Nieprawidłowy identyfikator.");
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).send("Nie odnaleziono użytkownika.");
 
     user.role = "editor";
     await user.save();
+    await req.ws?.syncUserState(user._id);
 
     await createLog(req, `[KOLEGIUM REDAKCYJNE] Pomyślnie przegłosowano i zatwierdzono kandydaturę: ${user.name}`);
     
@@ -514,17 +513,16 @@ async function postPromoteToEditor(req, res) {
   }
 }
 
-
 async function postDemoteFromEditor(req, res) {
   try {
     const { userId } = req.params;
-    if (!ObjectId.isValid(userId)) return res.status(400).send("Nieprawidłowy identyfikator.");
 
     const user = await User.findById(userId);
     if (!user) return res.status(404).send("Nie odnaleziono użytkownika.");
 
     user.role = "user";
     await user.save();
+    await req.ws?.syncUserState(user._id);
 
     await createLog(req, `[ADMIN] Odebrano oficjalną rolę Redaktora użytkownikowi: ${user.name}`);
     

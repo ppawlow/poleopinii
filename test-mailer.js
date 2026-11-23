@@ -1,9 +1,9 @@
-const TARGET_TEST_EMAIL = "piotr.roman.pawlowski@gmail.com"; 
-
 require("dotenv").config();
 const mongoose = require("mongoose");
 const mailer = require("./tools/mailer");
 const config = require("./config");
+
+const TARGET_TEST_EMAIL = process.env.TEST_MAIL; 
 
 // Podmiana konfiguracji globalnej na adres testowy użytkownika
 config.MAIN_ADMIN_EMAIL = TARGET_TEST_EMAIL;

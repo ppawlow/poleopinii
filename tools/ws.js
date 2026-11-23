@@ -12,6 +12,7 @@ const wsHandlers = {
   broadcastCommentEdited: () => {},
   sendNotification: () => {},
   broadcastAnnouncement: () => {},
+  syncUserState: () => {},
 };
 
 // Middleware podpinany w app.js przed routerami
@@ -30,6 +31,29 @@ function initWebSocket(server) {
   const activeConnections = new Set();
 
   server.on("upgrade", (request, socket, head) => {
+    const origin = request.headers.origin;
+    const host = request.headers.host;
+
+    // 1. OCHRONA PRZED CSWSH: Weryfikacja pochodzenia żądania (Origin)
+    if (!origin || !host) {
+      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+
+    try {
+      const originHost = new URL(origin).host;
+      if (originHost !== host) {
+        socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+        socket.destroy();
+        return;
+      }
+    } catch (e) {
+      socket.write("HTTP/1.1 403 Forbidden\r\n\r\n");
+      socket.destroy();
+      return;
+    }
+
     cookieParser(process.env.SESSION_SECRET)(request, {}, () => {
       const sid = request.signedCookies
         ? request.signedCookies["connect.sid"]
@@ -86,7 +110,30 @@ function initWebSocket(server) {
     });
   });
 
-  // Lokalne funkcje obsługujące transmisję
+  // 2. SYNCHRONIZACJA UPRAWNIEŃ W LOCIE (po zmianie roli, follow lub blokadzie)
+  async function syncUserState(userId) {
+    if (!userId) return;
+    const targetIdStr = userId.toString();
+
+    const freshUser = await User.findById(targetIdStr)
+      .select("role following blocks")
+      .lean();
+
+    activeConnections.forEach((client) => {
+      if (client.userId !== targetIdStr) return;
+
+      // Jeśli konto zostało usunięte, natychmiast zamykamy połączenie
+      if (!freshUser) {
+        client.close(1008, "Account removed");
+        return;
+      }
+
+      client.role = freshUser.role;
+      client.following = (freshUser.following || []).map((id) => id.toString());
+      client.blocks = (freshUser.blocks || []).map((id) => id.toString());
+    });
+  }
+
   function broadcastPost({ html, post, authorBlocks = [] }) {
     if (!post || post.visibility === "private") return;
 
@@ -210,7 +257,6 @@ function initWebSocket(server) {
     });
   }
 
-  // Podpięcie lokalnych funkcji do współdzielonego obiektu req.ws
   Object.assign(wsHandlers, {
     broadcastPost,
     broadcastComment,
@@ -218,6 +264,7 @@ function initWebSocket(server) {
     broadcastCommentEdited,
     sendNotification,
     broadcastAnnouncement,
+    syncUserState,
   });
 }
 

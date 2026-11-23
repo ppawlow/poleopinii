@@ -12,9 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
         typeof grecaptcha === "undefined" ||
         !grecaptcha.enterprise ||
         !siteKey
-      ) {
-        return resolve("BYPASS_TOKEN_CAPTCHA_DISABLED");
-      }
+      ) return resolve("");
+
       grecaptcha.enterprise.ready(() => {
         grecaptcha.enterprise
           .execute(siteKey, { action: actionName })
@@ -41,8 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const token = await getCaptchaToken("login_auth");
-        if (token) {
-          document.getElementById("loginRecaptchaToken").value = token;
+        // if (token) {
+        if (token !== null) {          document.getElementById("loginRecaptchaToken").value = token;
           HTMLFormElement.prototype.submit.call(loginForm); // Bezpieczne ominięcie pętli eventu
         } else {
           if (submitBtn) submitBtn.disabled = false;
@@ -74,7 +73,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
       try {
         const token = await getCaptchaToken("forgot_password_auth");
-        if (token && tokenInput) {
+//        if (token && tokenInput) {
+        if (token !== null && tokenInput) {
           tokenInput.value = token;
           HTMLFormElement.prototype.submit.call(forgotPasswordForm);
         } else {
@@ -103,6 +103,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
       // Pobranie tokenu tuż przed strzałem Fetch
       const token = await getCaptchaToken("register_auth");
+      if (token === null) {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerText = "Zarejestruj się";
+        }
+        return;
+      }
+         
       formData.set("recaptchaToken", token);
 
       const serializedData = new URLSearchParams(formData).toString();

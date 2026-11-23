@@ -114,13 +114,12 @@ async function getFollowingFeed(req, res) {
 async function postFollow(req, res) {
   try {
     const targetUserId = req.params.id;
-    const dbUser = req.dbUser; // Korzystamy bezpośrednio z bezpiecznego req.dbUser!
+    const dbUser = req.dbUser;
     const targetUser = await User.findById(targetUserId);
 
     if (!targetUser || !dbUser)
       return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 
-    // NAPRAWIONO: Korzystamy z metod instancji zamiast wadliwego .includes()
     const iBlockHim = dbUser.isBlocking(targetUser._id);
     const heBlocksMe = targetUser.isBlocking(dbUser._id);
 
@@ -141,18 +140,18 @@ async function postFollow(req, res) {
     }
 
     await dbUser.save();
+    await req.ws?.syncUserState(dbUser._id);
+
     return res.json({ success: true, isFollowing: !isFollowing });
   } catch (err) {
     return res.status(500).json({ error: "Błąd operacji follow" });
   }
 }
 
-// routes/main.js -> funkcja postBlock
-
 async function postBlock(req, res) {
   try {
     const targetUserId = req.params.id;
-    const dbUser = req.dbUser; // Korzystamy z bezpiecznego, znormalizowanego req.dbUser z middleware
+    const dbUser = req.dbUser;
     const targetUser = await User.findById(targetUserId).select(
       "name email nickname blocks following",
     );
@@ -160,7 +159,6 @@ async function postBlock(req, res) {
     if (!targetUser || !dbUser)
       return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 
-    // POPRAWKA LOGIKI RELACJI: Używamy .isBlocking() z prototypów zamiast wadliwego JavaScriptowego .includes()
     const isBlocked = dbUser.isBlocking(targetUser._id);
     if (!isBlocked) {
       dbUser.blocks.push(targetUser._id);
@@ -170,7 +168,7 @@ async function postBlock(req, res) {
 
       // 2. OBUSTRONNE CZYSZCZENIE: Zablokowany użytkownik również automatycznie przestaje obserwować mnie
       targetUser.following.pull(dbUser._id);
-      await targetUser.save(); // Zapisujemy zmiany w dokumencie zablokowanego użytkownika
+      await targetUser.save();
 
       await createLog(
         req,
@@ -185,8 +183,9 @@ async function postBlock(req, res) {
     }
 
     await dbUser.save();
+    await req.ws?.syncUserState(dbUser._id);
+    await req.ws?.syncUserState(targetUser._id);
 
-    // ZWRACAMY JSON ZAMIAST REDIRECT
     return res.json({ success: true, isBlocked: !isBlocked });
   } catch (err) {
     console.error("Błąd metody postBlock:", err);

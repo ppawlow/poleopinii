@@ -7,7 +7,6 @@ const { renderPartial } = require("../tools/pug2html");
 const { publishToAllSocials, deleteFromAllSocials } = require("../tools/socialPublisher");
 const { generatePostExcerpt } = require("../tools/excerptHelper");
 const { recordAiTokens } = require("../tools/analytics");
-
 const {
   User,
   Post,
@@ -37,6 +36,8 @@ const {
   validateId,
   validateContent,
   validatePublicContent,
+  verifyRecaptcha,
+  aiActionLimiter,
 } = require("../tools/validation");
 
 const postUpload = upload.single("postImage");
@@ -68,7 +69,7 @@ module.exports = express
 
   .use("/:id", validateId("id"))
   .post("/:id/delete-image", postDeleteImage)
-  .post("/:id/factcheck-reader", postReaderFactCheck)
+  .post("/:id/factcheck-reader", aiActionLimiter, postReaderFactCheck)
 
   .post(
     "/:id/edit",
@@ -734,26 +735,33 @@ async function postComment(req, res) {
     if (!post) return res.status(404).send("Nie znaleziono posta.");
     const dbUser = req.dbUser;
 
+    // 1. Ochrona zgłoszeń nadużyć (dostęp wyłącznie dla administratora)
+    if (post.isAbuseReport && !dbUser.isAdmin) {
+      return res.status(403).send("Brak uprawnień do tego zasobu.");
+    }
+
+    const postAuthor = await User.findById(post.authorId);
+
+    // 2. Weryfikacja prawa do wyświetlenia posta (ochrona IDOR dla private/restricted/editors)
+    if (!hasPermission(dbUser, post.visibility, "VIEW", post, postAuthor)) {
+      return res.status(403).send("Brak uprawnień do wyświetlenia i komentowania tego wpisu.");
+    }
+
+    // 3. Weryfikacja prawa do komentowania na danym poziomie widoczności
     if (!hasPermission(dbUser, post.visibility, "COMMENT")) {
       const fallbackMsg =
         post.visibility === "editors"
           ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
-          : "Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
+          : 'Brak uprawnień: Komentowanie postów publicznych wymaga pełnej weryfikacji konta. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>';
       return sendAccessDenied(req, res, fallbackMsg);
     }
 
-    if (post.visibility !== "editors") {
-      const postAuthor = await User.findById(post.authorId);
-      if (postAuthor) {
-        const iBlockHim = dbUser.blocks.includes(postAuthor._id);
-        const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
-        if (iBlockHim || heBlocksMe) {
-          return res
-            .status(403)
-            .send(
-              "Operacja zablokowana: Aktywna blokada uniemożliwia dodanie komentarza.",
-            );
-        }
+    // 4. Sprawdzenie wzajemnych blokad między autorem wpisu a komentującym
+    if (post.visibility !== "editors" && postAuthor) {
+      if (dbUser.isBlocking(postAuthor._id) || postAuthor.isBlocking(dbUser._id)) {
+        return res
+          .status(403)
+          .send("Operacja zablokowana: Aktywna blokada uniemożliwia dodanie komentarza.");
       }
     }
 
@@ -779,6 +787,7 @@ async function postComment(req, res) {
     const savedPost = await post.save();
     const addedComment = savedPost.comments[savedPost.comments.length - 1];
 
+    // 5. Obsługa wzmianek (@) z poprawnym sprawdzaniem blokad przez isBlocking()
     if (isReply && post.visibility !== "editors") {
       const mentionMatch = req.body.content.match(/^@([^\s]+)/);
       if (mentionMatch) {
@@ -787,8 +796,8 @@ async function postComment(req, res) {
           $or: [{ nickname: targetName }, { name: targetName }],
         });
         if (targetUser) {
-          const iBlockMentioned = dbUser.blocks.includes(targetUser._id);
-          const mentionedBlocksMe = targetUser.blocks.includes(dbUser._id);
+          const iBlockMentioned = dbUser.isBlocking(targetUser._id);
+          const mentionedBlocksMe = targetUser.isBlocking(dbUser._id);
           if (!iBlockMentioned && !mentionedBlocksMe) {
             recipientId = targetUser._id;
             notificationType = "reply_comment";
@@ -847,9 +856,8 @@ async function postComment(req, res) {
     try {
       const htmlSnippet = renderPartial("post-comments", renderContext);
 
-      // GLOBALNA TRANSMISJA WEBSOCKET DLA KOMENTARZY
       const authorBlocksStr = (dbUser.blocks || []).map((id) => id.toString());
-      
+
       req.ws?.broadcastComment({
         html: htmlSnippet,
         postId: post._id,
@@ -859,7 +867,6 @@ async function postComment(req, res) {
         authorBlocks: authorBlocksStr,
       });
 
-      // POWIADOMIENIE NA ŻYWO (DZWONECZEK) DLA ADRESATA KOMENTARZA / ODPOWIEDZI
       if (
         post.visibility !== "editors" &&
         String(recipientId) !== String(dbUser._id)
@@ -907,25 +914,33 @@ async function postLike(req, res) {
     if (!post) return res.status(404).send("Nie znaleziono posta.");
     const dbUser = req.dbUser;
 
-    if (!hasPermission(dbUser, post.visibility, "LIKE")) {
-      const fallbackMsg =
-        post.visibility === "editors"
-          ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
-          : "Brak uprawnień: Polubienie postów publicznych wymaga pełnej weryfikacji konta. Dowiedz się więcej";
-      return sendAccessDenied(req, res, fallbackMsg);
+    // 1. Ochrona zgłoszeń nadużyć
+    if (post.isAbuseReport && !dbUser.isAdmin) {
+      return res.status(403).send("Brak uprawnień do tego zasobu.");
     }
 
     const postAuthor = await User.findById(post.authorId);
 
+    // 2. Weryfikacja prawa do wyświetlenia posta (ochrona IDOR)
+    if (!hasPermission(dbUser, post.visibility, "VIEW", post, postAuthor)) {
+      return res.status(403).send("Brak uprawnień do tego wpisu.");
+    }
+
+    // 3. Weryfikacja prawa do oceny na danym poziomie widoczności
+    if (!hasPermission(dbUser, post.visibility, "LIKE")) {
+      const fallbackMsg =
+        post.visibility === "editors"
+          ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
+          : 'Brak uprawnień: Polubienie postów publicznych wymaga pełnej weryfikacji konta. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>';
+      return sendAccessDenied(req, res, fallbackMsg);
+    }
+
+    // 4. Sprawdzenie wzajemnych blokad przez isBlocking()
     if (post.visibility !== "editors" && postAuthor) {
-      const iBlockHim = dbUser.blocks.includes(postAuthor._id);
-      const heBlocksMe = postAuthor.blocks.includes(dbUser._id);
-      if (iBlockHim || heBlocksMe) {
+      if (dbUser.isBlocking(postAuthor._id) || postAuthor.isBlocking(dbUser._id)) {
         return res
           .status(403)
-          .send(
-            "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego wpisu.",
-          );
+          .send("Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego wpisu.");
       }
     }
 
@@ -948,7 +963,6 @@ async function postLike(req, res) {
           postId: post._id,
         });
 
-        // POWIADOMIENIE NA ŻYWO (DZWONECZEK) DLA AUTORA POSTA
         req.ws?.sendNotification(post.authorId, {
           notificationType: "like_post",
           senderName: dbUser.displayName,
@@ -964,7 +978,6 @@ async function postLike(req, res) {
     await post.save();
     await createLog(req, actionText, dbUser.email);
 
-    // System awansów na redaktora (100 gwiazdek) działa wyłącznie dla postów publicznych
     if (
       post.visibility === "public" &&
       postAuthor &&
@@ -1178,63 +1191,62 @@ async function postAppeal(req, res) {
  * Zintegrowany z reżącym reżimem prawnym DSA oraz systemem reCAPTCHA Enterprise.
  */
 async function postCreatePublicReport(req, res) {
-  let { content, parentPostId, abuseCategory, reporterEmail, recaptchaToken } =
-    req.body;
-  const { useRecaptcha } = require("../config");
-
-  // 1. Krytyczna walidacja obecności tokenu bezpieczeństwa
-  if (!recaptchaToken) {
-    return res
-      .status(400)
-      .send("Błąd bezpieczeństwa: Brak tokenu weryfikacji anty-botowej.");
-  }
+  let { content, parentPostId, abuseCategory, reporterEmail, recaptchaToken } = req.body;
 
   try {
     // =========================================================================
     // SYSTEM WERYFIKACJI ANTY-BOTOWEJ (RECAPTCHA ENTERPRISE)
     // =========================================================================
-    if (!useRecaptcha && recaptchaToken === "BYPASS_TOKEN_CAPTCHA_DISABLED") {
-      // SCENARIUSZ A: reCAPTCHA wyłączona centralnie w pliku config.js (Tryb deweloperski/testowy)
-      const ip = req.ip || "127.0.0.1";
-      console.log(
-        `[reCAPTCHA OMINIĘCIE] Przepuszczono żądanie przy wyłączonej fladze systemowej. IP: ${ip}`,
-      );
-    } else {
-      // SCENARIUSZ B: Środowisko produkcyjne - Pełna weryfikacja w chmurze Google Enterprise
-      const { RECAPTCHA_SECRET_KEY } = require("../config");
-
-      // Odpytanie oficjalnego API Google Cloud Enterprise w celu oceny ryzyka spamu
-      const verificationUrl = "https://www.google.com/recaptcha/api/siteverify";
-      const params = new URLSearchParams({
-        secret: RECAPTCHA_SECRET_KEY,
-        response: recaptchaToken,
-        remoteip: req.ip || "127.0.0.1", // Przekazujemy prawdziwe IP użytkownika zza proxy Nginxa
-      });
-
-      const captchaResponse = await fetch(verificationUrl, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-      });
-
-      const captchaData = await captchaResponse.json();
-
-      // Próg 0.5 chroni przed zautomatyzowanymi skryptami i farmami botów
-      if (!captchaData.success || captchaData.score < 0.5) {
-        const ip = req.ip || "127.0.0.1";
-        const { SystemLog } = require("../tools/db");
-
-        await SystemLog.create({
-          email: reporterEmail || "Niezalogowany Bot",
-          action: `[reCAPTCHA BLOKADA] Zablokowano podejrzany ruch jako bot-spam (Score: ${captchaData.score || 0})`,
-          ipAddress: ip,
-        });
-
+    // if (!useRecaptcha) {
+    //   // SCENARIUSZ A: reCAPTCHA wyłączona centralnie w pliku config.js (Tryb deweloperski/testowy)
+    //   const ip = req.ip || "127.0.0.1";
+    //   console.log(
+    //     `[reCAPTCHA OMINIĘCIE] Przepuszczono żądanie przy wyłączonej fladze systemowej. IP: ${ip}`,
+    //   );
+    // } else {
+    //   // SCENARIUSZ B: Środowisko produkcyjne - Pełna weryfikacja w chmurze Google Enterprise
+    //   const { RECAPTCHA_SECRET_KEY } = require("../config");
+    // 
+    //   // Odpytanie oficjalnego API Google Cloud Enterprise w celu oceny ryzyka spamu
+    //   const verificationUrl = "https://www.google.com/recaptcha/api/siteverify";
+    //   const params = new URLSearchParams({
+    //     secret: RECAPTCHA_SECRET_KEY,
+    //     response: recaptchaToken,
+    //     remoteip: req.ip || "127.0.0.1", // Przekazujemy prawdziwe IP użytkownika zza proxy Nginxa
+    //   });
+    // 
+    //   const captchaResponse = await fetch(verificationUrl, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    //     body: params.toString(),
+    //   });
+    // 
+    //   const captchaData = await captchaResponse.json();
+    // 
+    //   // Próg 0.5 chroni przed zautomatyzowanymi skryptami i farmami botów
+    //   if (!captchaData.success || captchaData.score < 0.5) {
+    //     const ip = req.ip || "127.0.0.1";
+    //     const { SystemLog } = require("../tools/db");
+    // 
+    //     await SystemLog.create({
+    //       email: reporterEmail || "Niezalogowany Bot",
+    //       action: `[reCAPTCHA BLOKADA] Zablokowano podejrzany ruch jako bot-spam (Score: ${captchaData.score || 0})`,
+    //       ipAddress: ip,
+    //     });
+    // 
+    //     return res
+    //       .status(403)
+    //       .send(
+    //         "Weryfikacja anty-botowa nieudana. Żądanie ocenione jako automatyczny spam.",
+    //       );
+    //   }
+    // }
+    if (!req.dbUser) {
+      const isHuman = await verifyRecaptcha(recaptchaToken, req.ip);
+      if (!isHuman) {
         return res
           .status(403)
-          .send(
-            "Weryfikacja anty-botowa nieudana. Żądanie ocenione jako automatyczny spam.",
-          );
+          .send("Weryfikacja anty-botowa nieudana. Żądanie ocenione jako automatyczny spam.");
       }
     }
 
@@ -1341,7 +1353,16 @@ async function postReaderFactCheck(req, res) {
     if (!originalPost) {
       return res.status(404).send("Nie odnaleziono podanego artykułu.");
     }
-
+    if (
+      originalPost.visibility !== "public" ||
+      originalPost.isAbuseReport ||
+      originalPost.isFactCheckReport
+    ) {
+      return res
+        .status(403)
+        .send("Brak uprawnień: Weryfikacji faktograficznej podlegają wyłącznie artykuły publiczne.");
+    }
+    
     // 2. Namierzamy systemowe konto bota "Gemini AI" w bazie danych
     const aiUser = await User.findOne({ normalizedEmail: "aisystent@poleopinii.pl" });
     if (!aiUser) {

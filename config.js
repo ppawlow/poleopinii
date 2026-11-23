@@ -89,33 +89,43 @@ POST_VISIBILITY: ["public", "restricted", "private", "editors", "users"],
   // MATRYCA UPRAWNIEŃ W ZAKRESIE PUBLIKACJI
   POST_PERMISSIONS: {
     public: {
-      CREATE:   (user) => user?.isPublicAllowed,
-      LIKE:     (user) => user?.isPublicAllowed,
-      COMMENT:  (user) => user?.isPublicAllowed,
-      BYPASS_AI:(user) => user?.isEditor,
+      VIEW:      () => true,
+      CREATE:    (user) => user?.isPublicAllowed,
+      LIKE:      (user) => user?.isPublicAllowed,
+      COMMENT:   (user) => user?.isPublicAllowed,
+      BYPASS_AI: (user) => user?.isEditor,
     },
     restricted: {
-      CREATE:   (user) => user ? true : false,
-      LIKE:     (user) => user ? true : false,
-      COMMENT:  (user) => user ? true : false,
+      VIEW: (user, post, author) => {
+        if (!user || !post) return false;
+        if (post.isOwnedBy(user)) return true;
+        if (!author) return false;
+        if (user.isBlocking(author._id) || author.isBlocking(user._id)) return false;
+        return user.isFollowing(author._id);
+      },
+      CREATE:  (user) => Boolean(user),
+      LIKE:    (user) => Boolean(user),
+      COMMENT: (user) => Boolean(user),
     },
     private: {
-      CREATE:   (user) => user ? true : false,
-      LIKE:     (user) => user ? true : false,
-      COMMENT:  (user) => user ? true : false,
+      VIEW:    (user, post) => Boolean(user && post && post.isOwnedBy(user)),
+      CREATE:  (user) => Boolean(user),
+      LIKE:    (user) => Boolean(user),
+      COMMENT: (user) => Boolean(user),
     },
     editors: {
-      CREATE:   (user) => user?.isEditor,
-      LIKE:     (user) => user?.isEditor,
-      COMMENT:  (user) => user?.isEditor,
+      VIEW:    (user) => Boolean(user?.isEditor),
+      CREATE:  (user) => Boolean(user?.isEditor),
+      LIKE:    (user) => Boolean(user?.isEditor),
+      COMMENT: (user) => Boolean(user?.isEditor),
     },
     users: {
+      VIEW:    (user) => Boolean(user),
       CREATE:  (user) => Boolean(user?.isEditor || user?.isAdmin),
       LIKE:    (user) => Boolean(user),
       COMMENT: (user) => Boolean(user),
     },
-  },
-  
+  },  
   PROTECTED_USER_DATA: `
      email
      normalizedEmail

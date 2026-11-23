@@ -261,13 +261,20 @@ async function postUpdatePhotos(req, res) {
 }
 
 // AKTUALIZACJA BIO
+// routes/profile.js
 async function postUpdateBio(req, res) {
   try {
+    const rawBio = typeof req.body.bio === "string" ? req.body.bio.trim() : "";
+    if (rawBio.length > 160) {
+      return res
+        .status(400)
+        .json({ error: "Opis bio nie może przekraczać 160 znaków." });
+    }
+
     const dbUser = req.dbUser;
-    dbUser.bio = req.body.bio;
+    dbUser.bio = rawBio;
     await dbUser.save();
 
-    // ZMIANA: Zwracamy czysty JSON z nową treścią zamiast res.redirect
     return res.json({
       success: true,
       bio: dbUser.bio,
@@ -389,12 +396,21 @@ async function postSendPrivateEmail(req, res) {
       return res.status(400).send("Nieprawidłowy ID adresata.");
     }
 
+    const cleanSubject = String(subject || "").trim();
+    const cleanMessage = String(message || "").trim();
+
+    if (!cleanSubject || cleanSubject.length > 150) {
+      return res.status(400).send("Temat wiadomości musi mieć od 1 do 150 znaków.");
+    }
+    if (!cleanMessage || cleanMessage.length > 5000) {
+      return res.status(400).send("Treść wiadomości musi mieć od 1 do 5000 znaków.");
+    }
+
     const sender = req.dbUser;
     const recipient = await User.findById(targetUserId);
 
     if (!recipient) return res.status(404).send("Nie odnaleziono adresata.");
 
-    // Weryfikacja uprawnień i wzajemnych blokad za pomocą centralnego silnika
     if (!hasPermission(sender, "user", "canSendMail", recipient)) {
       return res
         .status(403)
@@ -411,7 +427,7 @@ async function postSendPrivateEmail(req, res) {
         );
     }
 
-    await mailer.sendPrivatePeerEmail(sender, recipient, subject, message, req);
+    await mailer.sendPrivatePeerEmail(sender, recipient, cleanSubject, cleanMessage, req);
 
     await createLog(
       req,

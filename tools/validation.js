@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const pug = require("pug");
-const rateLimit = require("express-rate-limit");
+const { rateLimit, ipKeyGenerator } = require("express-rate-limit");
 const { body, validationResult } = require("express-validator");
 const { ObjectId } = require("mongodb");
 const sanitizeHtml = require("sanitize-html");
@@ -711,8 +711,17 @@ tools.adminScannerLimiter = rateLimit({
   },
 });
 
-// tools/validation.js
-
+tools.aiActionLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 godzina
+  max: 10, // Maksymalnie 10 operacji AI na godzinę na użytkownika
+  keyGenerator: (req) => {
+    if (req.dbUser?._id) return req.dbUser._id.toString();
+    return ipKeyGenerator(req.ip);
+  },
+  message: "Osiągnięto godzinny limit zapytań do asystenta AI. Spróbuj ponownie później.",
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 /**
  * Zcentralizowana funkcja weryfikacji tokenu reCAPTCHA v3 Enterprise
  * @param {string} token - Wygenerowany na froncie token
@@ -723,9 +732,7 @@ tools.verifyRecaptcha = async function (token, remoteIp) {
   const { useRecaptcha, RECAPTCHA_SECRET_KEY } = require("../config");
 
   // Jeśli funkcja jest wyłączona systemowo
-  if (!useRecaptcha || token === "BYPASS_TOKEN_CAPTCHA_DISABLED") {
-    return true;
-  }
+  if (!useRecaptcha) return true;
 
   if (!token) return false;
 

@@ -914,7 +914,7 @@ window.submitAbuseModalForm = async function (event) {
 
   // Obsługa reCAPTCHA Enterprise dla zgłoszeń publicznych
   if (isPublicReport && !isCaptchaEnabled) {
-    formData.set("recaptchaToken", "BYPASS_TOKEN_CAPTCHA_DISABLED");
+    formData.set("recaptchaToken", "");
     fireReportPayload(formData);
   } else if (
     isPublicReport &&

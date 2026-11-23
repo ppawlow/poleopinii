@@ -103,34 +103,39 @@ async function postCommentLike(req, res) {
 
     const dbUser = req.dbUser;
 
-    // Zcentralizowane sprawdzenie uprawnień na podstawie macierzy z config.js
+    // 1. Ochrona zgłoszeń nadużyć
+    if (post.isAbuseReport && !dbUser.isAdmin) {
+      return res.status(403).send("Brak uprawnień do tego zasobu.");
+    }
+
+    const postAuthor = await User.findById(post.authorId);
+
+    // 2. Weryfikacja prawa do wyświetlenia posta nadrzędnego (ochrona IDOR)
+    if (!hasPermission(dbUser, post.visibility, "VIEW", post, postAuthor)) {
+      return res.status(403).send("Brak uprawnień do tego wpisu.");
+    }
+
+    // 3. Weryfikacja prawa do interakcji z komentarzami
     if (!hasPermission(dbUser, post.visibility, "COMMENT")) {
-      const fallbackMsg = post.visibility === 'editors' 
+      const fallbackMsg = post.visibility === "editors"
         ? "Brak uprawnień: Ta sekcja jest dostępna wyłącznie dla zweryfikowanych Redaktorów Serwisu."
         : 'Brak uprawnień: Polubienie komentarza pod postem publicznym wymaga pełnej weryfikacji konta. <a href="/verify" style="color: #1877f2; font-weight: bold; text-decoration: underline;">Dowiedz się więcej</a>';
       return sendAccessDenied(req, res, fallbackMsg);
     }
 
-    // Jeśli to NIE jest poufny post redakcyjny, sprawdzamy relacje blokad towarzyskich
+    // 4. Sprawdzenie wzajemnych blokad przez isBlocking()
     if (post.visibility !== "editors") {
-      const postAuthor = await User.findById(post.authorId);
       const commentAuthor = await User.findById(comment.authorId);
 
       const isPostAuthorBlocked =
-        postAuthor &&
-        (dbUser.blocks.includes(postAuthor._id) ||
-          postAuthor.blocks.includes(dbUser._id));
+        postAuthor && (dbUser.isBlocking(postAuthor._id) || postAuthor.isBlocking(dbUser._id));
       const isCommentAuthorBlocked =
-        commentAuthor &&
-        (dbUser.blocks.includes(commentAuthor._id) ||
-          commentAuthor.blocks.includes(dbUser._id));
+        commentAuthor && (dbUser.isBlocking(commentAuthor._id) || commentAuthor.isBlocking(dbUser._id));
 
       if (isPostAuthorBlocked || isCommentAuthorBlocked) {
         return res
           .status(403)
-          .send(
-            "Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego komentarza.",
-          );
+          .send("Operacja zablokowana: Aktywna blokada uniemożliwia polubienie tego komentarza.");
       }
     }
 
@@ -153,9 +158,7 @@ async function postCommentLike(req, res) {
       });
     }
 
-    return res.redirect(
-      `${(req.get("Referrer") || "/").split("#")[0]}#comment-${comment._id}`,
-    );
+    return res.redirect(`/posts/${post._id}#comment-${comment._id}`);
   } catch (err) {
     console.error("Błąd lajkowania komentarza:", err);
     return res.status(500).send("Błąd przetwarzania żądania.");

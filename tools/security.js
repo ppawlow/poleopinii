@@ -146,29 +146,26 @@ toolbox.adminControl = async function (req, res, next) {
 /**
  * Uniwersalny weryfikator uprawnień na podstawie matryc z pliku konfiguracyjnego.
  */
-toolbox.hasPermission = function (
-  actingUser,
-  scope,
-  action,
-  targetUser = null,
-) {
+toolbox.hasPermission = function (actingUser, scope, action, ...args) {
+  // Dla widoczności "public" akcja VIEW powinna działać nawet dla niezalogowanego gościa (actingUser === null)
+  if (scope === "public" && action === "VIEW") {
+    return true;
+  }
+
   if (!actingUser) return false;
 
   // 1. Obsługa uprawnień relacyjnych między użytkownikami
   if (scope === "user") {
     const userRule = USER_PERMISSIONS[action];
-    return typeof userRule === "function"
-      ? userRule(actingUser, targetUser)
-      : false;
+    return typeof userRule === "function" ? userRule(actingUser, ...args) : false;
   }
 
   // 2. Obsługa poziomów widoczności postów
   const scopeRules = POST_PERMISSIONS[scope];
   return typeof scopeRules?.[action] === "function"
-    ? scopeRules[action](actingUser)
+    ? scopeRules[action](actingUser, ...args)
     : false;
 };
-
 /*
  * Funkcja odrzucająca zapytanie od nieuprawnionych
  */

@@ -70,7 +70,7 @@ if post.imageUrl && !isWorkMode
                         i.fa-solid.fa-trash(title="Usuń ten post")
 
     if isSingleView
-        h1.portal-single-title(style="font-size: 32px; font-weight: 800; color: #1c1e21; line-height: 1.25; margin: 14px 0 10px 0; text-align: left;")!= post.title || 'Wpis bez tytułu'
+        h1.portal-single-title(style="font-size: 32px; font-weight: 800; color: #1c1e21; line-height: 1.25; margin: 14px 0 10px 0; text-align: left;")= post.title || 'Wpis bez tytułu'
     else
         div(style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-top: 10px;")
             h2.portal-card-title(id=`title-text-${post._id}`)

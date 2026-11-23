@@ -4,10 +4,9 @@ const { ObjectId } = require("mongodb");
 const { User, getScopedPosts, TopicOfTheDay, createLog } = require("../tools/db");
 const { accessControl } = require("../tools/security");
 const { AI_CONFIG } = require("../config");
-const {validateId} = require("../tools/validation");
+const {validateId, aiActionLimiter} = require("../tools/validation");
 const { renderMessage } = require("../tools/pug2html"); 
 const { recordAiTokens } = require("../tools/analytics");
-
 module.exports = express.Router()
   .use(accessControl)
   .use((req, res, next) => 
@@ -16,10 +15,12 @@ module.exports = express.Router()
   .get("/", getMain)
   .use("/topics/:topicId", validateId("topicId"))
   .delete("/topics/:topicId", deleteTopic)
-  .post("/topics/:topicId/generate-article", postGenerateArticle)
-
+  .post("/topics/:topicId/generate-article", 
+        aiActionLimiter, 
+        postGenerateArticle
+  )
   .use("/posts/:postId", validateId("postId"))
-  .post("/posts/:postId/check", postCheck)
+  .post("/posts/:postId/check", aiActionLimiter, postCheck)
   .use("/factcheck-reports/:reportId", validateId("reportId"))
   .delete("/factcheck-reports/:reportId", deleteFactCheckReport)
 
