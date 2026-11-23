@@ -228,7 +228,8 @@ POST_VISIBILITY: ["public", "restricted", "private", "editors", "users"],
 
   PORT: 3000,
   SALT_ROUNDS: 12,
-  useRecaptcha: process.env.USE_RECAPTCHA || false,
+
+  useRecaptcha: process.env.USE_RECAPTCHA === "true",
   RECAPTCHA_SECRET_KEY: process.env.RECAPTCHA_SECRET_KEY,
   RECAPTCHA_SITE_KEY: process.env.RECAPTCHA_PUBLIC_KEY,
   isDevelopment: process.env.NODE_ENV === "development",

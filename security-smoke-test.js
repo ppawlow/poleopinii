@@ -4,6 +4,8 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
 const { createVerifiedUser, rmUser } = require("./tools/db");
+const { useRecaptcha } = require("./config");
+const isCaptchaActive = Boolean(useRecaptcha && useRecaptcha !== "false");
 
 const BASE_URL = process.env.TEST_URL || "http://localhost:3000";
 
@@ -153,9 +155,9 @@ async function runTests() {
   let createdUserB = null;
 
   try {
-    // =========================================================================
+    // ============================================
     // 0. PRZYGOTOWANIE TYMCZASOWYCH KONT W MONGODB
-    // =========================================================================
+    // ============================================
     console.log("🛠️  Tworzenie tymczasowych kont testowych w bazie MongoDB...");
     createdUserA = await createVerifiedUser(userAData);
     createdUserB = await createVerifiedUser(userBData);
@@ -169,9 +171,9 @@ async function runTests() {
       `   Utworzono: ${userAData.email} (ID: ${createdUserA._id}) oraz ${userBData.email} (ID: ${createdUserB._id})\n`,
     );
 
-    // =========================================================================
+    // ===================================
     // CZĘŚĆ A: TESTY BEZ LOGOWANIA (GOŚĆ)
-    // =========================================================================
+    // ===================================
     const guest = new TestSessionClient("Gość");
     await guest.fetchCsrf("/auth/login");
 
@@ -183,11 +185,20 @@ async function runTests() {
         recaptchaToken: "",
       });
       const text = await res.text();
-      assert(
-        res.status === 400 && !text.includes("Brak tokenu weryfikacji"),
-        "reCAPTCHA: Pusty token nie blokuje formularza przy wyłączonej CAPTCHA",
-        `Status: ${res.status}`,
-      );
+
+      if (isCaptchaActive) {
+        assert(
+          res.status === 403,
+          "reCAPTCHA (AKTYWNA): Pusty token jest prawidłowo blokowany (403)",
+          `Status: ${res.status}`,
+        );
+      } else {
+        assert(
+          res.status === 400 && !text.includes("Brak tokenu weryfikacji"),
+          "reCAPTCHA (WYŁĄCZONA): Pusty token nie blokuje formularza",
+          `Status: ${res.status}`,
+        );
+      }
     }
 
     {
@@ -256,168 +267,175 @@ async function runTests() {
     // =========================================================================
     // CZĘŚĆ B: TESTY ZALOGOWANYCH UŻYTKOWNIKÓW (IDOR, RESTRICTED, BIO, LIMITER)
     // =========================================================================
-    const clientA = new TestSessionClient("UserA");
-    const clientB = new TestSessionClient("UserB");
-
-    const loggedA = await clientA.login(userAData.email, userAData.password);
-    const loggedB = await clientB.login(userBData.email, userBData.password);
-
-    assert(loggedA, "Logowanie tymczasowego konta UserA");
-    assert(loggedB, "Logowanie tymczasowego konta UserB");
-
-    if (loggedA && loggedB) {
-      // 1. Walidacja długości Bio (max 160 znaków)
-      const resLongBio = await clientA.postForm("/profile/update-bio", {
-        bio: "A".repeat(161),
-      });
-      assert(
-        resLongBio.status === 400,
-        "Walidacja Bio: Odrzucenie opisu dłuższego niż 160 znaków (400)",
-        `Otrzymano: ${resLongBio.status}`,
+    if (isCaptchaActive) {
+      console.log(
+        "\nℹ️  Pominięto logowanie automatyczne UserA/UserB (USE_RECAPTCHA jest włączone i blokuje żądania bez przeglądarki).\n",
       );
+    } else {
+      const clientA = new TestSessionClient("UserA");
+      const clientB = new TestSessionClient("UserB");
 
-      const resValidBio = await clientA.postForm("/profile/update-bio", {
-        bio: "Poprawny opis biogramu testowego.",
-      });
-      assert(
-        resValidBio.status === 200,
-        "Regresja Bio: Poprawny opis (<= 160 znaków) zapisuje się pomyślnie (200)",
-        `Otrzymano: ${resValidBio.status}`,
-      );
+      const loggedA = await clientA.login(userAData.email, userAData.password);
+      const loggedB = await clientB.login(userBData.email, userBData.password);
 
-      // 2. Test IDOR na wpisie PRYWATNYM (private)
-      const createPrivateRes = await clientA.postMultipart("/posts", {
-        title: "Testowy wpis prywatny IDOR",
-        content: "<p>Tajna treść szkicu</p>",
-        visibility: "private",
-      });
+      assert(loggedA, "Logowanie tymczasowego konta UserA");
+      assert(loggedB, "Logowanie tymczasowego konta UserB");
 
-      let privatePostId = null;
-      if (createPrivateRes.ok) {
-        const data = await createPrivateRes.json();
-        const idMatch = (data.html || "").match(/id="post-([a-f0-9]{24})"/);
-        if (idMatch) privatePostId = idMatch[1];
-      }
-
-      assert(
-        Boolean(privatePostId),
-        "Tworzenie prywatnego posta przez UserA",
-        privatePostId
-          ? `ID: ${privatePostId}`
-          : `Status: ${createPrivateRes.status}`,
-      );
-
-      if (privatePostId) {
-        const idorView = await clientB.get(`/posts/${privatePostId}`);
+      if (loggedA && loggedB) {
+        // 1. Walidacja długości Bio (max 160 znaków)
+        const resLongBio = await clientA.postForm("/profile/update-bio", {
+          bio: "A".repeat(161),
+        });
         assert(
-          idorView.status === 403,
-          "IDOR View (private): UserB nie może wyświetlić prywatnego posta UserA (403)",
-          `Otrzymano: ${idorView.status}`,
+          resLongBio.status === 400,
+          "Walidacja Bio: Odrzucenie opisu dłuższego niż 160 znaków (400)",
+          `Otrzymano: ${resLongBio.status}`,
         );
 
-        const idorLike = await clientB.postForm(
-          `/posts/${privatePostId}/like`,
-          {},
-        );
+        const resValidBio = await clientA.postForm("/profile/update-bio", {
+          bio: "Poprawny opis biogramu testowego.",
+        });
         assert(
-          idorLike.status === 403,
-          "IDOR Like (private): UserB nie może polubić prywatnego posta UserA (403)",
-          `Otrzymano: ${idorLike.status}`,
+          resValidBio.status === 200,
+          "Regresja Bio: Poprawny opis (<= 160 znaków) zapisuje się pomyślnie (200)",
+          `Otrzymano: ${resValidBio.status}`,
         );
 
-        const idorComment = await clientB.postForm(
-          `/posts/${privatePostId}/comment`,
-          { content: "Nieuprawniony komentarz" },
-        );
-        assert(
-          idorComment.status === 403,
-          "IDOR Comment (private): UserB nie może skomentować prywatnego posta UserA (403)",
-          `Otrzymano: ${idorComment.status}`,
-        );
-        const idorFc = await clientB.postForm(
-          `/posts/${privatePostId}/factcheck-reader`,
-          {},
-        );
-        assert(
-          idorFc.status === 403,
-          "IDOR Fact-Check (private): UserB nie może zlecić analizy AI prywatnego posta (403)",
-          `Otrzymano: ${idorFc.status}`,
-        );
-      }
-      // 3. Test IDOR i regresji na wpisie ZASTRZEŻONYM (restricted)
-      const createRestrictedRes = await clientA.postMultipart("/posts", {
-        title: "Testowy wpis dla obserwujących",
-        content: "Treść tylko dla obserwujących",
-        visibility: "restricted",
-      });
-      let restrictedPostId = null;
-      if (createRestrictedRes.ok) {
-        const data = await createRestrictedRes.json();
-        const idMatch = (data.html || "").match(/id="post-([a-f0-9]{24})"/);
-        if (idMatch) restrictedPostId = idMatch[1];
-      }
-      if (restrictedPostId) {
-        // UserB NIE obserwuje jeszcze UserA -> próba polubienia powinna zwrócić 403
-        const idorRestrictedLike = await clientB.postForm(
-          `/posts/${restrictedPostId}/like`,
-          {},
-        );
-        assert(
-          idorRestrictedLike.status === 403,
-          "IDOR Like (restricted): Nieobserwujący UserB dostaje 403",
-          `Otrzymano: ${idorRestrictedLike.status}`,
-        );
-        // UserB zaczyna obserwować UserA -> polubienie i komentarz muszą zadziałać (regresja)
-        await clientB.postForm(`/follow/${createdUserA._id}`, {});
-        const allowedLike = await clientB.postForm(
-          `/posts/${restrictedPostId}/like`,
-          {},
-        );
-        assert(
-          allowedLike.status === 200,
-          "Regresja Like (restricted): Obserwujący UserB może polubić wpis (200)",
-          `Otrzymano: ${allowedLike.status}`,
-        );
-        const allowedComment = await clientB.postForm(
-          `/posts/${restrictedPostId}/comment`,
-          { content: "Legalny komentarz obserwującego" },
-        );
-        assert(
-          allowedComment.status === 200,
-          "Regresja Comment (restricted): Obserwujący UserB może skomentować wpis (200)",
-          `Otrzymano: ${allowedComment.status}`,
-        );
-      }
-      // 4. Test Rate-Limitera AI (11 zapytań pod rząd -> 429 Too Many Requests)
-      const dummyPostId = "6adeff567d07c910c127ed5c";
-      let got429 = false;
-      for (let i = 1; i <= 11; i++) {
-        const resAi = await clientB.postForm(
-          `/posts/${dummyPostId}/factcheck-reader`,
-          {},
-        );
-        if (resAi.status === 429) {
-          got429 = true;
-          break;
+        // 2. Test IDOR na wpisie PRYWATNYM (private)
+        const createPrivateRes = await clientA.postMultipart("/posts", {
+          title: "Testowy wpis prywatny IDOR",
+          content: "<p>Tajna treść szkicu</p>",
+          visibility: "private",
+        });
+
+        let privatePostId = null;
+        if (createPrivateRes.ok) {
+          const data = await createPrivateRes.json();
+          const idMatch = (data.html || "").match(/id="post-([a-f0-9]{24})"/);
+          if (idMatch) privatePostId = idMatch[1];
         }
+
+        assert(
+          Boolean(privatePostId),
+          "Tworzenie prywatnego posta przez UserA",
+          privatePostId
+            ? `ID: ${privatePostId}`
+            : `Status: ${createPrivateRes.status}`,
+        );
+
+        if (privatePostId) {
+          const idorView = await clientB.get(`/posts/${privatePostId}`);
+          assert(
+            idorView.status === 403,
+            "IDOR View (private): UserB nie może wyświetlić prywatnego posta UserA (403)",
+            `Otrzymano: ${idorView.status}`,
+          );
+
+          const idorLike = await clientB.postForm(
+            `/posts/${privatePostId}/like`,
+            {},
+          );
+          assert(
+            idorLike.status === 403,
+            "IDOR Like (private): UserB nie może polubić prywatnego posta UserA (403)",
+            `Otrzymano: ${idorLike.status}`,
+          );
+
+          const idorComment = await clientB.postForm(
+            `/posts/${privatePostId}/comment`,
+            { content: "Nieuprawniony komentarz" },
+          );
+          assert(
+            idorComment.status === 403,
+            "IDOR Comment (private): UserB nie może skomentować prywatnego posta UserA (403)",
+            `Otrzymano: ${idorComment.status}`,
+          );
+          const idorFc = await clientB.postForm(
+            `/posts/${privatePostId}/factcheck-reader`,
+            {},
+          );
+          assert(
+            idorFc.status === 403,
+            "IDOR Fact-Check (private): UserB nie może zlecić analizy AI prywatnego posta (403)",
+            `Otrzymano: ${idorFc.status}`,
+          );
+        }
+
+        // 3. Test IDOR i regresji na wpisie ZASTRZEŻONYM (restricted)
+        const createRestrictedRes = await clientA.postMultipart("/posts", {
+          title: "Testowy wpis dla obserwujących",
+          content: "Treść tylko dla obserwujących",
+          visibility: "restricted",
+        });
+        let restrictedPostId = null;
+        if (createRestrictedRes.ok) {
+          const data = await createRestrictedRes.json();
+          const idMatch = (data.html || "").match(/id="post-([a-f0-9]{24})"/);
+          if (idMatch) restrictedPostId = idMatch[1];
+        }
+        if (restrictedPostId) {
+          // UserB NIE obserwuje jeszcze UserA -> próba polubienia powinna zwrócić 403
+          const idorRestrictedLike = await clientB.postForm(
+            `/posts/${restrictedPostId}/like`,
+            {},
+          );
+          assert(
+            idorRestrictedLike.status === 403,
+            "IDOR Like (restricted): Nieobserwujący UserB dostaje 403",
+            `Otrzymano: ${idorRestrictedLike.status}`,
+          );
+          // UserB zaczyna obserwować UserA -> polubienie i komentarz muszą zadziałać (regresja)
+          await clientB.postForm(`/follow/${createdUserA._id}`, {});
+          const allowedLike = await clientB.postForm(
+            `/posts/${restrictedPostId}/like`,
+            {},
+          );
+          assert(
+            allowedLike.status === 200,
+            "Regresja Like (restricted): Obserwujący UserB może polubić wpis (200)",
+            `Otrzymano: ${allowedLike.status}`,
+          );
+          const allowedComment = await clientB.postForm(
+            `/posts/${restrictedPostId}/comment`,
+            { content: "Legalny komentarz obserwującego" },
+          );
+          assert(
+            allowedComment.status === 200,
+            "Regresja Comment (restricted): Obserwujący UserB może skomentować wpis (200)",
+            `Otrzymano: ${allowedComment.status}`,
+          );
+        }
+        // 4. Test Rate-Limitera AI (11 zapytań pod rząd -> 429 Too Many Requests)
+        const dummyPostId = "6adeff567d07c910c127ed5c";
+        let got429 = false;
+        for (let i = 1; i <= 11; i++) {
+          const resAi = await clientB.postForm(
+            `/posts/${dummyPostId}/factcheck-reader`,
+            {},
+          );
+          if (resAi.status === 429) {
+            got429 = true;
+            break;
+          }
+        }
+        assert(
+          got429,
+          "Rate Limiter AI: 11. żądanie w ciągu godziny zwraca 429 Too Many Requests",
+        );
+        // 5. Test RBAC (zwykły użytkownik próbuje wejść na /editors i /admin)
+        const editorRes = await clientB.get("/editors");
+        assert(
+          editorRes.status === 403,
+          "RBAC Editors: Zwykły użytkownik dostaje 403 na /editors",
+          `Otrzymano: ${editorRes.status}`,
+        );
+        const adminRes = await clientB.get("/admin");
+        assert(
+          adminRes.status === 403,
+          "RBAC Admin: Zwykły użytkownik dostaje 403 na /admin",
+          `Otrzymano: ${adminRes.status}`,
+        );
       }
-      assert(
-        got429,
-        "Rate Limiter AI: 11. żądanie w ciągu godziny zwraca 429 Too Many Requests",
-      );
-      // 5. Test RBAC (zwykły użytkownik próbuje wejść na /editors i /admin)
-      const editorRes = await clientB.get("/editors");
-      assert(
-        editorRes.status === 403,
-        "RBAC Editors: Zwykły użytkownik dostaje 403 na /editors",
-        `Otrzymano: ${editorRes.status}`,
-      );
-      const adminRes = await clientB.get("/admin");
-      assert(
-        adminRes.status === 403,
-        "RBAC Admin: Zwykły użytkownik dostaje 403 na /admin",
-        `Otrzymano: ${adminRes.status}`,
-      );
     }
   } finally {
     // =========================================================================
