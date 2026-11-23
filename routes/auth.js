@@ -27,7 +27,7 @@ module.exports = express
     postSetPassword,
   )
   
-  .post("/forgot-password", tokenGenerationLimiter, postForgotPassword);
+  .post("/forgot-password", tokenGenerationLimiter, postForgotPassword)
   
   // Dostępne tylko dla niezalogowanych
   .use(isGuest)
