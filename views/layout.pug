@@ -9,7 +9,7 @@ html(lang="pl")
         - var metaTitle = post && post.title ? post.title : title ? title + ' | ' + SERVICE_NAME : SERVICE_NAME
         - var metaImage = (post && post.imageUrl) ? (windowOrigin ? windowOrigin + post.imageUrl : post.imageUrl) : (windowOrigin ? windowOrigin + OG_DEFAULT_IMAGE : OG_DEFAULT_IMAGE)
 
-        meta(name="facebook-domain-verification" content=domain_verification_code)
+        meta(name="facebook-domain-verification" content=facebook_domain_verification)
 
         //- Tagi Open Graph (Facebook, LinkedIn, Messenger)
         meta(property="og:type" content="article")

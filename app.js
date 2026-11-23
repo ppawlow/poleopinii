@@ -45,7 +45,7 @@ const {
   SHARE_PLATFORMS,
   SERVICE_SOCIALS,
   useRecaptcha,
-  fb_domain_verification_code,
+  facebook_domain_verification,
 } = require("./config");
 
 // Narzędzia
@@ -268,7 +268,7 @@ app.use(async (req, res, next) => {
     RECAPTCHA_SITE_KEY,
     isDevelopment,
     useRecaptcha,
-    fb_domain_verification_code,
+    facebook_domain_verification,
     feedView,
     SHARE_PLATFORMS,
     SERVICE_SOCIALS,
