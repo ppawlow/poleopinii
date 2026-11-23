@@ -121,8 +121,7 @@ async function prepareFacebookImage(post) {
       })
       .join("");
 
-    const overlaySvg = `
-      <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://w3.org">
+    const overlaySvg = `<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://w3.org">
         <defs>
           <linearGradient id="bottomGrad" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stop-color="#000000" stop-opacity="0" />
@@ -143,7 +142,7 @@ async function prepareFacebookImage(post) {
 
     return await sharp(localImagePath)
       .resize(width, height, { fit: "cover", position: "attention" })
-      .composite([{ input: Buffer.from(overlaySvg), top: 0, left: 0 }])
+      .composite([{ input: Buffer.from(overlaySvg.trim()), top: 0, left: 0 }])
       .png()
       .toBuffer();
   }
@@ -179,7 +178,7 @@ async function prepareFacebookImage(post) {
     </svg>
   `;
 
-  return await sharp(Buffer.from(fallbackSvg)).png().toBuffer();
+  return await sharp(Buffer.from(fallbackSvg.trim())).png().toBuffer();
 }
 
 /**
