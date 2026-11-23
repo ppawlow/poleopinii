@@ -6,7 +6,7 @@ const { createLog } = require("../systemLog");
 const { Post } = require("../db");
 
 const FB_GRAPH_VERSION = "v21.0";
-const fbApi = `https://facebook.com{FB_GRAPH_VERSION}/`;
+const fbApi = `https://graph.facebook.com/${FB_GRAPH_VERSION}/`;
 
 /**
  * Escapuje znaki specjalne XML dla bezpiecznego osadzenia tekstu w SVG
