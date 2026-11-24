@@ -22,6 +22,7 @@ mongoose
       await dbModules.Post.syncIndexes();
       await dbModules.DailyStats.syncIndexes();
       await dbModules.backfillDailyStatsFromLogs();
+      await dbModules.BannedIp.syncIndexes();
       console.log("[MONGODB] Indeksy kolekcji User i Post zsynchronizowane pomyślnie.");
     } catch (idxErr) {
       console.error("[MONGODB BŁĄD INDEKSÓW]: Nie udało się zbudować indeksów unikalnych:", idxErr.message);

@@ -1,7 +1,14 @@
 // tools/analytics.js
 const mongoose = require("mongoose");
 const crypto = require("crypto");
+const { createLog } = require("./systemLog");
 
+const WINDOW_MS = 60 * 60 * 1000;      // 1 godzina (okno zliczania 404)
+const MAX_404_PER_HOUR = 10;           // limit nieistniejących ścieżek na godzinę
+const BAN_DURATION_SEC = 3600;         // czas blokady w bazie (1 godzina)
+const CLEAN_CACHE_TTL_MS = 60 * 1000;  // cache czystych IP w RAM na 60 s
+
+// 1. Model statystyk dziennych
 const dailyStatsSchema = new mongoose.Schema({
   dateKey: { type: String, required: true, unique: true },
   totalVisits: { type: Number, default: 0 },
@@ -16,6 +23,137 @@ const dailyStatsSchema = new mongoose.Schema({
 });
 
 const DailyStats = mongoose.model("DailyStats", dailyStatsSchema);
+
+// 2. Model czarnej listy IP z automatycznym wygasaniem po 1h (indeks TTL)
+const bannedIpSchema = new mongoose.Schema({
+  ip: { type: String, required: true, unique: true, index: true },
+  reason: { type: String, default: "Bot trap (404 flood)" },
+  hits: { type: Number, default: 0 },
+  lastPaths: [{ type: String }],
+  createdAt: { type: Date, default: Date.now, expires: BAN_DURATION_SEC },
+});
+
+const BannedIp = mongoose.model("BannedIp", bannedIpSchema);
+
+// 3. Reguły i pamięć podręczna pułapki na boty
+const IGNORED_BOT_PATHS = new Set([
+  "/favicon.ico",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/apple-touch-icon.png",
+  "/apple-touch-icon-precomposed.png",
+  "/.well-known/security.txt",
+]);
+
+const INSTANT_BAN_PATTERNS = [
+  /\/wp-admin/i,
+  /\/wp-login\.php/i,
+  /\/wp-content/i,
+  /\/wp-includes/i,
+  /\/xmlrpc\.php/i,
+  /\/wlwmanifest\.xml/i,
+  /\/wp-config/i,
+  /\/administrator/i,
+  /\/joomla/i,
+  /\/drupal/i,
+  /\/\.env/i,
+  /\/\.git/i,
+  /\/\.svn/i,
+  /\/\.htaccess/i,
+  /\/\.htpasswd/i,
+  /\/\.aws/i,
+  /\/\.ssh/i,
+  /\/config\.json/i,
+  /\/docker-compose\.yml/i,
+  /\/package\.json/i,
+  /\.php$/i,
+  /\.asp$/i,
+  /\.aspx$/i,
+  /\/phpmyadmin/i,
+  /\/pma/i,
+  /\/adminer/i,
+  /\/mysql/i,
+  /\/cgi-bin/i,
+  /\/vendor\/phpunit/i,
+  /\/eval-stdin/i,
+  /\/shell/i,
+  /\/webshell/i,
+];
+
+const strikeMap = new Map();
+const banCache = new Map();
+const cleanCache = new Map();
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, data] of strikeMap.entries()) {
+    if (now - data.firstHit > WINDOW_MS) strikeMap.delete(ip);
+  }
+  for (const [ip, exp] of banCache.entries()) {
+    if (now > exp) banCache.delete(ip);
+  }
+  for (const [ip, exp] of cleanCache.entries()) {
+    if (now > exp) cleanCache.delete(ip);
+  }
+}, 15 * 60 * 1000).unref();
+
+function isLocalIp(ip) {
+  return !ip || ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+}
+
+function isInstantBanPath(reqPath) {
+  return INSTANT_BAN_PATTERNS.some((regex) => regex.test(reqPath));
+}
+
+/**
+ * Sprawdza, czy ścieżka jest znana w zarejestrowanej mapie serwisu (serviceMap)
+ */
+function isKnownInServiceMap(serviceMap, method, urlPath) {
+  if (!serviceMap) return true;
+  const methodRoutes = serviceMap[method] || serviceMap.GET || {};
+  const cleanSegments = urlPath.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+
+  if (cleanSegments.length === 0) return true; // strona główna "/"
+
+  const prefix = cleanSegments[0];
+  const subSegments = cleanSegments.slice(1);
+  const candidates = methodRoutes[prefix] || methodRoutes[""] || [];
+
+  return candidates.some((routeSegments) => {
+    const target = methodRoutes[prefix] ? subSegments : cleanSegments;
+    if (routeSegments.length !== target.length) return false;
+    return routeSegments.every((seg, idx) => seg.startsWith(":") || seg === target[idx]);
+  });
+}
+
+async function banIpAddress(ip, req, reason, hits, pathsSample) {
+  const now = Date.now();
+  cleanCache.delete(ip);
+  strikeMap.delete(ip);
+  banCache.set(ip, now + BAN_DURATION_SEC * 1000);
+
+  try {
+    await BannedIp.findOneAndUpdate(
+      { ip },
+      {
+        ip,
+        reason,
+        hits,
+        lastPaths: pathsSample,
+        createdAt: new Date(),
+      },
+      { upsert: true, new: true },
+    );
+
+    await createLog(
+      req,
+      `[BOT-TRAP] Zablokowano IP ${ip} na 60 min — ${reason} (${pathsSample.slice(0, 5).join(", ")})`,
+      "System-Security",
+    );
+  } catch (err) {
+    console.error("[BOT-TRAP SAVE ERROR]:", err.message);
+  }
+}
 
 function getTodayWarsawKey(dateObj = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -54,50 +192,128 @@ const IGNORED_PATH_PREFIXES = [
 
 const STATIC_EXT_REGEX = /\.(css|js|png|jpg|jpeg|gif|webp|svg|ico|woff2?|ttf|map)$/i;
 
-function trafficAnalyticsMiddleware(req, res, next) {
-  const urlPath = (req.originalUrl || req.url || "").split("?")[0];
+/**
+ * Zunifikowany middleware analityki ruchu oraz ochrony przed botami (Bot Trap + Czarna Lista TTL)
+ */
+function trafficAnalyticsMiddleware(serviceMap = null) {
+  return async (req, res, next) => {
+    const urlPath = (req.originalUrl || req.url || "").split("?")[0];
+    const ip = req.ip || "127.0.0.1";
+    const local = isLocalIp(ip);
 
-  if (
-    STATIC_EXT_REGEX.test(urlPath) ||
-    IGNORED_PATH_PREFIXES.some((prefix) => urlPath.startsWith(prefix))
-  ) {
-    return next();
-  }
+    // 1. Weryfikacja czarnej listy IP przed wykonaniem tras (z wyjątkiem localhost)
+    if (!local) {
+      const now = Date.now();
+      const cachedBanExpiry = banCache.get(ip);
 
-  res.on("finish", () => {
-    const status = res.statusCode;
-    const isBlocked = status === 401 || status === 403 || status === 429;
-    const isPageVisit = req.method === "GET" && status >= 200 && status < 400;
+      if (cachedBanExpiry && now < cachedBanExpiry) {
+        // Zwrócenie 403 wywoła poniższy listener res.on("finish") i podbije blockedVisits
+        res.on("finish", () => recordBlockedOnly());
+        return res.status(403).send("Access denied.");
+      }
+      if (cachedBanExpiry) banCache.delete(ip);
 
-    if (!isPageVisit && !isBlocked) return;
-
-    const dateKey = getTodayWarsawKey();
-    const ipHash = hashVisitorIp(req.ip, dateKey);
-    const isLoggedIn = Boolean(req.dbUser?._id || req.session?.user?.id);
-
-    const incFields = {};
-    if (isPageVisit) {
-      incFields.totalVisits = 1;
-      if (isLoggedIn) incFields.loggedInVisits = 1;
+      const cachedCleanUntil = cleanCache.get(ip);
+      if (!cachedCleanUntil || now >= cachedCleanUntil) {
+        try {
+          const banned = await BannedIp.findOne({ ip }).lean();
+          if (banned) {
+            const expiresAt = new Date(banned.createdAt).getTime() + BAN_DURATION_SEC * 1000;
+            if (now < expiresAt) {
+              banCache.set(ip, expiresAt);
+              res.on("finish", () => recordBlockedOnly());
+              return res.status(403).send("Access denied.");
+            }
+          }
+          cleanCache.set(ip, now + CLEAN_CACHE_TTL_MS);
+        } catch (err) {
+          console.error("[BOT-BLOCKER DB ERROR]:", err.message);
+        }
+      }
     }
-    if (isBlocked) {
-      incFields.blockedVisits = 1;
-    }
 
-    DailyStats.updateOne(
-      { dateKey },
-      {
-        $inc: incFields,
-        ...(isPageVisit ? { $addToSet: { uniqueIpHashes: ipHash } } : {}),
-        $set: { updatedAt: new Date() },
-      },
-      { upsert: true },
-    ).catch((err) => {
-      console.error("[ANALYTICS ERROR] Błąd zapisu statystyk dziennych:", err.message);
+    // 2. Rejestracja statystyk i detekcja nieistniejących ścieżek (404 / brak w serviceMap)
+    res.on("finish", async () => {
+      const status = res.statusCode;
+      const isStaticOrInternal =
+        STATIC_EXT_REGEX.test(urlPath) ||
+        IGNORED_PATH_PREFIXES.some((prefix) => urlPath.startsWith(prefix));
+
+      // Wykrywanie botów na nieobsłużonych ścieżkach (404 oraz brak dopasowania w serviceMap)
+      const isNotFound = status === 404 && !isKnownInServiceMap(serviceMap, req.method, urlPath);
+      let countedAsBotTrap = false;
+
+      if (isNotFound && !local && !IGNORED_BOT_PATHS.has(urlPath)) {
+        countedAsBotTrap = true;
+
+        if (isInstantBanPath(urlPath)) {
+          await banIpAddress(ip, req, "Wykryto sygnaturę skanera/bota", 1, [urlPath]);
+        } else {
+          const now = Date.now();
+          let entry = strikeMap.get(ip);
+          if (!entry || now - entry.firstHit > WINDOW_MS) {
+            entry = { count: 1, firstHit: now, paths: new Set([urlPath]) };
+            strikeMap.set(ip, entry);
+          } else {
+            entry.count += 1;
+            if (entry.paths.size < 10) entry.paths.add(urlPath);
+            if (entry.count > MAX_404_PER_HOUR) {
+              await banIpAddress(
+                ip,
+                req,
+                `Przekroczono limit ${MAX_404_PER_HOUR} nieistniejących ścieżek/h`,
+                entry.count,
+                Array.from(entry.paths),
+              );
+            }
+          }
+        }
+      }
+
+      if (isStaticOrInternal && !countedAsBotTrap) return;
+
+      const isBlocked = status === 401 || status === 403 || status === 429 || countedAsBotTrap;
+      const isPageVisit = req.method === "GET" && status >= 200 && status < 400;
+
+      if (!isPageVisit && !isBlocked) return;
+
+      const dateKey = getTodayWarsawKey();
+      const ipHash = hashVisitorIp(ip, dateKey);
+      const isLoggedIn = Boolean(req.dbUser?._id || req.session?.user?.id);
+
+      const incFields = {};
+      if (isPageVisit) {
+        incFields.totalVisits = 1;
+        if (isLoggedIn) incFields.loggedInVisits = 1;
+      }
+      if (isBlocked) {
+        incFields.blockedVisits = 1;
+      }
+
+      DailyStats.updateOne(
+        { dateKey },
+        {
+          $inc: incFields,
+          ...(isPageVisit ? { $addToSet: { uniqueIpHashes: ipHash } } : {}),
+          $set: { updatedAt: new Date() },
+        },
+        { upsert: true },
+      ).catch((err) => {
+        console.error("[ANALYTICS ERROR] Błąd zapisu statystyk dziennych:", err.message);
+      });
     });
-  });
 
-  next();
+    next();
+  };
+}
+
+function recordBlockedOnly() {
+  const dateKey = getTodayWarsawKey();
+  DailyStats.updateOne(
+    { dateKey },
+    { $inc: { blockedVisits: 1 }, $set: { updatedAt: new Date() } },
+    { upsert: true },
+  ).catch(() => {});
 }
 
 async function getAnalyticsSummary(days = 30) {
@@ -336,6 +552,11 @@ async function recordAiTokens({ input = 0, output = 0, total = 0 } = {}) {
   }
 }
 
+function unbanIpFromCache(ip) {
+  if (!ip) return;
+  banCache.delete(ip);
+  strikeMap.delete(ip);
+}
 module.exports = {
   DailyStats,
   trafficAnalyticsMiddleware,
@@ -343,4 +564,6 @@ module.exports = {
   getTodayWarsawKey,
   backfillDailyStatsFromLogs,
   recordAiTokens,
+  BannedIp,
+  unbanIpFromCache,
 };

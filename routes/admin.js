@@ -9,7 +9,8 @@ const {
   SystemLog, 
   createLog, 
   getSocialShareSettings, 
-  updateSocialShareSetting 
+  updateSocialShareSetting,
+  BannedIp,
 } = require("../tools/db");
 const { adminControl } = require("../tools/security");
 const { adminApprovalValidationRules, validateId } = require("../tools/validation");
@@ -185,6 +186,17 @@ async function main(req, res) {
         },
       },
     ]);
+    // 4. Liczba aktualnie zbanowanych adresów IP (aktywne w oknie 1h)
+    let activeBannedIpsCount = 0;
+    try {
+      const { BannedIp } = require("../tools/db");
+      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+      activeBannedIpsCount = await BannedIp.countDocuments({
+        createdAt: { $gt: oneHourAgo },
+      });
+    } catch (banErr) {
+      console.error("[ADMIN] Błąd zliczania zbanowanych IP:", banErr.message);
+    }
 
     const postsStats = {
       total: 0,
@@ -195,19 +207,20 @@ async function main(req, res) {
       users: 0,
     };
 
+    const serverStatus = {
+      totalUsers: usersStats.length,
+      activeSessions: activeSessionsCount,
+      activeBannedIps: activeBannedIpsCount,
+      posts: postsStats,
+      today: analytics.todayStats,
+    };
+
     for (const item of postsBreakdownAgg) {
       if (item._id && Object.prototype.hasOwnProperty.call(postsStats, item._id)) {
         postsStats[item._id] = item.count;
         postsStats.total += item.count;
       }
     }
-
-    const serverStatus = {
-      totalUsers: usersStats.length,
-      activeSessions: activeSessionsCount,
-      posts: postsStats,
-      today: analytics.todayStats,
-    };
 
     res.render("admin", {
       title: "Panel Zarządzania Systemem",

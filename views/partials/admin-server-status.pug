@@ -53,6 +53,10 @@
             div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--alert-danger-bg); border: 1px solid var(--alert-danger-border); border-radius: 6px;")
                 span(style="color: var(--alert-danger-text); font-weight: 600;") 🛡️ Zablokowane ataki
                 strong(style="color: var(--alert-danger-text);") #{serverStatus.today.blockedVisits}
+            div(style="display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--alert-warning-bg); border: 1px solid var(--alert-warning-border); border-radius: 6px;")
+                span(style="color: var(--alert-warning-text); font-weight: 600;") 🚫 Aktywne bany IP (1h)
+                strong(style="color: var(--alert-warning-text);") #{serverStatus.activeBannedIps || 0}
+
     //- 4. ZUŻYCIE TOKENÓW AI DZISIAJ
     div(style="margin-top: 16px;")
         div(style="font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px;") Tokeny AI dzisiaj

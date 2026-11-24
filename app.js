@@ -91,7 +91,6 @@ function getLastAppUpdateDate() {
   }
 }
 
-
 const APP_INFO = {
   name: pkg.name,
   version: pkg.version,
@@ -105,6 +104,18 @@ const APP_INFO = {
 };
 
 const app = express();
+
+app.set("trust proxy", 1);
+app.set("view engine", "pug");
+app.set("views", path.join(__dirname, "views"));
+
+/*******************
+ * MIDDLEWARES
+ ******************/
+
+// Mapa tras serwisu przekazywana przez referencję do zunifikowanego middleware statystyk i ochrony przed botami
+const serviceMap = { GET: {}, POST: {} };
+app.use(trafficAnalyticsMiddleware(serviceMap));
 
 app.use(
   helmet({
@@ -201,14 +212,6 @@ app.use(
   }),
 );
 
-app.set("trust proxy", 1);
-app.set("view engine", "pug");
-app.set("views", path.join(__dirname, "views"));
-
-/*******************
- * MIDDLEWARES
- ******************/
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -272,14 +275,12 @@ app.use(async (req, res, next) => {
     feedView,
     SHARE_PLATFORMS,
     SERVICE_SOCIALS,
-    getProfileUrl:User.getProfileUrl,
+    getProfileUrl: User.getProfileUrl,
   };
   next();
 });
 
 app.use(userData);
-
-app.use(trafficAnalyticsMiddleware);
 
 app.use((err, req, res, next) => {
   if (err.code !== "EBADCSRFTOKEN") return next(err);
@@ -289,8 +290,6 @@ app.use((err, req, res, next) => {
       "Błąd bezpieczeństwa: Niepoprawny lub brakujący token CSRF. Odśwież stronę.",
     );
 });
-
-const serviceMap = { GET: {}, POST: {} };
 
 function setupEndpoints(app) {
   const { routeDir, routers } = require("./config");
