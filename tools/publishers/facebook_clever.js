@@ -6,7 +6,7 @@ const { createLog } = require("../systemLog");
 const { Post } = require("../db");
 
 const FB_GRAPH_VERSION = "v21.0";
-const fbApi = `https://facebook.com{FB_GRAPH_VERSION}/`;
+const fbApi = `https://graph.facebook.com/${FB_GRAPH_VERSION}/`;
 const DELAY_MINUTES = 45; // Czas oczekiwania przed wstrzyknięciem linku w treść posta
 
 function escapePango(unsafe) {
