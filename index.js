@@ -20,4 +20,9 @@ server.listen(PORT_APP, async () => {
   startNotification();
   const { initializeNewsCron } = require("./tools/aiNewsService");
   initializeNewsCron();
+  const cron = require("node-cron");
+  const { injectDelayedFacebookLinks } = require("./tools/publishers/facebook");
+  cron.schedule("*/5 * * * *", () => {
+    injectDelayedFacebookLinks();
+  });
 });

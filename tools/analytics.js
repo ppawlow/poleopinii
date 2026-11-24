@@ -130,7 +130,7 @@ async function banIpAddress(ip, req, reason, hits, pathsSample) {
   const now = Date.now();
   cleanCache.delete(ip);
   strikeMap.delete(ip);
-  banCache.set(ip, now + BAN_DURATION_SEC * 1000);
+  banCache.set(ip, Math.min(now + 15 * 1000, now + BAN_DURATION_SEC * 1000));
 
   try {
     await BannedIp.findOneAndUpdate(
@@ -220,7 +220,7 @@ function trafficAnalyticsMiddleware(serviceMap = null) {
           if (banned) {
             const expiresAt = new Date(banned.createdAt).getTime() + BAN_DURATION_SEC * 1000;
             if (now < expiresAt) {
-              banCache.set(ip, expiresAt);
+              banCache.set(ip, Math.min(now + 15 * 1000, expiresAt));
               res.on("finish", () => recordBlockedOnly());
               return res.status(403).send("Access denied.");
             }
@@ -556,6 +556,7 @@ function unbanIpFromCache(ip) {
   if (!ip) return;
   banCache.delete(ip);
   strikeMap.delete(ip);
+  cleanCache.set(ip, Date.now() + CLEAN_CACHE_TTL_MS);
 }
 module.exports = {
   DailyStats,

@@ -39,6 +39,8 @@ const postSchema = new mongoose.Schema({
   hasFactCheckErrors: { type: Boolean, default: false }, 
   isModeratorLocked: { type: Boolean, default: false },
   fbPostId: { type: String, default: null },
+  fbLinkInjected: { type: Boolean, default: false },
+  fbBaseUrl: { type: String, default: null },
   fediPostId: { type: String, default: null },
   bskyPostUri: { type: String, default: null },
   xPostId: { type: String, default: null },
