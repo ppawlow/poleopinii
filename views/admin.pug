@@ -46,5 +46,9 @@ block content
                 +adminSection("admin-panel-analytics", "fa-solid fa-chart-line", "Statystyki ruchu i odwiedzin serwisu", "#1877f2", `${analytics.todayStats.totalVisits} dziś`, "is-info", false, true)
                     include partials/admin-analytics.pug
 
+                - var bannedCount = (bannedIps || []).length
+                +adminSection("admin-panel-banned-ips", "fa-solid fa-ban", "Zablokowane adresy IP (Bot Trap)", "var(--alert-danger-text)", bannedCount, bannedCount > 0 ? "is-danger" : "", false, true, null, "banned-ips-badge")
+                    include partials/admin-banned-ips.pug
+
         aside.right-sidebar
             include partials/admin-socials.pug

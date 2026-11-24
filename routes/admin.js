@@ -11,6 +11,7 @@ const {
   getSocialShareSettings, 
   updateSocialShareSetting,
   BannedIp,
+  activeBannedIpsCount,
 } = require("../tools/db");
 const { adminControl } = require("../tools/security");
 const { adminApprovalValidationRules, validateId } = require("../tools/validation");
@@ -25,7 +26,8 @@ module.exports = express.Router()
   .get("/", main)
   .get("/logs/api", getLogsApi)
   .post("/socials/toggle", postToggleSocialShare)
-
+  .delete("/banned-ips/:banId", validateId("banId"), deleteBannedIp)
+  
   .use("/:dummy/:postId", validateId("postId"))
   .post("/posts/:postId/unlock", postUnlockModeratorFlag)
 
@@ -43,7 +45,7 @@ module.exports = express.Router()
   .post("/:reportId/accept", postAcceptAbuseReport)
   .post("/:reportId/reject", postRejectAbuseReport);
 
-// Pomocnicza funkcja formatująca wpis logu prasowego
+  // Pomocnicza funkcja formatująca wpis logu prasowego
 function mapLogDocument(log) {
   const ip = log.ipAddress ? log.ipAddress.trim() : "127.0.0.1";
   let displayUser = log.fallbackName || "Gość";
@@ -186,17 +188,6 @@ async function main(req, res) {
         },
       },
     ]);
-    // 4. Liczba aktualnie zbanowanych adresów IP (aktywne w oknie 1h)
-    let activeBannedIpsCount = 0;
-    try {
-      const { BannedIp } = require("../tools/db");
-      const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-      activeBannedIpsCount = await BannedIp.countDocuments({
-        createdAt: { $gt: oneHourAgo },
-      });
-    } catch (banErr) {
-      console.error("[ADMIN] Błąd zliczania zbanowanych IP:", banErr.message);
-    }
 
     const postsStats = {
       total: 0,
@@ -207,14 +198,6 @@ async function main(req, res) {
       users: 0,
     };
 
-    const serverStatus = {
-      totalUsers: usersStats.length,
-      activeSessions: activeSessionsCount,
-      activeBannedIps: activeBannedIpsCount,
-      posts: postsStats,
-      today: analytics.todayStats,
-    };
-
     for (const item of postsBreakdownAgg) {
       if (item._id && Object.prototype.hasOwnProperty.call(postsStats, item._id)) {
         postsStats[item._id] = item.count;
@@ -222,12 +205,29 @@ async function main(req, res) {
       }
     }
 
+    // 4. Lista aktualnie zbanowanych adresów IP (automatycznie czyszczona przez indeks TTL)
+    let bannedIpsList = [];
+    try {
+      bannedIpsList = await BannedIp.find({}).sort({ createdAt: -1 }).lean();
+    } catch (banErr) {
+      console.error("[ADMIN] Błąd pobierania zbanowanych IP:", banErr.message);
+    }
+
+    const serverStatus = {
+      totalUsers: usersStats.length,
+      activeSessions: activeSessionsCount,
+      activeBannedIps: bannedIpsList.length,
+      posts: postsStats,
+      today: analytics.todayStats,
+    };
+
     res.render("admin", {
       title: "Panel Zarządzania Systemem",
       reports: reports || [],
       pendingUsers: pendingUsers || [],
       logs: formattedLogs || [],
       systemUsers: usersStats || [],
+      bannedIps: bannedIpsList,
       currentTab: "admin",
       queryError: req.query.error || null,
       queryMsg: req.query.msg || null,
@@ -569,5 +569,29 @@ async function postToggleSocialShare(req, res) {
   } catch (err) {
     console.error("Błąd zmiany ustawień social media:", err);
     return res.status(400).send(err.message || "Błąd zapisu ustawień.");
+  }
+}
+
+async function deleteBannedIp(req, res) {
+  try {
+    const { banId } = req.params;
+    const { unbanIpFromCache } = require("../tools/analytics");
+
+    const deletedBan = await BannedIp.findByIdAndDelete(banId);
+    if (!deletedBan) {
+      return res.status(404).send("Nie odnaleziono aktywnej blokady dla tego rekordu.");
+    }
+
+    unbanIpFromCache(deletedBan.ip);
+
+    await createLog(
+      req,
+      `[ADMIN - SECURITY] Zdjęto ręcznie blokadę IP: ${deletedBan.ip} (wcześniejszy powód: ${deletedBan.reason})`,
+    );
+
+    return res.json({ success: true, ip: deletedBan.ip });
+  } catch (err) {
+    console.error("Błąd podczas zdejmowania blokady IP:", err);
+    return res.status(500).send("Wewnętrzny błąd serwera podczas odblokowywania IP.");
   }
 }

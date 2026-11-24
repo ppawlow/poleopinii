@@ -469,3 +469,102 @@ window.toggleSocialShareSlider = async function (checkbox, platformId) {
     checkbox.disabled = false;
   }
 };
+
+/**
+ * Asynchroniczne zdjęcie blokady adresu IP (DELETE /admin/banned-ips/:banId)
+ */
+window.executeUnbanIp = async function (banId, ipAddress, buttonEl) {
+  if (!banId) return;
+
+  const confirmed =
+    typeof window.Confirm === "function"
+      ? await window.Confirm(
+          `Czy na pewno chcesz natychmiast zdjąć blokadę dla adresu IP ${ipAddress}?`,
+          "Odblokowanie adresu IP",
+        )
+      : confirm(`Czy na pewno chcesz odblokować adres IP ${ipAddress}?`);
+
+  if (!confirmed) return;
+
+  if (buttonEl) {
+    buttonEl.disabled = true;
+    buttonEl.style.opacity = "0.6";
+  }
+
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute("content");
+
+  try {
+    const response = await fetch(`/admin/banned-ips/${banId}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+    });
+
+    if (response.ok) {
+      const row = document.getElementById(`banned-ip-row-${banId}`);
+      if (row) {
+        row.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+        row.style.opacity = "0";
+        row.style.transform = "scale(0.98)";
+
+        setTimeout(() => {
+          row.remove();
+
+          const tbody = document.getElementById("banned-ips-table-body");
+          const badge = document.getElementById("banned-ips-badge");
+          const remaining = tbody ? tbody.querySelectorAll("tr").length : 0;
+
+          if (badge) {
+            badge.textContent = String(remaining);
+            if (remaining === 0) {
+              badge.classList.remove("is-danger");
+            }
+          }
+
+          if (remaining === 0 && tbody) {
+            const wrapper = tbody.closest(".admin-table-wrapper");
+            if (wrapper) {
+              wrapper.outerHTML =
+                '<div class="no-posts empty-state-box">Aktualnie brak zbanowanych adresów IP w systemie.</div>';
+            }
+          }
+        }, 250);
+      }
+
+      if (typeof window.Alert === "function") {
+        await window.Alert(
+          `🔓 Adres IP <b>${ipAddress}</b> został pomyślnie odblokowany.`,
+          "Bezpieczeństwo serwera",
+        );
+      }
+    } else {
+      if (buttonEl) {
+        buttonEl.disabled = false;
+        buttonEl.style.opacity = "";
+      }
+      const errText = await response.text();
+      if (typeof window.Alert === "function") {
+        await window.Alert(
+          `Nie udało się odblokować adresu IP: ${errText}`,
+          "Błąd serwera",
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas odblokowywania IP:", err);
+    if (buttonEl) {
+      buttonEl.disabled = false;
+      buttonEl.style.opacity = "";
+    }
+    if (typeof window.Alert === "function") {
+      await window.Alert(
+        "Wystąpił błąd połączenia z serwerem.",
+        "Błąd sieci",
+      );
+    }
+  }
+};

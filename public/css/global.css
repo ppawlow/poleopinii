@@ -389,6 +389,8 @@ select {
   position: sticky;
   top: 76px;
   height: fit-content;
+  max-height: calc(100vh - 92px);
+  overflow-y: auto;
 }
 
 .sidebar-item {
