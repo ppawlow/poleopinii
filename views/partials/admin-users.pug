@@ -8,6 +8,7 @@ if systemUsers && systemUsers.length > 0
                     th(style="padding: 12px; font-weight: 700; text-align: center;") Posty (Pub / Zas / Pryw)
                     th(style="padding: 12px; font-weight: 700; text-align: center;") Gwiazdki
                     th(style="padding: 12px; font-weight: 700; text-align: center; color: var(--alert-danger-text);") Redaktor Serwisu
+                    th(style="padding: 12px; font-weight: 700; text-align: center;") Zawieszenie
             tbody
                 each sUser in systemUsers
                     tr
@@ -42,5 +43,22 @@ if systemUsers && systemUsers.length > 0
                                         onclick=`toggleEditorSlider(this, '${sUser._id}')`
                                     )
                                     span.slider
+                        - var isUserSuspended = sUser.suspendedUntil && new Date(sUser.suspendedUntil).getTime() > Date.now()
+                        td(id=`suspend-cell-${sUser._id}` style="padding: 12px; text-align: center;")
+                            if isUserSuspended
+                                div(style="font-size: 11px; color: var(--alert-danger-text); font-weight: 700; margin-bottom: 4px;")
+                                    | ⛔ Do: #{new Date(sUser.suspendedUntil).toLocaleDateString('pl-PL')}
+                                button(
+                                    type="button"
+                                    onclick=`executeUnsuspendUser('${sUser._id}')`
+                                    style="background: #146c43; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;"
+                                ) Odblokuj
+                            else
+                                button(
+                                    type="button"
+                                    onclick=`openSuspendUserModal('${sUser._id}', '${sUser.name.replace(/'/g, "\\'")}')`
+                                    style="background: #bc2525; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer;"
+                                ) Zawieś
+
 else
     .no-posts.empty-state-box W systemie nie odnotowano zarejestrowanych kont użytkowników.

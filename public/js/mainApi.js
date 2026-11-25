@@ -617,7 +617,11 @@ window.sharePost = async function (postId, postTitle) {
  */
 window.executeReaderFactCheckWithConfirm = async function (postId, buttonElement) {
   if (!postId || !buttonElement) return;
-
+  
+  if (window.appUser && window.appUser.isSuspended) {
+    return window.showAccountSuspendedAlert("Uruchamianie weryfikacji faktograficznej AI");
+  }
+  
   const message = "Czy chcesz uruchomić zaawansowaną weryfikację faktograficzną dla tego wpisu? Algorytm Gemini przeszuka sieć za pomocą Google Search Grounding i opublikuje oficjalny raport w sekcji Polemik pod tym artykułem. Tę akcję można wykonać tylko raz.";
   
   const confirmed = typeof window.Confirm === "function"
@@ -714,6 +718,16 @@ document.addEventListener("click", (e) => {
     );
     return;
   }
+  if (window.appUser && window.appUser.isSuspended) {
+    const actionMap = {
+      like_public: "Ocenianie wpisów (przyznawanie gwiazdek)",
+      comment_public: "Komentowanie i odpowiadanie w dyskusjach",
+      like_comment: "Ocenianie komentarzy",
+      private_mail_unverified: "Wysyłanie prywatnych wiadomości e-mail",
+    };
+    window.showAccountSuspendedAlert(actionMap[reason] || "Ta interakcja");
+    return;
+  }
 
   let message = "Ta funkcja wymaga pełnej weryfikacji tożsamości.";
 
@@ -799,3 +813,17 @@ async function handleAsyncCommentLikeSubmit(form, csrfToken) {
     }
   }
 }
+
+window.showAccountSuspendedAlert = function (actionLabel = "Ta funkcja") {
+  const untilInfo = window.appUser?.suspendedUntil
+    ? ` do dnia <b>${window.appUser.suspendedUntil}</b>`
+    : "";
+
+  return window.Alert(
+    `<div style="text-align: left; line-height: 1.5;">
+      <p style="margin-bottom: 10px;"><b>${actionLabel}</b> jest niedostępna, ponieważ Twoje konto jest tymczasowo zawieszone${untilInfo}.</p>
+      <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Zgodnie z § 7 pkt 5 Regulaminu Serwisu w okresie obowiązywania blokady interakcje z innymi użytkownikami są wstrzymane, a nowe treści możesz zapisywać wyłącznie w strefie prywatnej.</p>
+    </div>`,
+    "⛔ Konto tymczasowo zawieszone",
+  );
+};

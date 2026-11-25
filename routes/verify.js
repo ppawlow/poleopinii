@@ -1,6 +1,5 @@
 // routes/verify.js
 const express = require("express");
-const crypto = require("crypto");
 const { User, createLog, canonicalizeEmail } = require("../tools/db");
 const { accessControl, appendUserData } = require("../tools/security");
 const { BANK_TRANSFER_DATA } = require("../config");
@@ -18,34 +17,26 @@ async function getVerifyEmail(req, res) {
   try {
     const { token } = req.params;
 
-    // 1. Szukamy użytkownika po unikalnym tokenie bezpieczeństwa
     const user = await User.findOne({ securityToken: token });
 
-    // POPRAWKA: Mongoose zwraca null w przypadku braku dokumentu
     if (!user) {
       return res.render("email-verification", { verified: false });
     }
 
-    // Sprawdzenie, czy token nie wygasł (obsługa wbudowanego wirtualnego gettera tokenu)
     if (!user.token) {
       return res.render("email-verification", { verified: false });
     }
 
-    // POPRAWKA: Korzystamy z prawidłowej nazwy pola "newEmailPending" zdefiniowanej w schemacie db.js
     if (user.newEmailPending && user.newEmailPending.trim().length > 0) {
       const targetEmail = user.newEmailPending.trim();
-
-      // POPRAWKA: Aktualizujemy adres podstawowy oraz generujemy nową postać kanoniczną e-maila
       user.email = targetEmail;
       user.normalizedEmail = canonicalizeEmail(targetEmail);
     }
 
-    // Czyszczenie danych procesu weryfikacyjnego i unieważnienie tokenu
     user.newEmailPending = null;
     user.token = null;
     user.isVerified = true;
 
-    // POPRAWKA: Zapewniamy asynchroniczny, pewny zapis w bazie danych MongoDB
     await user.save();
 
     await createLog(
@@ -54,7 +45,6 @@ async function getVerifyEmail(req, res) {
       user.email,
     );
 
-    // Bezpieczne czyszczenie aktywnej sesji (użytkownik musi zalogować się ponownie nowym mailem)
     if (req.session) {
       req.session.destroy((err) => {
         if (err)
@@ -78,10 +68,9 @@ async function getVerifyStatus(req, res) {
   try {
     const user = req.dbUser;
 
-    await appendUserData(res.locals.user, `verificationTransferStatus`);
-    await appendUserData(res.locals.user, `verificationTransferCode`);
+    await appendUserData(res.locals.user, "verificationTransferStatus");
+    await appendUserData(res.locals.user, "verificationTransferCode");
 
-    // POPRAWKA: Kod pobierany jest zawsze z bazy, nigdy nie jest generowany tymczasowo w sesji
     const dynamicTransferCode = user.verificationTransferCode;
 
     res.render("verify", {
@@ -98,6 +87,11 @@ async function getVerifyStatus(req, res) {
 }
 
 async function postSubmitTransfer(req, res) {
+  const isAjax =
+    req.xhr ||
+    req.headers["x-requested-with"] === "XMLHttpRequest" ||
+    (req.headers.accept && req.headers.accept.includes("application/json"));
+
   try {
     const user = req.dbUser;
 
@@ -105,13 +99,12 @@ async function postSubmitTransfer(req, res) {
       user.verificationTransferStatus === "approved" ||
       user.verificationTransferStatus === "processing"
     ) {
-      return res.status(400).json({
-        error: "Błąd: Zgłoszenie zostało już przesłane lub zatwierdzone.",
-      });
+      const msg = "Błąd: Zgłoszenie zostało już przesłane lub zatwierdzone.";
+      return isAjax
+        ? res.status(400).json({ error: msg })
+        : res.redirect("/verify?msg=transfer_submitted");
     }
 
-    // KRYTYCZNA POPRAWKA: Nie odczytujemy req.body.transferCode!
-    // Status zmieniamy na podstawie kodu, który serwer bezpiecznie przechowuje w bazie.
     user.verificationTransferStatus = "processing";
     await user.save();
 
@@ -121,10 +114,16 @@ async function postSubmitTransfer(req, res) {
       user.email,
     );
 
-    return res.json({ success: true, status: "processing" });
+    if (isAjax) {
+      return res.json({ success: true, status: "processing" });
+    }
+    return res.redirect("/verify?msg=transfer_submitted");
   } catch (err) {
     console.error("Błąd zapisu przelewu:", err);
-    return res.status(500).json({ error: "Błąd wewnętrzny serwera" });
+    if (isAjax) {
+      return res.status(500).json({ error: "Błąd wewnętrzny serwera." });
+    }
+    return res.redirect("/verify?error=server");
   }
 }
 

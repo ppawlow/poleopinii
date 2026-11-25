@@ -117,6 +117,8 @@ async function postFollow(req, res) {
     const dbUser = req.dbUser;
     const targetUser = await User.findById(targetUserId);
 
+    if (dbUser.isSuspended) return res.status(403).json({ error: "Konto zawieszone." });
+    
     if (!targetUser || !dbUser)
       return res.status(404).json({ error: "Nie znaleziono użytkownika" });
 

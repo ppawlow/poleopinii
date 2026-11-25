@@ -14,13 +14,13 @@ form(id=`editForm-${activePost._id}` data-csrf=csrfToken onsubmit=`prepareEditSu
             style="padding: 6px 12px; border: 1px solid #1877f2; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; background: var(--bg-card); color: var(--text-body);"
         )
             option(value="" disabled selected=(!selectedVis)) 👁️ Wybierz widoczność wpisu
-            option(value="public" selected=(selectedVis === 'public')) 🌐 Publiczne
-            option(value="restricted" selected=(selectedVis === 'restricted')) 👥 Dla obserwujących
+            option(value="public" selected=(selectedVis === 'public') disabled=user.isSuspended) 🌐 Publiczne
+            option(value="restricted" selected=(selectedVis === 'restricted') disabled=user.isSuspended) 👥 Dla obserwujących
             option(value="private" selected=(selectedVis === 'private')) 🔒 Prywatne
             if user && (user.role === 'editor' || user.isAdmin)
-                option(value="users" selected=(selectedVis === 'users')) 📢 Ogłoszenie (Tylko dla zalogowanych)
+                option(value="users" selected=(selectedVis === 'users') disabled=user.isSuspended) 📢 Ogłoszenie (Tylko dla zalogowanych)
             if user && user.role === 'editor'
-                option(value="editors" selected=(selectedVis === 'editors')) 📝 Wewnętrzne (Tylko dla Redaktorów)
+                option(value="editors" selected=(selectedVis === 'editors') disabled=user.isSuspended) 📝 Wewnętrzne (Tylko dla Redaktorów)
 
         if isNew
             span#public-debate-warning-badge(style="display: none; font-size: 12px; color: var(--alert-danger-text); background: var(--alert-danger-bg); padding: 4px 10px; border-radius: 4px; font-weight: 600; border: 1px solid var(--alert-danger-border);")

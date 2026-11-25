@@ -57,6 +57,17 @@ const mockReport = {
   abuseCategory: "general"
 };
 
+const mockFactCheckReport = {
+  _id: new mongoose.Types.ObjectId("6adeff567d07c910c127ed5f"),
+  title: "⚠️ Korekta Faktograficzna AI: \"Fikcyjny Artykuł Testowy\"",
+  author: "AIsystent",
+  authorEmail: "aisystent@poleopinii.pl",
+  parentPostId: mockPost._id,
+  isFactCheckReport: true,
+  hasFactCheckErrors: true,
+  content: "<p>1. W artykule podano błędną datę wejścia ustawy w życie (2022 zamiast 2024).</p><p>2. Przytoczone dane statystyczne GUS dotyczą III kwartału, a nie całego roku kalendarzowego.</p>"
+};
+
 const mockReq = {
   protocol: "http",
   get: () => "localhost:3000"
@@ -138,6 +149,10 @@ async function runMailerTestPipeline() {
     {
       name: "sendEditorApprovedByBoardEmail (Mianowanie Redaktorem przez Kolegium)",
       fn: () => mailer.sendEditorApprovedByBoardEmail(mockUser)
+    },
+    {
+      name: "sendFactCheckWarningEmail (Korekta Faktograficzna AI pod artykułem)",
+      fn: () => mailer.sendFactCheckWarningEmail(mockPost, mockFactCheckReport, mockReq)
     }
   ];
 

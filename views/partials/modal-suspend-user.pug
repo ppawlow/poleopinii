@@ -1,0 +1,39 @@
+//- Okno modalne czasowego zawieszenia użytkownika (§ 7 pkt 5 Regulaminu)
+#suspend-user-modal.custom-modal-backdrop(style="display: none;" onclick="window.closeSuspendUserModal()")
+    .custom-modal-box(style="max-width: 460px;" onclick="event.stopPropagation()")
+        .custom-modal-header(style="background: var(--alert-danger-bg); border-bottom: 1px solid var(--alert-danger-border); display: flex; justify-content: space-between; align-items: center;")
+            h3(style="color: var(--alert-danger-text); margin: 0; font-size: 16px; font-weight: 700;") ⛔ Czasowe zawieszenie konta
+            span(onclick="window.closeSuspendUserModal()" style="cursor: pointer; font-size: 24px; font-weight: bold; color: var(--text-muted); line-height: 1;") &times;
+
+        form#suspendUserForm(onsubmit="window.submitSuspendUserForm(event)")
+            input#suspendTargetUserId(type="hidden" name="userId")
+            .custom-modal-body(style="padding: 16px; display: flex; flex-direction: column; gap: 14px; font-family: sans-serif;")
+                p(style="margin: 0; font-size: 14px; color: var(--text-main);")
+                    | Użytkownik: 
+                    strong#suspendTargetUserName(style="color: var(--alert-danger-text);")
+
+                div
+                    label(for="suspendDaysInput" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;") Czas trwania blokady (liczba dni, 1–365):*
+                    input#suspendDaysInput(
+                        type="number"
+                        name="days"
+                        min="1"
+                        max="365"
+                        value="7"
+                        required
+                        style="width: 100%; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 15px; font-weight: 600; outline: none; background: var(--bg-card); color: var(--text-body);"
+                    )
+
+                div
+                    label(for="suspendReasonInput" style="font-size: 12.5px; font-weight: 700; color: var(--text-muted); display: block; margin-bottom: 6px;") Uzasadnienie decyzji (widoczne dla użytkownika oraz w wiadomości e-mail):*
+                    textarea#suspendReasonInput(
+                        name="reason"
+                        maxlength="300"
+                        required
+                        placeholder="Wpisz uzasadnienie zgodnie z Regulaminem..."
+                        style="width: 100%; height: 100px; padding: 10px; border: 1px solid var(--border-input); border-radius: 6px; font-size: 14px; resize: none; outline: none; font-family: inherit;"
+                    ) Naruszenie § 7 Regulaminu Serwisu
+
+            .custom-modal-footer
+                button.modal-btn-secondary(type="button" onclick="window.closeSuspendUserModal()") Anuluj
+                button.modal-btn-danger(type="submit") Zawieś konto

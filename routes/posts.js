@@ -217,6 +217,10 @@ async function postCreate(req, res) {
     let isSelfContinuation = false;
     let parentPostTitle = "Wpis bez tytułu";
     let parentPostAuthorId = null;
+    if (dbUser.isSuspended) {
+      visibility = "private";
+      parentPostId = null;
+    }
 
     // 1. Walidacja uprawnień tworzenia na wybranym poziomie widoczności (np. public, editors, users)
     if (!hasPermission(dbUser, visibility, "CREATE")) {
@@ -257,7 +261,7 @@ async function postCreate(req, res) {
       }
 
       const originalAuthor = await User.findById(originalPost.authorId);
-
+      
       if (hasPermission(dbUser, "user", "canReplyWithPost", originalAuthor)) {
         if (!dbUser.isPublicAllowed && visibility === "public") {
           visibility = "restricted";
@@ -512,10 +516,16 @@ async function postCreate(req, res) {
 async function postEdit(req, res) {
   const { title, content, visibility } = req.body;
   try {
+    const dbUser = req.dbUser;
     const post = await Post.findById(req.params.id);
     if (!post) return res.status(404).send("Nie znaleziono wpisu.");
-    if (!post.isOwnedBy(req.dbUser)) {
+    if (!post.isOwnedBy(dbUser)) {
       return res.status(403).send("Brak uprawnień do edycji tego wpisu.");
+    }
+    if (dbUser.isSuspended && visibility && visibility !== "private") {
+      return res
+        .status(403)
+        .send("Twoje konto jest tymczasowo zawieszone. Nowe oraz edytowane wpisy mogą mieć wyłącznie status prywatny.");
     }
 
     // =========================================================================
@@ -541,7 +551,6 @@ async function postEdit(req, res) {
         .status(400)
         .send("Edycja odrzucona: Niedozwolona lub pusta treść.");
     }
-    const dbUser = req.dbUser;
 
     if (post.isModeratorLocked && visibility === "public") {
       return res
@@ -550,7 +559,7 @@ async function postEdit(req, res) {
           "Operacja zablokowana: Ten wpis został oznaczony przez moderatora jako nadużycie i nie może zostać ponownie upubliczniony.",
         );
     }
-
+    
     // Flaga pomocnicza, która poinformuje nas czy uruchomiliśmy strumień Server-Sent Events (SSE)
     const isChangingToPublic =
       visibility === "public" && post.visibility !== "public";
@@ -1345,6 +1354,9 @@ async function postReaderFactCheck(req, res) {
   try {
     const postId = req.params.id;
     const dbUser = req.dbUser; // Aktywny czytelnik
+    if (dbUser.isSuspended) {
+      return res.status(403).send("Twoje konto jest tymczasowo zawieszone.");
+    }
     const { GoogleGenAI } = require("@google/genai");
     const { checkContentFacts } = require("../tools/validation");
 
@@ -1363,13 +1375,13 @@ async function postReaderFactCheck(req, res) {
         .send("Brak uprawnień: Weryfikacji faktograficznej podlegają wyłącznie artykuły publiczne.");
     }
     
-    // 2. Namierzamy systemowe konto bota "Gemini AI" w bazie danych
+    // 2. Namierzamy systemowe konto bota "AIsystent" w bazie danych
     const aiUser = await User.findOne({ normalizedEmail: "aisystent@poleopinii.pl" });
     if (!aiUser) {
       return res.status(500).send("Krytyczny błąd systemu: Profil wizualny AI nie został zainicjalizowany.");
     }
 
-    // 3. Sprawdzamy, czy dla tego posta istnieje już polemika stworzona przez "Gemini AI"
+    // 3. Sprawdzamy, czy dla tego posta istnieje już raport wygenerowany przez AI
     const existingAnalysis = await Post.findOne({
       parentPostId: originalPost._id,
       isFactCheckReport: true,
@@ -1379,7 +1391,7 @@ async function postReaderFactCheck(req, res) {
       return res.status(400).send("Ten post posiada już wygenerowany raport oceny wiarygodności.");
     }
 
-    // 4. Uruchamiamy model LLM (Gemini 3.8 Flash + Google Search Grounding)
+    // 4. Uruchamiamy model LLM (Gemini + Google Search Grounding)
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY, apiVersion: "v1beta" });
     const factCheckAnalysis = await checkContentFacts(ai, originalPost.title, originalPost.content);
     await recordAiTokens({
@@ -1388,8 +1400,7 @@ async function postReaderFactCheck(req, res) {
       total: factCheckAnalysis.meta.totalTokenCount,
     });
 
-    // 5. Zapisujemy raport jako oficjalny artykuł polemiczny (Polemika) przypisany do konta "Gemini AI"
-    // Skracamy tytuł artykułu do maksymalnie 5 słów + "..."
+    // 5. Zapisujemy raport jako oficjalny artykuł polemiczny przypisany do konta AI
     const titleWords = (originalPost.title || "Wpis bez tytułu")
       .trim()
       .split(/\s+/);
@@ -1402,7 +1413,7 @@ async function postReaderFactCheck(req, res) {
     const reportTitle = factCheckAnalysis.result.hasErrors
       ? `⚠️ Korekta Faktograficzna AI: "${shortArticleTitle}"`
       : `🟢 Certyfikat Wiarygodności AI: "${shortArticleTitle}"`;
-    // Formatowanie tekstu do standardu artykułów (zamiana znaków nowej linii z raportu na akapity HTML)
+
     const formattedContent = factCheckAnalysis.result.report
       .split("\n")
       .filter(line => line.trim().length > 0)
@@ -1424,6 +1435,25 @@ async function postReaderFactCheck(req, res) {
     });
 
     const savedReport = await aiReportPost.save();
+
+    // 6. Jeśli AI zakwestionowało prawdziwość treści, wysyłamy e-mail oraz powiadomienie w aplikacji
+    if (factCheckAnalysis.result.hasErrors) {
+      await mailer.sendFactCheckWarningEmail(originalPost, savedReport, req);
+
+      await createNotification({
+        senderId: aiUser._id,
+        recipientId: originalPost.authorId,
+        type: "factcheck_warning",
+        postId: savedReport._id,
+      });
+
+      req.ws?.sendNotification(originalPost.authorId, {
+        notificationType: "factcheck_warning",
+        senderName: aiUser.name,
+        postId: savedReport._id.toString(),
+        postTitle: savedReport.title,
+      });
+    }
 
     // Rejestracja w logu audytowym
     await createLog(

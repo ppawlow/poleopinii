@@ -103,27 +103,27 @@ POST_VISIBILITY: ["public", "restricted", "private", "editors", "users"],
         if (user.isBlocking(author._id) || author.isBlocking(user._id)) return false;
         return user.isFollowing(author._id);
       },
-      CREATE:  (user) => Boolean(user),
-      LIKE:    (user) => Boolean(user),
-      COMMENT: (user) => Boolean(user),
+      CREATE:  (user) => Boolean(user && !user.isSuspended),
+      LIKE:    (user) => Boolean(user && !user.isSuspended),
+      COMMENT: (user) => Boolean(user && !user.isSuspended),
     },
     private: {
       VIEW:    (user, post) => Boolean(user && post && post.isOwnedBy(user)),
       CREATE:  (user) => Boolean(user),
-      LIKE:    (user) => Boolean(user),
-      COMMENT: (user) => Boolean(user),
+      LIKE:    (user) => Boolean(user && !user.isSuspended),
+      COMMENT: (user) => Boolean(user && !user.isSuspended),
     },
     editors: {
-      VIEW:    (user) => Boolean(user?.isEditor),
-      CREATE:  (user) => Boolean(user?.isEditor),
-      LIKE:    (user) => Boolean(user?.isEditor),
-      COMMENT: (user) => Boolean(user?.isEditor),
+      VIEW:    (user) => Boolean(user?.isEditor && !user.isSuspended),
+      CREATE:  (user) => Boolean(user?.isEditor && !user.isSuspended),
+      LIKE:    (user) => Boolean(user?.isEditor && !user.isSuspended),
+      COMMENT: (user) => Boolean(user?.isEditor && !user.isSuspended),
     },
     users: {
       VIEW:    (user) => Boolean(user),
-      CREATE:  (user) => Boolean(user?.isEditor || user?.isAdmin),
-      LIKE:    (user) => Boolean(user),
-      COMMENT: (user) => Boolean(user),
+      CREATE:  (user) => Boolean((user?.isEditor || user?.isAdmin) && !user.isSuspended),
+      LIKE:    (user) => Boolean(user && !user.isSuspended),
+      COMMENT: (user) => Boolean(user && !user.isSuspended),
     },
   },  
   PROTECTED_USER_DATA: `
@@ -152,7 +152,7 @@ POST_VISIBILITY: ["public", "restricted", "private", "editors", "users"],
       !targetUser.isBlocking(actingUser),
 
     canReplyWithPost: (actingUser, targetUser) =>
-      actingUser && targetUser &&
+      actingUser && targetUser && !actingUser.isSuspended &&
       (
         actingUser._id.equals(targetUser._id) ||
         (

@@ -120,6 +120,8 @@ async function handleAsyncFollowUserSubmit(form, csrfToken) {
           }
         }
       }
+    } else if (response.status === 403 && window.appUser?.isSuspended && typeof window.showAccountSuspendedAlert === "function") {
+      await window.showAccountSuspendedAlert("Obserwowanie innych autorów");
     }
   } catch (err) {
     console.error("Błąd sieciowy podczas operacji follow:", err);

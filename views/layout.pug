@@ -67,7 +67,9 @@ html(lang="pl")
                     id: "!{user.id || user._id}",
                     displayName: "!{user.displayName || user.name}",
                     avatarUrl: "!{user.avatarUrl || DEFAULT_ASSETS.avatar}",
-                    isVerified: !{user.isFullyVerified} 
+                    isVerified: !{user.isFullyVerified}, 
+                    isSuspended: !{Boolean(user.isSuspended)},
+                    suspendedUntil: !{user.suspendedUntil ? JSON.stringify(new Date(user.suspendedUntil).toLocaleString('pl-PL')) : 'null'}
                 };
         
         header.fb-navbar

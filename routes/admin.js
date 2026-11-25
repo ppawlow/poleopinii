@@ -12,8 +12,9 @@ const {
   updateSocialShareSetting,
   BannedIp,
   activeBannedIpsCount,
+  countAuthorPublicLikes,
 } = require("../tools/db");
-const { adminControl } = require("../tools/security");
+const { adminControl, isAdminId } = require("../tools/security");
 const { adminApprovalValidationRules, validateId } = require("../tools/validation");
 const { deleteFromAllSocials } = require("../tools/socialPublisher");
 const { renderPartial } = require("../tools/pug2html");
@@ -40,6 +41,8 @@ module.exports = express.Router()
   .post("/verify-user/:userId/reject", postAdminRejectUser)
   .post("/users/:userId/promote", postPromoteToEditor)
   .post("/users/:userId/demote", postDemoteFromEditor)
+  .post("/users/:userId/suspend", postSuspendUser)
+  .post("/users/:userId/unsuspend", postUnsuspendUser)
 
   .use("/:reportId", validateId("reportId"))
   .post("/:reportId/accept", postAcceptAbuseReport)
@@ -92,7 +95,7 @@ async function main(req, res) {
 
     const formattedLogs = logs.map(mapLogDocument);
 
-    const usersStats = await User.aggregate([
+    const rawUsersStats = await User.aggregate([
       {
         $lookup: {
           from: "posts",
@@ -107,6 +110,8 @@ async function main(req, res) {
           email: 1,
           alias: 1,
           role: 1,
+          suspendedUntil: 1, 
+          suspensionReason: 1,
           aiBlockedSafetyCount: { $ifNull: ["$aiBlockedSafetyCount", 0] },
           aiBlockedFactCheckCount: { $ifNull: ["$aiBlockedFactCheckCount", 0] },
           publicCount: {
@@ -141,22 +146,17 @@ async function main(req, res) {
               },
             },
           },
-          totalStars: {
-            $reduce: {
-              input: "$userPosts",
-              initialValue: 0,
-              in: {
-                $sum: [
-                  "$$value",
-                  { $size: { $ifNull: ["$$this.likedBy", []] } },
-                ],
-              },
-            },
-          },
         },
       },
       { $sort: { name: 1 } },
     ]);
+
+    const usersStats = await Promise.all(
+      rawUsersStats.map(async (u) => ({
+        ...u,
+        totalStars: await countAuthorPublicLikes(u._id),
+      })),
+    );
 
     // 1. Statystyki dziennych odwiedzin (w tym dzisiejsze)
     const analytics = await getAnalyticsSummary(30);
@@ -593,5 +593,69 @@ async function deleteBannedIp(req, res) {
   } catch (err) {
     console.error("Błąd podczas zdejmowania blokady IP:", err);
     return res.status(500).send("Wewnętrzny błąd serwera podczas odblokowywania IP.");
+  }
+}
+
+async function postSuspendUser(req, res) {
+  try {
+    const { userId } = req.params;
+    const { days, reason } = req.body;
+    const durationDays = parseInt(days, 10);
+
+    if (!durationDays || durationDays < 1 || durationDays > 365) {
+      return res.status(400).send("Czas zawieszenia musi wynosić od 1 do 365 dni.");
+    }
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send("Nie odnaleziono użytkownika.");
+    if (isAdminId(user._id)) {
+      return res.status(403).send("Nie można zawiesić administratora systemu.");
+    }
+
+    const untilDate = new Date(Date.now() + durationDays * 24 * 60 * 60 * 1000);
+    user.suspendedUntil = untilDate;
+    user.suspensionReason = String(reason || "Naruszenie postanowień Regulaminu").trim().slice(0, 300);
+    await user.save();
+
+    await createLog(
+      req,
+      `[ADMIN - ZAWIESZENIE] Zawieszono konto użytkownika ${user.name} na ${durationDays} dni (do ${untilDate.toLocaleString("pl-PL")}). Powód: ${user.suspensionReason}`,
+    );
+    await mailer.sendUserSuspendedEmail(
+      user,
+      durationDays,
+      untilDate,
+      user.suspensionReason,
+    );
+    return res.json({
+      success: true,
+      suspendedUntil: untilDate,
+      formattedDate: untilDate.toLocaleString("pl-PL"),
+    });
+  } catch (err) {
+    console.error("Błąd podczas zawieszania użytkownika:", err);
+    return res.status(500).send("Błąd serwera.");
+  }
+}
+
+async function postUnsuspendUser(req, res) {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).send("Nie odnaleziono użytkownika.");
+
+    user.suspendedUntil = null;
+    user.suspensionReason = null;
+    await user.save();
+
+    await createLog(
+      req,
+      `[ADMIN - ODBLOKOWANIE] Zdjęto przedterminowo zawieszenie konta: ${user.name}`,
+    );
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("Błąd podczas zdejmowania zawieszenia:", err);
+    return res.status(500).send("Błąd serwera.");
   }
 }

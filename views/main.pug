@@ -36,6 +36,15 @@ block content
                             p(style="margin: 0; font-size: 13px; color: var(--text-body); line-height: 1.4;") Aby odblokować wszystkie możliwości profilu, np. zamieszczać artykuły publiczne, brać udział w dyskusjach, kontaktować się prywatnie z innymi użytkownikami, potwierdź swoją autentyczność.
                         a(href="/verify" style="background: #1877f2; color: white; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-weight: bold; font-size: 13px; white-space: nowrap;") Zweryfikuj konto
 
+                if user.isSuspended
+                    .admin-alert-box.is-danger(style="margin-bottom: 16px; line-height: 1.5;")
+                        | ⛔ <strong>Twoje konto zostało tymczasowo zawieszone</strong> do dnia #{new Date(user.suspendedUntil).toLocaleString('pl-PL')}.
+                        if user.suspensionReason
+                            br
+                            | Powód: <em>#{user.suspensionReason}</em>
+                        br
+                        small Zgodnie z § 7 pkt 5 Regulaminu interakcje z innymi użytkownikami są zablokowane, a nowe wpisy możesz zapisywać wyłącznie jako prywatne.
+
                 include partials/create-post.pug
 
             if (SERVICE_SOCIALS && SERVICE_SOCIALS.length > 0) || user

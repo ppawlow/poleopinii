@@ -66,6 +66,7 @@ toolbox.userData = async function (req, res, next) {
     req.dbUser.isAdmin = toolbox.isAdminId(req.dbUser.id);
     res.locals.user = safeUser(req.dbUser);
     res.locals.user.isAdmin = req.dbUser.isAdmin;
+    res.locals.user.isSuspended = req.dbUser.isSuspended;
     await updateEvents(req, res);
   }
   next();

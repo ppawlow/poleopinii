@@ -568,3 +568,97 @@ window.executeUnbanIp = async function (banId, ipAddress, buttonEl) {
     }
   }
 };
+
+window.openSuspendUserModal = function (userId, userName) {
+  const modal = document.getElementById("suspend-user-modal");
+  const idInput = document.getElementById("suspendTargetUserId");
+  const nameEl = document.getElementById("suspendTargetUserName");
+  const daysInput = document.getElementById("suspendDaysInput");
+  const reasonInput = document.getElementById("suspendReasonInput");
+
+  if (!modal || !idInput) return;
+
+  idInput.value = userId;
+  if (nameEl) nameEl.textContent = userName || "";
+  if (daysInput) daysInput.value = "7";
+  if (reasonInput) reasonInput.value = "Naruszenie § 7 Regulaminu Serwisu";
+
+  modal.style.display = "flex";
+  if (daysInput) {
+    daysInput.focus();
+    daysInput.select();
+  }
+};
+
+window.closeSuspendUserModal = function () {
+  const modal = document.getElementById("suspend-user-modal");
+  if (modal) modal.style.display = "none";
+};
+
+window.submitSuspendUserForm = async function (event) {
+  event.preventDefault();
+  const form = event.target;
+  const submitBtn = form.querySelector('button[type="submit"]');
+
+  const userId = document.getElementById("suspendTargetUserId")?.value;
+  const userName = document.getElementById("suspendTargetUserName")?.textContent || "";
+  const days = parseInt(document.getElementById("suspendDaysInput")?.value, 10);
+  const reason = (document.getElementById("suspendReasonInput")?.value || "").trim();
+
+  if (!userId || isNaN(days) || days < 1 || days > 365) {
+    return window.Alert("Podaj poprawną liczbę dni (od 1 do 365).", "Błąd walidacji");
+  }
+
+  if (!reason) {
+    return window.Alert("Podaj uzasadnienie zawieszenia konta.", "Błąd walidacji");
+  }
+
+  const originalBtnText = submitBtn ? submitBtn.textContent : "Zawieś konto";
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Zapisywanie...";
+  }
+
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "";
+    const res = await fetch(`/admin/users/${userId}/suspend`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+      },
+      body: JSON.stringify({ days, reason }),
+    });
+
+    if (res.ok) {
+      window.closeSuspendUserModal();
+      await window.Alert(
+        `Konto użytkownika <b>${userName}</b> zostało zawieszone na <b>${days}</b> ${days === 1 ? "dzień" : "dni"}.`,
+        "⛔ Zawieszenie konta",
+      );
+      window.location.reload();
+    } else {
+      const errText = await res.text();
+      await window.Alert(errText || "Nie udało się zawiesić konta.", "Błąd");
+    }
+  } catch (err) {
+    console.error("Błąd sieciowy podczas zawieszania konta:", err);
+    await window.Alert("Wystąpił błąd połączenia z serwerem.", "Błąd sieci");
+  } finally {
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalBtnText;
+    }
+  }
+};
+
+window.executeUnsuspendUser = async function (userId) {
+  if (!(await window.Confirm("Czy na pewno chcesz zdjąć zawieszenie tego konta?", "Odblokowanie konta"))) return;
+  const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute("content");
+  const res = await fetch(`/admin/users/${userId}/unsuspend`, {
+    method: "POST",
+    headers: { "X-CSRF-Token": csrfToken, "X-Requested-With": "XMLHttpRequest" },
+  });
+  if (res.ok) window.location.reload();
+};

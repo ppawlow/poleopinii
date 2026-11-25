@@ -696,6 +696,11 @@ window.openReplyPostModal = async function (
   parentPostTitle,
   isSelfContinuation = false,
 ) {
+  if (!isSelfContinuation && window.appUser && window.appUser.isSuspended) {
+    if (typeof window.showAccountSuspendedAlert === "function") {
+      return window.showAccountSuspendedAlert("Publikowanie polemik z innymi autorami");
+    }
+  }
   const postCard =
     document.getElementById(`post-${parentPostId}`) ||
     document.querySelector(".editorial-article");

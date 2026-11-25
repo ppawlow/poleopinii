@@ -72,7 +72,7 @@
     overflow-y: auto !important;
     -webkit-overflow-scrolling: touch;
     overscroll-behavior: contain;
-    padding: 12px 16px 20px 16px !important;
+    padding: 12px 6px 20px 6px !important;
     background-color: var(--bg-card) !important;
   }
 
@@ -297,6 +297,12 @@
   .main-container .editorial-article.single-article-card {
     padding: 0 0 24px 0 !important;
   }
+
+  .left-sidebar .sidebar-item,
+  .right-sidebar .sidebar-item {
+    padding-left: 8px;
+    padding-right: 8px;
+  }  
 }
 
 /* =========================================

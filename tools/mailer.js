@@ -416,6 +416,60 @@ async function sendAiAppealEmail(post, req) {
   );
 }
 
+/**
+ * 17. Wyślij powiadomienie do autora o zakwestionowaniu prawdziwości treści przez weryfikator AI
+ */
+async function sendFactCheckWarningEmail(originalPost, savedReport, req) {
+  const { User } = require("./db");
+  const targetAuthorDoc = await User.findById(originalPost.authorId).select("name email");
+  const recipientEmail = targetAuthorDoc?.email || originalPost.authorEmail;
+
+  if (!recipientEmail) {
+    console.warn(
+      `[SYSTEM MAIL] Przerwano sendFactCheckWarningEmail: brak adresu e-mail dla autora posta o ID: ${originalPost._id}`,
+    );
+    return;
+  }
+
+  const authorName = targetAuthorDoc?.name || originalPost.author;
+  const postUrl = `${req.protocol}://${req.get("host")}/posts/${originalPost._id}#factcheck-report-item-${savedReport._id}`;
+
+  const mailContent = renderMail("factCheckWarningEmail", {
+    authorName,
+    originalTitle: originalPost.title || "Wpis bez tytułu",
+    reportHtml: savedReport.content,
+    postUrl,
+    serviceName: SERVICE_NAME,
+  });
+
+  await sendMail(
+    recipientEmail,
+    `⚠️ Korekta Faktograficzna AI pod Twoim artykułem "${originalPost.title || "Wpis bez tytułu"}"`,
+    mailContent,
+  );
+}
+
+/**
+ * 18. Wyślij powiadomienie do użytkownika o czasowym zawieszeniu konta (§ 7 pkt 5 Regulaminu)
+ */
+async function sendUserSuspendedEmail(user, durationDays, untilDate, reason) {
+  if (!user || !user.email) return;
+
+  const untilFormatted = new Date(untilDate).toLocaleString("pl-PL");
+  const mailContent = renderMail("userSuspendedEmail", {
+    userName: user.name,
+    durationDays,
+    untilFormatted,
+    reason,
+    serviceName: SERVICE_NAME,
+  });
+
+  await sendMail(
+    user.email,
+    `⛔ Tymczasowe zawieszenie konta (do ${new Date(untilDate).toLocaleDateString("pl-PL")})`,
+    mailContent,
+  );
+}
 
 module.exports = {
   startNotification,
@@ -435,4 +489,6 @@ module.exports = {
   sendEditorApprovedByBoardEmail,
   sendNewEditorPostNotification,
   sendAiAppealEmail,
+  sendFactCheckWarningEmail,
+  sendUserSuspendedEmail,
 };

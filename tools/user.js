@@ -58,6 +58,8 @@ const userSchema = new mongoose.Schema({
   },
   aiBlockedSafetyCount: { type: Number, default: 0 },
   aiBlockedFactCheckCount: { type: Number, default: 0 },
+  suspendedUntil: { type: Date, default: null },
+  suspensionReason: { type: String, default: null },
   bio: {
     type: String,
     default: "Nie dodano jeszcze żadnych informacji o sobie.",
@@ -95,13 +97,20 @@ userSchema.virtual("isEditor").get(function () {
 });
 
 userSchema.virtual("isPublicAllowed").get(function () {
-  return this.isEditor || this.isFullyVerified
+  if (this.isSuspended) return false;
+  return this.isEditor || this.isFullyVerified;
+});
+
+userSchema.virtual("isSuspended").get(function () {
+  if (!this.suspendedUntil) return false;
+  return Date.now() < new Date(this.suspendedUntil).getTime();
 });
 
 userSchema.methods.isOwnerOf = function (post) {
   if (!post || !post.authorId) return false;
   return this._id.equals(post.authorId);
 };
+
 
 userSchema
   .virtual("token")
@@ -167,6 +176,8 @@ userSchema.set("toJSON", { virtuals: true, getters: true });
 userSchema.options.toObject.transform = (doc, ret) => {
   ret.isFullyVerified =
     doc.isVerified === true && doc.verificationTransferStatus === "approved";
+  ret.isSuspended = doc.isSuspended;
+  ret.suspendedUntil = doc.suspendedUntil;
   return ret;
 };
 userSchema.options.toJSON.transform = userSchema.options.toObject.transform;

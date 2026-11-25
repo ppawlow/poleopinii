@@ -87,6 +87,34 @@ async function countAuthorPublicLikes(authorId) {
         $match: {
           authorId: new mongoose.Types.ObjectId(authorId),
           visibility: "public",
+          isAbuseReport: { $ne: true },
+          isFactCheckReport: { $ne: true },
+        },
+      },
+      {
+        $lookup: {
+          from: "posts",
+          let: { postId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$parentPostId", "$$postId"] },
+                    { $eq: ["$isFactCheckReport", true] },
+                    { $eq: ["$hasFactCheckErrors", true] },
+                  ],
+                },
+              },
+            },
+            { $limit: 1 },
+          ],
+          as: "failedFactChecks",
+        },
+      },
+      {
+        $match: {
+          failedFactChecks: { $size: 0 },
         },
       },
       { $project: { likesCount: { $size: { $ifNull: ["$likedBy", []] } } } },

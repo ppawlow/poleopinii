@@ -1,0 +1,20 @@
+extends base-layout
+
+block email-config
+  - var borderTopColor = '#bc2525'
+
+block email-body
+  h2(style="color: #bc2525; margin-top: 0; font-size: 20px; font-weight: 700; margin-bottom: 16px;") ⚠️ Korekta Faktograficzna AI pod Twoim artykułem
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Witaj #[strong #{authorName}],
+  p(style="font-size: 15px; color: #050505; line-height: 1.5; margin: 0 0 12px 0;") Informujemy, że autonomiczny system weryfikacji faktograficznej (AIsystent) przeanalizował Twój publiczny artykuł pt. #[strong "#{originalTitle}"] i opublikował pod nim raport wskazujący na potencjalne rozbieżności lub błędy faktograficzne. Prosimy, wycofaj artykuł ze strefy publicznej, popraw błedy i przywróć mu status publiczny. Pamiętaj, że negatywna ocena faktograficzna obniża Twoją ocenę jako autora w serwisie.
+  
+  p(style="font-size: 14px; font-weight: bold; color: #1c1e21; margin: 16px 0 6px 0;") Podsumowanie analizy AI:
+  div(style="background-color: #fff3f3; padding: 14px; border-radius: 6px; border-left: 4px solid #bc2525; color: #1c1e21; font-size: 14px; line-height: 1.5; margin-bottom: 16px;")
+    | !{reportHtml}
+    
+  p(style="font-size: 13.5px; color: #65676b; line-height: 1.5; margin: 0 0 20px 0;") Raport ma charakter doradczy i został dołączony do sekcji polemik pod Twoim wpisem. Możesz zapoznać się z jego treścią, odnieść się do niego w dyskusji lub wycofać artykuł do prywatnego szkicu, aby nanieść poprawki.
+  
+  table(cellpadding="0" cellspacing="0" border="0" style="margin-bottom: 10px;")
+    tr
+      td
+        a(href=postUrl style="display: inline-block; background-color: #bc2525; color: #ffffff; font-weight: bold; padding: 11px 20px; border-radius: 6px; text-decoration: none; font-size: 14px;") Przejdź do artykułu i raportu AI

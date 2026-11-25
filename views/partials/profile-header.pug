@@ -13,6 +13,9 @@
                 else
                     span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
                         i.fa-solid.fa-circle-xmark
+            if profileUser.isSuspended
+                div.profile-rank-badge(style="display: inline-flex; align-items: center; background: var(--alert-danger-bg); color: var(--alert-danger-text); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid var(--alert-danger-border);")
+                    span ⛔ Konto zawieszone do #{new Date(profileUser.suspendedUntil).toLocaleDateString('pl-PL')}
 
             div(style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;")
                 if profileUser.role === 'editor'

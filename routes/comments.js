@@ -42,6 +42,10 @@ module.exports = express
 // ==========================================
 async function postCommentEdit(req, res) {
   try {
+    if (req.dbUser.isSuspended) {
+      return res.status(403).send("Twoje konto jest tymczasowo zawieszone.");
+    }
+
     const post = await Post.findById(req.params.id);
     if (!post)
       return res.status(404).send("Nie odnaleziono powiązanego posta.");

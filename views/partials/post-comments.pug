@@ -74,3 +74,9 @@ if user
             textarea(id=`comment-input-field-${post._id}` name="content" placeholder="Napisz komentarz..." rows="1" required autocomplete="off" style="resize: none; overflow-y: hidden; flex: 1; min-height: 36px; box-sizing: border-box;")
             button(type="submit" title="Wyślij komentarz" style="background: none; border: none; color: #1877f2; cursor: pointer; padding: 8px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;")
                 i.fa-solid.fa-paper-plane(style="font-size: 18px;")
+    else if user.isSuspended
+        .admin-alert-box.is-danger(style="margin-top: 12px; font-size: 13px; font-weight: 500; line-height: 1.4;")
+            | ⛔ Nie możesz dodawać komentarzy, ponieważ Twoje konto jest tymczasowo zawieszone
+            if user.suspendedUntil
+                |  do dnia <strong>#{new Date(user.suspendedUntil).toLocaleString('pl-PL')}</strong>
+            | .

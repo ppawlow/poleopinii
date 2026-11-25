@@ -10,6 +10,13 @@
                 |  opublikował nowy komunikat: 
                 a.event-post-link(href=`/posts/${ev.postId}` style="font-weight: 700;") "#{ev.postTitle}"
 
+        else if ev.type === 'factcheck_warning'
+            i.fa-solid.fa-scale-balanced(style="color: var(--alert-danger-text); font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
+            span
+                a(href=ev.senderUrl style="font-weight: 600; color: #1877f2; text-decoration: none;") #{ev.senderName}
+                |  zgłosił zastrzeżenia faktograficzne: 
+                a(href=`/posts/${ev.postId}` style="font-weight: 600; color: var(--alert-danger-text); text-decoration: underline;") "#{ev.postTitle}"
+
         else if ev.type === 'like_post'
             i.fa-solid.fa-star(style="color: #E5A93C; font-size: 18px; width: 24px; text-align: center; flex-shrink: 0;")
             span
