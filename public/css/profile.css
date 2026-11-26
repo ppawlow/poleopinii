@@ -59,9 +59,9 @@
 }
 
 .profile-user-details {
-  margin-bottom: 16px;
-  flex: 1;
-  min-width: 0;
+  margin-bottom: 8px;
+  flex: 1 1 calc(100% - 200px);
+  min-width: 260px;
 }
 
 .profile-user-details h2 {
@@ -175,6 +175,14 @@
   gap: 16px;
 }
 
+.update-photos-container,
+.profile-guest-actions-mobile {
+  flex: 1 1 100%;
+  justify-content: flex-end;
+  margin-top: 4px;
+  margin-bottom: 4px !important;
+}
+
 /* Responsywność profilu */
 @media (max-width: 992px) {
   .profile-container {
@@ -231,8 +239,46 @@
     height: 130px;
   }
   .profile-user-details {
+    flex: none;
     width: 100%;
     margin-bottom: 0;
+  }
+  .update-photos-container,
+  .profile-guest-actions-mobile {
+    flex: none;
+    justify-content: center;
+  }
+  .profile-user-details h2 {
+    font-size: 24px;
+    justify-content: center;
+  }
+  .profile-rank-badge {
+    margin: 4px auto 0 auto;
+  }
+}
+
+@media (max-width: 900px) {
+  .profile-avatar-row {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    margin-top: -65px;
+  }
+  .avatar-wrapper {
+    margin: 0 auto;
+    width: 130px;
+    height: 130px;
+  }
+  .profile-user-details {
+    flex: none;
+    width: 100%;
+    margin-bottom: 0;
+  }
+  .update-photos-container,
+  .profile-guest-actions-mobile {
+    flex: none;
+    justify-content: center;
   }
   .profile-user-details h2 {
     font-size: 24px;
