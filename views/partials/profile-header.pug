@@ -7,7 +7,7 @@
         .profile-user-details
             h2(style="display: inline-flex; align-items: center; gap: 8px; margin: 0;") 
                 | #{profileUser.displayName}
-                if profileUser.isFullyVerified || profileUser.role === 'editor'
+                if profileUser.hasFullAccess
                     span(title="Profil Zweryfikowany / Zaufany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
                         i.fa-solid.fa-circle-check
                 else
@@ -55,7 +55,7 @@
                         button.profile-mail-main-btn(type="button" title="Wyślij prywatną wiadomość" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')`) 
                             i.fa-solid.fa-envelope
                             span.btn-text Wyślij wiadomość
-                    else if !user.isFullyVerified
+                    else if !user.hasFullAccess
                         button.restricted-feature-trigger(type="button" title="Wymaga weryfikacji profilu" data-reason="private_mail_unverified") 
                             i.fa-solid.fa-envelope
                             span.btn-text Wyślij wiadomość

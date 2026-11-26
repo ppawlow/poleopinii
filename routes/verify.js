@@ -131,8 +131,7 @@ async function getStatusJson(req, res) {
   return res.json({
     isVerified: req.dbUser.isVerified,
     transferStatus: req.dbUser.verificationTransferStatus,
-    isFullyVerified:
-      req.dbUser.isVerified &&
-      req.dbUser.verificationTransferStatus === "approved",
+    isFullyVerified: req.dbUser.isFullyVerified,
+    hasFullAccess: req.dbUser.hasFullAccess,
   });
 }

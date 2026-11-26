@@ -36,7 +36,7 @@
                 i.fa-solid.fa-gear
                 | Ustawienia konta
                 
-            if !user.isFullyVerified
+            if !user.hasFullAccess
                 a.dropdown-item(href="/verify")
                     i.fa-solid.fa-circle-check
                     | Zweryfikuj swoje konto

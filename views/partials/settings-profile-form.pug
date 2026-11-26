@@ -68,6 +68,6 @@
 
         hr(style="border: 0; border-top: 1px solid var(--border-color); margin: 8px 0;")
 
-if !user.isFullyVerified
+if !user.hasFullAccess
     h4(style="color: var(--text-main);") Pamiętaj również o weryfikacji swojego profilu, aby korzystać ze wszystkich narzędzi
     button(type="button" onclick="location='/verify'" style="background: #1877f2; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 14px;") Weryfikacja profilu użytkownika

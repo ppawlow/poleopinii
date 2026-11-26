@@ -67,7 +67,7 @@ html(lang="pl")
                     id: "!{user.id || user._id}",
                     displayName: "!{user.displayName || user.name}",
                     avatarUrl: "!{user.avatarUrl || DEFAULT_ASSETS.avatar}",
-                    isVerified: !{user.isFullyVerified}, 
+                    hasFullAccess: !{Boolean(user.hasFullAccess)}, 
                     isSuspended: !{Boolean(user.isSuspended)},
                     suspendedUntil: !{user.suspendedUntil ? JSON.stringify(new Date(user.suspendedUntil).toLocaleString('pl-PL')) : 'null'}
                 };
@@ -88,7 +88,7 @@ html(lang="pl")
                         )
                             img.nav-avatar(src=(user.avatarUrl || DEFAULT_ASSETS.avatar) alt="Avatar")
                             span.user-name #{user.displayName}
-                                if user.isFullyVerified
+                                if user.hasFullAccess
                                     sup(title="Profil Zweryfikowany" style="color: #1877f2; display: inline-flex;") 
                                         i.fa-solid.fa-circle-check
                                 else

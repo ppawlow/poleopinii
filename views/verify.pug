@@ -104,6 +104,12 @@ block content
                 if msg === 'transfer_submitted'
                     .admin-alert-box(style="background: var(--alert-info-bg); color: var(--alert-info-text); border: 1px solid var(--alert-info-border); margin-bottom: 16px;") 🏦 Dane przelewu zostały zarejestrowane. Oczekujemy na zaksięgowanie wpłaty.
 
+                if user.isEditor && user.verificationTransferStatus !== 'approved'
+                    .admin-alert-box.is-success(style="margin-bottom: 16px; line-height: 1.5;")
+                        | 🌟 <strong>Posiadasz pełny dostęp dzięki randze Redaktora Serwisu!</strong>
+                        br
+                        span(style="font-weight: normal; font-size: 13.5px;") Wykonanie przelewu uwierzytelniającego nie jest wymagane do korzystania ze wszystkich funkcjonalności platformy. Możesz go jednak zrealizować opcjonalnie, jeśli chcesz dodatkowo powiązać konto z rachunkiem bankowym na potrzeby odzyskiwania dostępu.
+
                 .verify-step-card(class=(user.verificationTransferStatus === 'approved' ? 'is-approved' : ''))
                     div(style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;")
                         h3(style="font-size: 16px; font-weight: 700; margin: 0; color: var(--text-main);") Przelew uwierzytelniający (1.00 PLN)

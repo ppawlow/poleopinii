@@ -317,7 +317,7 @@ async function getScopedPosts(req, options = {}) {
             then: {
               _id: "$authorDetails._id",
               avatarUrl: DEFAULT_ASSETS.avatar,
-              isFullyVerified: false,
+              hasFullAccess: false,
               name: "Anonimowy Użytkownik",
               alias: null,
               role: "user",
@@ -327,13 +327,18 @@ async function getScopedPosts(req, options = {}) {
               avatarUrl: {
                 $ifNull: ["$authorDetails.avatarUrl", DEFAULT_ASSETS.avatar],
               },
-              isFullyVerified: {
-                $and: [
-                  { $eq: ["$authorDetails.isVerified", true] },
+              hasFullAccess: {
+                $or: [
+                  { $eq: ["$authorDetails.role", "editor"] },
                   {
-                    $eq: [
-                      "$authorDetails.verificationTransferStatus",
-                      "approved",
+                    $and: [
+                      { $eq: ["$authorDetails.isVerified", true] },
+                      {
+                        $eq: [
+                          "$authorDetails.verificationTransferStatus",
+                          "approved",
+                        ],
+                      },
                     ],
                   },
                 ],
@@ -410,7 +415,7 @@ async function getScopedPosts(req, options = {}) {
                   in: { $ifNull: ["$$matchedUser.role", "user"] },
                 },
               },
-              isFullyVerified: {
+              hasFullAccess: {
                 $let: {
                   vars: {
                     matchedUser: {
@@ -426,12 +431,17 @@ async function getScopedPosts(req, options = {}) {
                     },
                   },
                   in: {
-                    $and: [
-                      { $eq: ["$$matchedUser.isVerified", true] },
+                    $or: [
+                      { $eq: ["$$matchedUser.role", "editor"] },
                       {
-                        $eq: [
-                          "$$matchedUser.verificationTransferStatus",
-                          "approved",
+                        $and: [
+                          { $eq: ["$$matchedUser.isVerified", true] },
+                          {
+                            $eq: [
+                              "$$matchedUser.verificationTransferStatus",
+                              "approved",
+                            ],
+                          },
                         ],
                       },
                     ],

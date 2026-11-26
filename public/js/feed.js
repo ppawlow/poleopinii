@@ -712,7 +712,7 @@ window.openReplyPostModal = async function (
   if (
     !isSelfContinuation &&
     window.appUser &&
-    !window.appUser.isVerified &&
+    !window.appUser.hasFullAccess &&
     isPublicPost
   ) {
     await window.Alert(

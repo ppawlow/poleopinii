@@ -15,7 +15,7 @@ if post.imageUrl && !isWorkMode
                 span.portal-author-name #{post.authorDetails ? post.authorDetails.name : post.author}
                 if post.authorDetails && post.authorDetails.role === 'editor'
                     span(title="Zatwierdzony Redaktor Serwisu" style="color: #9360f7; font-size: 12px;") 🌟
-                if post.authorDetails && (post.authorDetails.isFullyVerified || post.authorDetails.role === 'editor')
+                if post.authorDetails && post.authorDetails.hasFullAccess
                     i.fa-solid.fa-circle-check(title="Profil Zweryfikowany" style="color: #1877f2; font-size: 12px;")
                 else
                     i.fa-solid.fa-circle-xmark(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 12px;")

@@ -441,9 +441,7 @@ async function postCreate(req, res) {
         name: dbUser.displayName,
         avatarUrl: dbUser.avatarUrl || "/uploads/default-avatar.png",
         role: dbUser.role,
-        isFullyVerified:
-          dbUser.isVerified === true &&
-          dbUser.verificationTransferStatus === "approved",
+        hasFullAccess: dbUser.hasFullAccess,
       },
     };
 
@@ -842,10 +840,7 @@ async function postComment(req, res) {
           authorAvatar: c.authorAvatar,
           author: c.author,
           role: commentAuthorDoc ? commentAuthorDoc.role : "user",
-          isFullyVerified: commentAuthorDoc
-            ? commentAuthorDoc.isVerified === true &&
-              commentAuthorDoc.verificationTransferStatus === "approved"
-            : false,
+          hasFullAccess: commentAuthorDoc ? commentAuthorDoc.hasFullAccess : false,
         };
       }),
     );

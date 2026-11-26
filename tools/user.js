@@ -96,6 +96,10 @@ userSchema.virtual("isEditor").get(function () {
   return this.role === "editor";
 });
 
+userSchema.virtual("hasFullAccess").get(function () {
+  return this.isEditor || this.isFullyVerified;
+});
+
 userSchema.virtual("isPublicAllowed").get(function () {
   if (this.isSuspended) return false;
   return this.isEditor || this.isFullyVerified;
@@ -177,6 +181,7 @@ userSchema.options.toObject.transform = (doc, ret) => {
   ret.isFullyVerified =
     doc.isVerified === true && doc.verificationTransferStatus === "approved";
   ret.isSuspended = doc.isSuspended;
+  ret.hasFullAccess = doc.isEditor || ret.isFullyVerified;
   ret.suspendedUntil = doc.suspendedUntil;
   return ret;
 };
