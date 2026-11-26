@@ -59,9 +59,18 @@
 }
 
 .profile-user-details {
-  margin-bottom: 32px;
-  flex: 1 1 calc(100% - 200px);
-  min-width: 260px;
+  margin-bottom: 16px;
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-meta-actions-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
 }
 
 .profile-user-details h2 {
@@ -175,14 +184,6 @@
   gap: 16px;
 }
 
-.update-photos-container,
-.profile-guest-actions-mobile {
-  flex: 1 1 100%;
-  justify-content: flex-end;
-  margin-top: 4px;
-  margin-bottom: 4px !important;
-}
-
 /* Responsywność profilu */
 @media (max-width: 992px) {
   .profile-container {
@@ -239,13 +240,18 @@
     height: 130px;
   }
   .profile-user-details {
-    flex: none;
     width: 100%;
     margin-bottom: 0;
   }
+  .profile-meta-actions-row {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
   .update-photos-container,
   .profile-guest-actions-mobile {
-    flex: none;
+    margin-left: 0 !important;
     justify-content: center;
   }
   .profile-user-details h2 {

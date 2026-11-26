@@ -13,75 +13,75 @@
                 else
                     sup(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 16px; margin-left: 6px; vertical-align: super;") 
                         i.fa-solid.fa-circle-xmark
+
             if profileUser.isSuspended
-                div.profile-rank-badge(style="display: inline-flex; align-items: center; background: var(--alert-danger-bg); color: var(--alert-danger-text); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid var(--alert-danger-border);")
+                div.profile-rank-badge(style="display: inline-flex; align-items: center; background: var(--alert-danger-bg); color: var(--alert-danger-text); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid var(--alert-danger-border); margin-top: 8px;")
                     span ⛔ Konto zawieszone do #{new Date(profileUser.suspendedUntil).toLocaleDateString('pl-PL')}
 
-            div(style="margin-top: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center;")
-                if profileUser.role === 'editor'
-                    //- Najwyższy priorytet: Oficjalna ranga na podstawie trwałego zapisu w bazie danych
-                    div.profile-rank-badge(style="display: inline-flex; align-items: center; background: #f3ebff; color: #9360f7; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid #9360f7;" title="Zweryfikowany status Redaktora platformy")
-                        span 🌟 Redaktor Serwisu
-                else if currentRank
-                    //- Fallback: Rangi standardowe lub status Kandydata wyliczany dynamicznie z lajków
-                    div.profile-rank-badge(style=`display: inline-flex; align-items: center; background: ${currentRank.bg}; color: ${currentRank.color}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid ${currentRank.color};` title=`Próg punktowy poziomu wynosi: ${currentRank.minLikes} lajków`)
-                        span #{currentRank.name}
-                        
-        if user && user._id.equals(profileUser._id)
-            div.update-photos-container.profile-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
-                form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0; display: inline-flex;")
-                    label.upload-action-btn(for="avatar-file-input" title="Zmień awatar" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")
-                        i.fa-solid.fa-camera
-                        span.btn-text  Zmień awatar
-                    input#avatar-file-input(type="file" name="avatar" accept="image/*" style="display: none;" onchange="uploadProfilePhoto(this)")
+            .profile-meta-actions-row
+                div(style="display: flex; gap: 8px; flex-wrap: wrap; align-items: center;")
+                    if profileUser.role === 'editor'
+                        div.profile-rank-badge(style="display: inline-flex; align-items: center; background: #f3ebff; color: #9360f7; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid #9360f7;" title="Zweryfikowany status Redaktora platformy")
+                            span 🌟 Redaktor Serwisu
+                    else if currentRank
+                        div.profile-rank-badge(style=`display: inline-flex; align-items: center; background: ${currentRank.bg}; color: ${currentRank.color}; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid ${currentRank.color};` title=`Próg punktowy poziomu wynosi: ${currentRank.minLikes} lajków`)
+                            span #{currentRank.name}
 
-                form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0; display: inline-flex;")
-                    label.upload-action-btn(for="cover-file-input" title="Zmień tło" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")
-                        i.fa-solid.fa-image
-                        span.btn-text  Zmień tło
-                    input#cover-file-input(type="file" name="cover" accept="image/*" style="display: none;" onchange="uploadProfilePhoto(this)")
-        
-                button.upload-action-btn(type="button" title="Ustawienia" onclick="location=`/profile/settings`" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; border: none; white-space: nowrap;")
-                    i.fa-solid.fa-gear
-                    span.btn-text  Ustawienia
+                if user && user._id.equals(profileUser._id)
+                    div.update-photos-container.profile-actions-mobile(style="display: flex; gap: 8px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
+                        form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0; display: inline-flex;")
+                            label.upload-action-btn(for="avatar-file-input" title="Zmień awatar" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")
+                                i.fa-solid.fa-camera
+                                span.btn-text  Zmień awatar
+                            input#avatar-file-input(type="file" name="avatar" accept="image/*" style="display: none;" onchange="uploadProfilePhoto(this)")
 
-        else if user
-            - var amIFollowing = user.isFollowing(profileUser._id)
-            - var amIBlocking = user.isBlocking(profileUser._id)
+                        form.update-photos-form(action="/profile/update-photos" method="POST" enctype="multipart/form-data" style="margin: 0; display: inline-flex;")
+                            label.upload-action-btn(for="cover-file-input" title="Zmień tło" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;")
+                                i.fa-solid.fa-image
+                                span.btn-text  Zmień tło
+                            input#cover-file-input(type="file" name="cover" accept="image/*" style="display: none;" onchange="uploadProfilePhoto(this)")
+                
+                        button.upload-action-btn(type="button" title="Ustawienia" onclick="location=`/profile/settings`" style="margin: 0; display: inline-flex; align-items: center; gap: 6px; border: none; white-space: nowrap;")
+                            i.fa-solid.fa-gear
+                            span.btn-text  Ustawienia
 
-            div.profile-guest-actions-mobile(style="display: flex; gap: 8px; margin-bottom: 16px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
-                if profileUser.allowPrivateEmails
-                    if hasPermission(user, 'user', 'canSendMail', profileUser)
-                        button.profile-mail-main-btn(type="button" title="Wyślij prywatną wiadomość" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')`) 
-                            i.fa-solid.fa-envelope
-                            span.btn-text Wyślij wiadomość
-                    else if !user.hasFullAccess
-                        button.restricted-feature-trigger(type="button" title="Wymaga weryfikacji profilu" data-reason="private_mail_unverified") 
-                            i.fa-solid.fa-envelope
-                            span.btn-text Wyślij wiadomość
+                else if user
+                    - var amIFollowing = user.isFollowing(profileUser._id)
+                    - var amIBlocking = user.isBlocking(profileUser._id)
 
-                form.dynamic-follow-form(action=`/follow/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
-                    input(type="hidden" name="_csrf" value=csrfToken)
-                    button.profile-follow-btn(
-                        type="submit" 
-                        title=(amIFollowing ? "Przestań obserwować" : "Obserwuj profil") 
-                        class=(amIFollowing ? 'is-following' : '')
-                    )
-                        if amIFollowing
-                            i.fa-solid.fa-eye-slash
-                        else
-                            i.fa-solid.fa-eye
-                        span.btn-text #{amIFollowing ? 'Obserwujesz' : 'Obserwuj'}
+                    div.profile-guest-actions-mobile(style="display: flex; gap: 8px; margin-left: auto; flex-wrap: nowrap; align-items: center;")
+                        if profileUser.allowPrivateEmails
+                            if hasPermission(user, 'user', 'canSendMail', profileUser)
+                                button.profile-mail-main-btn(type="button" title="Wyślij prywatną wiadomość" onclick=`openContactMailModal('${profileUser._id}', '${profileUser.nickname || profileUser.name}')`) 
+                                    i.fa-solid.fa-envelope
+                                    span.btn-text Wyślij wiadomość
+                            else if !user.hasFullAccess
+                                button.restricted-feature-trigger(type="button" title="Wymaga weryfikacji profilu" data-reason="private_mail_unverified") 
+                                    i.fa-solid.fa-envelope
+                                    span.btn-text Wyślij wiadomość
 
-                form.dynamic-block-form(action=`/block/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
-                    input(type="hidden" name="_csrf" value=csrfToken)
-                    button.profile-block-main-btn(
-                        type="submit" 
-                        title=(amIBlocking ? "Odblokuj profil" : "Blokuj profil")
-                        class=(amIBlocking ? 'is-blocking' : '')
-                    )
-                        if amIBlocking
-                            i.fa-solid.fa-user
-                        else
-                            i.fa-solid.fa-user-slash
-                        span.btn-text #{amIBlocking ? 'Odblokuj' : 'Zablokuj'}
+                        form.dynamic-follow-form(action=`/follow/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            button.profile-follow-btn(
+                                type="submit" 
+                                title=(amIFollowing ? "Przestań obserwować" : "Obserwuj profil") 
+                                class=(amIFollowing ? 'is-following' : '')
+                            )
+                                if amIFollowing
+                                    i.fa-solid.fa-eye-slash
+                                else
+                                    i.fa-solid.fa-eye
+                                span.btn-text #{amIFollowing ? 'Obserwujesz' : 'Obserwuj'}
+
+                        form.dynamic-block-form(action=`/block/${profileUser._id}` method="POST" data-target-id=profileUser._id style="margin:0; display: inline-flex;")
+                            input(type="hidden" name="_csrf" value=csrfToken)
+                            button.profile-block-main-btn(
+                                type="submit" 
+                                title=(amIBlocking ? "Odblokuj profil" : "Blokuj profil")
+                                class=(amIBlocking ? 'is-blocking' : '')
+                            )
+                                if amIBlocking
+                                    i.fa-solid.fa-user
+                                else
+                                    i.fa-solid.fa-user-slash
+                                span.btn-text #{amIBlocking ? 'Odblokuj' : 'Zablokuj'}
