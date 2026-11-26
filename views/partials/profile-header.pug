@@ -5,13 +5,13 @@
         .avatar-wrapper
             img.profile-main-avatar(src=profileUser.avatarUrl alt="Avatar")
         .profile-user-details
-            h2(style="display: inline-flex; align-items: center; gap: 8px; margin: 0;") 
+            h2(style="margin: 0; line-height: 1.25;") 
                 | #{profileUser.displayName}
                 if profileUser.hasFullAccess
-                    span(title="Profil Zweryfikowany / Zaufany" style="color: #1877f2; font-size: 20px; display: inline-flex;") 
+                    sup(title="Profil Zweryfikowany / Zaufany" style="color: #1877f2; font-size: 16px; margin-left: 6px; vertical-align: super;") 
                         i.fa-solid.fa-circle-check
                 else
-                    span(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 20px; display: inline-flex;") 
+                    sup(title="Profil Niezweryfikowany" style="color: #8a8d91; font-size: 16px; margin-left: 6px; vertical-align: super;") 
                         i.fa-solid.fa-circle-xmark
             if profileUser.isSuspended
                 div.profile-rank-badge(style="display: inline-flex; align-items: center; background: var(--alert-danger-bg); color: var(--alert-danger-text); padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; border: 1px solid var(--alert-danger-border);")
