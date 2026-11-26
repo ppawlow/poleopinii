@@ -225,6 +225,9 @@
     margin-bottom: 12px;
     padding: 0 8px;
   }
+  main.profile-feed .feed-toolbar-row {
+    padding: 0 12px;
+  }
 }
 
 @media (max-width: 900px) {

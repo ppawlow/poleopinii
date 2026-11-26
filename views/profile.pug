@@ -17,14 +17,38 @@ block content
             main.profile-feed
                 if user && String(user.id) === String(profileUser._id)
                     include partials/create-post.pug
-                    div(style="margin-bottom: 20px;")
-                
-                if posts && posts.length > 0
-                    .accordion-container#accordion-posts-wrapper
+                    div(style="margin-bottom: 12px;")
+
+                if user && posts && posts.length > 0
+                    .feed-toolbar-row(style="display: flex; justify-content: flex-end; align-items: flex-end; margin-bottom: 12px;")
+                        .toolbar-group(style="display: flex; flex-direction: column; align-items: flex-end; gap: 6px; margin-left: auto;")
+                            span#feed-view-label.toolbar-group-label= feedView === 'portal' ? 'Widok czytelnika' : 'Widok roboczy'
+                            .feed-view-switcher(style="display: flex; align-items: center; gap: 8px;")
+                                button.view-switch-btn(
+                                    type="button"
+                                    class=(feedView !== 'portal' ? 'active' : '')
+                                    onclick="window.setFeedViewMode('accordion', event)"
+                                    title="Widok roboczy"
+                                    aria-label="Widok roboczy"
+                                )
+                                    i.fa-solid.fa-tools
+                                button.view-switch-btn(
+                                    type="button"
+                                    class=(feedView === 'portal' ? 'active' : '')
+                                    onclick="window.setFeedViewMode('portal', event)"
+                                    title="Widok czytelnika"
+                                    aria-label="Widok czytelnika"
+                                )
+                                    i.fa-solid.fa-book-open
+
+                .accordion-container#accordion-posts-wrapper
+                    if posts && posts.length > 0
                         each post in posts
-                            include partials/post-card.pug
-                else
-                    .accordion-container#accordion-posts-wrapper
+                            if feedView === 'portal'
+                                include partials/post-portal-card.pug
+                            else
+                                include partials/post-card.pug
+                    else
                         .no-posts.empty-state-box Brak wpisów autora.
 
         include partials/profile-contact-modal.pug
